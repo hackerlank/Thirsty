@@ -31,8 +31,7 @@
  *       DCHECK(num < 0) << "invalid item count";
  */
 
-#ifndef ARKTO_LOGGING
-#define ARKTO_LOGGING
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -231,5 +230,3 @@ private:
     const int           line_;
     const std::string   message_;
 };
-
-#endif // ARKTO_LOGGING

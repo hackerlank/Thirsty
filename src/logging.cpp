@@ -28,7 +28,7 @@ void NullLogHandler(LogLevel level,
   // Nothing.
 }
 
-static ::logging::LogHandler* log_handler_ = &DefaultLogHandler;
+static LogHandler* log_handler_ = &DefaultLogHandler;
 
 
 
@@ -56,7 +56,7 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
     /* values which we print with this, but well use snprintf() */  \
     /* anyway to be extra safe. */                                  \
     char buffer[128];                                               \
-    snprintf(buffer, sizeof(buffer), FORMAT, value);                \
+    sprintf_s(buffer, sizeof(buffer), FORMAT, value);               \
     /* Guard against broken MSVC snprintf(). */                     \
     buffer[sizeof(buffer)-1] = '\0';                                \
     message_ += buffer;                                             \
@@ -64,7 +64,7 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
 }
 
 DECLARE_STREAM_OPERATOR(char         , "%c" )
-DECLARE_STREAM_OPERATOR(uint32_t     , "%d" )
+DECLARE_STREAM_OPERATOR(int32_t      , "%d" )
 DECLARE_STREAM_OPERATOR(uint32_t     , "%u" )
 DECLARE_STREAM_OPERATOR(int64_t      , "%I64d")
 DECLARE_STREAM_OPERATOR(uint64_t     , "%U64d")
