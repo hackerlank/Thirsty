@@ -25,7 +25,6 @@ solution 'Thirsty'
         defines
         {
             'WIN32',
-            '_DEBUG',
             'NOMINMAX',
             'WIN32_LEAN_AND_MEAN',
             '_WIN32_WINNT=0x0600',
@@ -45,20 +44,19 @@ solution 'Thirsty'
             BOOST_ROOT,
         }
         links
-        {
-            'libThirsty',
+        {           
             'libgtest',
             'double-conversion',
+            'zlib',
         }
 
-    project 'libThirsty'
+    project 'Thirsty'
         location 'build'
-        kind 'StaticLib'
+        kind 'ConsoleApp'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
         defines
         {
             'WIN32',
-            '_DEBUG',
             'NOMINMAX',
             'WIN32_LEAN_AND_MEAN',
             '_WIN32_WINNT=0x0600',
@@ -76,6 +74,11 @@ solution 'Thirsty'
             'dep/double-conversion/src',
             'dep/zlib/include',
             BOOST_ROOT,
+        }
+        links
+        {
+            'zlib',
+            'double-conversion',
         }
 
     project 'zlib'
