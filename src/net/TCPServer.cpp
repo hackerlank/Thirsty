@@ -1,5 +1,8 @@
 #include "TCPServer.h"
+#include <functional>
 
+
+using namespace std::placeholders;
 
 
 TCPServer::TCPServer(boost::asio::io_service& io_service)
@@ -11,6 +14,7 @@ TCPServer::TCPServer(boost::asio::io_service& io_service)
 
 TCPServer::~TCPServer()
 {
+    Stop();
 }
 
 void TCPServer::Start(const std::string& addr, const std::string& port)
@@ -24,12 +28,13 @@ void TCPServer::Start(const std::string& addr, const std::string& port)
     acceptor_.bind(endpoint);
     acceptor_.listen();
 
-    PostAccept();
+    StartAccept();
 }
 
 void TCPServer::Stop()
 {
     io_service_.stop();
+    connections_.clear();
 }
 
 void TCPServer::Close(int64_t serial)
@@ -71,18 +76,14 @@ void TCPServer::SendAll(const char* data, size_t size)
 }
 
 
-void TCPServer::PostAccept()
+void TCPServer::StartAccept()
 {
     auto serial = current_serial_++;
-    new_connection_.reset(new TCPConnection(io_service_, serial));
-    acceptor_.async_accept(new_connection_->GetSocket(), 
-        [&](const boost::system::error_code& err)
-    {
-        HandleAccept(err, new_connection_);
-    });
+    TCPConnectionPtr conn = std::make_shared<TCPConnection>(io_service_, serial);
+    acceptor_.async_accept(conn->GetSocket(), std::bind(&TCPServer::HandleAccept, this, _1, conn));
 }
 
-// This method is called by worker thread
+
 void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnectionPtr conn)
 {
     if (!err)
@@ -93,5 +94,9 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
     else
     {
         conn.reset();
-    }    
+    }
+    if (acceptor_.is_open())
+    {
+        StartAccept();
+    }
 }

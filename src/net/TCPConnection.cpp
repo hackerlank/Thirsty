@@ -3,10 +3,16 @@
 #include <zlib.h>
 #include "core/logging.h"
 
+using namespace std::placeholders;
+
 
 TCPConnection::TCPConnection(boost::asio::io_service& io_service, int64_t serial)
     : socket_(io_service),
       serial_(serial)
+{
+}
+
+TCPConnection::~TCPConnection()
 {
 }
 
@@ -17,57 +23,74 @@ void TCPConnection::Close()
 
 void TCPConnection::Start()
 {
-    boost::asio::async_read(socket_, boost::asio::buffer(&head_, sizeof(head_)), 
-        [this](const boost::system::error_code& err, size_t bytes)
-    {
-        this->HandleReadHeader(err, bytes);
-    });
+    boost::asio::async_read(socket_, boost::asio::buffer(buf_->data(), buf_->head_size()),
+        std::bind(&TCPConnection::HandleReadHeader, this, _1, _2));
 }
 
 void TCPConnection::HandleReadHeader(const boost::system::error_code& err, size_t bytes)
 {
     if(!err)
     {
-        if (bytes == sizeof(head_) && head_.size <= MAX_BODY_LEN)
+        const Header& head = buf_->header();
+        if (bytes == sizeof(head) && head.size <= MAX_BODY_LEN)
         {
-            auto checksum = crc32(0, (const Bytef*)&head_.size, sizeof(head_.size));
-            if (checksum == head_.size_checksum)
+            if (buf_->check_head_crc())
             {
-                BufferPtr bufptr(new Buffer(head_.size));
-                boost::asio::async_read(socket_, boost::asio::buffer(bufptr->data(), bufptr->size()),
-                    [&](const boost::system::error_code& err, size_t  bytes)
-                {
-                    this->HandleReadBody(err, bytes, bufptr);
-                });
+                buf_->resize(head.size);
+                boost::asio::async_read(socket_, boost::asio::buffer(buf_->body(), head.size),
+                    std::bind(&TCPConnection::HandleReadBody, this, _1, _2));
+            }
+            else
+            {
+                LOG(ERROR) << "invalid head checksum, " << serial_ << ", size: " << head.size
+                    << ", checksum: " << head.size_crc;
             }
         }
+        else
+        {
+            LOG(ERROR) << "header size invalid, serial: " << serial_ << ", size: " << head.size;
+        }
+    }
+    else
+    {
+        LOG(ERROR) << serial_ << ", error: " << err.value() << "," << err.message();
     }
 }
 
-void TCPConnection::HandleReadBody(const boost::system::error_code& err, size_t bytes, BufferPtr ptr)
+void TCPConnection::HandleReadBody(const boost::system::error_code& err, size_t bytes)
 {
     if (!err)
     {
-        if (bytes == ptr->size())
-        {
-            auto checksum = crc32(0, (const Bytef*)ptr->data(), ptr->size());
-            if (head_.body_checksum == checksum)
+        const Header& head = buf_->header();
+        if (bytes == buf_->body_size())
+        {            
+            if (buf_->check_body_crc())
             {
 
             }
+            else
+            {
+                LOG(ERROR) << "invalid body checksum, " << serial_ << ", size: " << head.size
+                    << ", checksum: " << head.body_crc;
+            }
         }
+        else
+        {
+            LOG(ERROR) << "body size invalid, serial: " << serial_ << ", size: " << head.size;
+        }
+    }
+    else
+    {
+        LOG(ERROR) << "error: " << serial_ << ", " << err.value() << "," << err.message();
     }
 }
 
 
 void TCPConnection::AsynSend(const char* data, size_t size)
 {
-    BufferPtr ptr(new Buffer(data, size));
-    boost::asio::async_write(socket_, boost::asio::buffer(ptr->data(), ptr->size()),
-        [&](const boost::system::error_code& err, size_t bytes)
-    {
-        HandleWrite(err, bytes, ptr);
-    });
+    BufferPtr buf = std::make_shared<Buffer>(data, size);
+    boost::asio::async_write(socket_, boost::asio::buffer(buf->data(), buf->size()),
+        std::bind(&TCPConnection::HandleWrite, this, _1, _2, buf));
 }
 
 void TCPConnection::HandleWrite(const boost::system::error_code& err, size_t bytes, BufferPtr ptr)

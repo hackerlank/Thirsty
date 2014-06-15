@@ -27,13 +27,8 @@ public:
 
 private:
     // Initiate an asynchronous accept operation.
-    void PostAccept();
-
-    // Handle completion of an asynchronous accept operation.
-    void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr conn);
-
-private:
-    void OnAccept(const boost::system::error_code& err, TCPConnectionPtr conn);
+    void StartAccept();
+    void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr ptr);
 
 private:
     // The io_service used to perform asynchronous operations.
@@ -44,9 +39,6 @@ private:
 
     // current serial number
     int64_t     current_serial_; 
-
-    // The next connection to be accepted.
-    TCPConnectionPtr    new_connection_;
 
     // Connections identified by serial number
     std::unordered_map<int64_t, TCPConnectionPtr>    connections_;

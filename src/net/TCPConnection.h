@@ -5,7 +5,6 @@
 #include <queue>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
-#include "Header.h"
 #include "Buffer.h"
 
 
@@ -16,6 +15,7 @@ class TCPConnection
 public:
     // Construct a connection with the given io_service.
     TCPConnection(boost::asio::io_service& io_service, int64_t serial);
+    ~TCPConnection();
 
     // Start the first asynchronous operation for the connection.
     void Start();
@@ -34,7 +34,7 @@ public:
 private:
     // Handle completion of a read operation.
     void HandleReadHeader(const boost::system::error_code& err, size_t bytes);
-    void HandleReadBody(const boost::system::error_code& err, size_t bytes, BufferPtr ptr);
+    void HandleReadBody(const boost::system::error_code& err, size_t bytes);
         
     // Handle completion of a write operation.
     void HandleWrite(const boost::system::error_code& err, size_t bytes, BufferPtr ptr);
@@ -44,7 +44,7 @@ private:
     boost::asio::ip::tcp::socket        socket_;
 
     int64_t     serial_;
-    Header      head_;
+    BufferPtr   buf_;
 };
 
 typedef std::shared_ptr<TCPConnection>  TCPConnectionPtr;
