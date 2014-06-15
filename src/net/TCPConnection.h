@@ -27,7 +27,7 @@ public:
     void Close();
 
     // Get the socket associated with the connection.
-    boost::asio::ip::tcp::socket&   GetSocket();
+    boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
 
     int64_t GetSerial() const { return serial_; }
 
