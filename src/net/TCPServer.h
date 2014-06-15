@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
-#include <atomic>
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
@@ -11,60 +11,46 @@
 class TCPServer : private boost::noncopyable
 {
 public:
-    typedef std::map<int, TCPConnectionPtr>     TCPConnectionMap;
-
-    TCPServer(boost::asio::io_service& io_service,
-             const std::string& address, 
-             int16_t port);
-
+    explicit TCPServer(boost::asio::io_service& io_service);
     ~TCPServer();
 
-    /// Run this server(called in main thread)
-    void Run();
+    void Start(const std::string& addr, const std::string& port);
+    void Stop();
 
-    /// Close a connection
-    void Close(int serial);
+    // Close a connection
+    void Close(int64_t serial);
 
-    /// Send data to connection
-    void AsynSend(int32_t serial, const char* data, size_t size);
+    // Send data to connection
+    void AsynSend(int64_t serial, const char* data, size_t size);
 
-
-private:
-    /// Initiate an asynchronous accept operation.
-    void StartAccept();
-
-    /// Handle completion of an asynchronous accept operation.
-    void HandleAccept(int serial, const ErrorCode& e);
-
-    /// Handle a request to stop the server.
-    void HandleStop();
+    void SendAll(const char* data, size_t size);
 
 private:
-    void ProcessCommands();
-    void OnAccept(int serial, int error);
-    void OnRead();
-    void OnClose();
+    // Initiate an asynchronous accept operation.
+    void PostAccept();
+
+    // Handle completion of an asynchronous accept operation.
+    void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr conn);
 
 private:
-    /// The io_service used to perform asynchronous operations.
+    void OnAccept(const boost::system::error_code& err, TCPConnectionPtr conn);
+
+private:
+    // The io_service used to perform asynchronous operations.
     boost::asio::io_service&        io_service_;
 
-    /// Acceptor used to listen for incoming connections.
+    // Acceptor used to listen for incoming connections.
     boost::asio::ip::tcp::acceptor  acceptor_;
 
     // current serial number
-    std::atomic<int>     current_serial_; 
+    int64_t     current_serial_; 
 
-    /// The next connection to be accepted.
+    // The next connection to be accepted.
     TCPConnectionPtr    new_connection_;
 
     // Connections identified by serial number
-    TCPConnectionMap    connections_;
+    std::unordered_map<int64_t, TCPConnectionPtr>    connections_;
 
 };
 
 typedef std::shared_ptr<TCPServer>    TCPServerPtr;
-
-} // namespace arkto
-
-#endif // ARKTO_SERVER_H
