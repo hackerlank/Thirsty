@@ -11,7 +11,7 @@ def pack_data(data):
     return struct.pack('iii',  size, size_crc, data_crc) + data
 
 def run_test():
-    s = create_socket(socket.AF_INET, socket.SOCK_STREAM)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('127.0.0.1', 32450))
     data = pack_data('hello,kitty')
     s.send(data)
