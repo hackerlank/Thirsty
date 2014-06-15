@@ -318,22 +318,15 @@ toAppend(Tgt* result, Src value) {
 }
 
 /**
- * Variadic conversion to string. Appends each element in turn.
+ * to<SomeString>(v1, v2, ...) uses toAppend() (see below) as back-end
+ * for all types.
  */
-template <class Tgt, class Head, class... Tail>
-typename std::enable_if<sizeof...(Tail) >= 2
-    && IsSomeString<Tgt>::value>::type
-toAppend(Tgt* result, const Head& v, const Tail&... vs) {
-    toAppend(result, v);
-    toAppend(result, vs...);
-}
-
-/**
- * Variadic base case: do nothing.
- */
-template <class Tgt>
-typename std::enable_if<IsSomeString<Tgt>::value>::type
-toAppend(Tgt* result) {
+template <class Tgt, class Src>
+typename std::enable_if<IsSomeString<Tgt>::value, Tgt>::type
+to(const Src& src) {
+    Tgt result;
+    toAppend(&result, src);
+    return result;
 }
 
 #endif /* FOLLY_BASE_CONV_H_ */

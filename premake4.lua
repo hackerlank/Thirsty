@@ -74,9 +74,28 @@ solution 'Thirsty'
         {
             'src',
             'dep/double-conversion/src',
+            'dep/zlib/include',
             BOOST_ROOT,
         }
 
+    project 'zlib'
+        location 'build'
+        kind 'StaticLib'
+        uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
+        defines
+        {
+        }
+        files
+        {
+            'dep/zlib/include/*.h',
+            'dep/zlib/src/*.c',
+        }
+        includedirs
+        {
+            'dep/zlib/inlucde',
+        }
+
+        
     project 'libgtest'
         location 'build'
         kind 'StaticLib'
