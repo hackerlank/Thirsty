@@ -18,7 +18,7 @@ public:
     ~TCPConnection();
 
     // Start the first asynchronous operation for the connection.
-    void Start();
+    void AsynRead();
 
     // Send messages
     void AsynSend(const char* data, size_t size);
@@ -33,7 +33,7 @@ public:
 
 private:
     // Handle completion of a read operation.
-    void HandleReadHeader(const boost::system::error_code& err, size_t bytes);
+    void HandleReadHead(const boost::system::error_code& err, size_t bytes);
     void HandleReadBody(const boost::system::error_code& err, size_t bytes);
         
     // Handle completion of a write operation.

@@ -21,13 +21,13 @@ void TCPConnection::Close()
     socket_.close();
 }
 
-void TCPConnection::Start()
+void TCPConnection::AsynRead()
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buf_.data(), sizeof(Header)),
-        std::bind(&TCPConnection::HandleReadHeader, this, _1, _2));
+        std::bind(&TCPConnection::HandleReadHead, this, _1, _2));
 }
 
-void TCPConnection::HandleReadHeader(const boost::system::error_code& err, size_t bytes)
+void TCPConnection::HandleReadHead(const boost::system::error_code& err, size_t bytes)
 {
     if(!err)
     {
@@ -66,7 +66,7 @@ void TCPConnection::HandleReadBody(const boost::system::error_code& err, size_t 
         {            
             if (buf_.check_body_crc())
             {
-
+                AsynRead();
             }
             else
             {
