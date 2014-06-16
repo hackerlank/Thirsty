@@ -44,7 +44,7 @@ private:
     boost::asio::ip::tcp::socket        socket_;
 
     int64_t     serial_;
-    BufferPtr   buf_;
+    Buffer      buf_;
 };
 
 typedef std::shared_ptr<TCPConnection>  TCPConnectionPtr;

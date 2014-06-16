@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 #include <memory>
 #include <boost/noncopyable.hpp>
 
@@ -17,46 +18,38 @@ struct Header
     uint32_t     body_crc;          // ÄÚÈÝCRC
 };
 
-bool CheckHeadCrc(const Header& head);
-bool CheckBodyCrc(const Header& head, const void* data, size_t len);
-
 
 class Buffer : boost::noncopyable
 {
 public:
-    enum kResetType
-    {
-        RESET_HEAD = 0x01,
-        RESET_BODY = 0x10,
-    };
+    enum {RESERVED_SIZE = 20};
 
     Buffer();
     Buffer(const void* data, size_t size);
     Buffer(Buffer&& other);
     ~Buffer();
+    
+    size_t          size() const { return data_.size(); }
+    char*           data() { return &data_[0]; }
+    const char*     data() const { return &data_[0]; }    
+    Header*         header() { return reinterpret_cast<Header*>(data()); }
+    const Header*   header() const { return reinterpret_cast<const Header*>(data()); }
 
-    size_t          size() const { return sizeof(head_) + head_.size; }
-    char*           data() { return reinterpret_cast<char*>(&head_); }
-    const char*     data() const { return reinterpret_cast<const char*>(&head_); }
+    size_t          body_size() const { return header()->size; }
+    char*           body() { return data() + sizeof(Header); }
+    const char*     body() const { return data() + sizeof(Header); }
 
-    size_t          head_size() const { return sizeof(head_); }
-    const Header&   header() const { return *reinterpret_cast<const Header*>(&head_); }
-
-    size_t          body_size() const { return head_.size; }
-    char*           body() { return body_; };
-    const char*     body() const { return body_; }
-
-    void            resize(size_t size);
-    void            resize(const void* data, size_t size);
+    void            reserve_body(size_t bodysize);
 
     bool            check_head_crc() const;
     bool            check_body_crc() const;
     
     void            make_head_checksum();
     void            make_body_checksum();
+    
 private:
-    Header      head_;
-    char*       body_;
+    std::vector<char>       data_;
 };
+
 
 typedef std::shared_ptr<Buffer>     BufferPtr;

@@ -23,7 +23,7 @@ void TCPConnection::Close()
 
 void TCPConnection::Start()
 {
-    boost::asio::async_read(socket_, boost::asio::buffer(buf_->data(), buf_->head_size()),
+    boost::asio::async_read(socket_, boost::asio::buffer(buf_.data(), sizeof(Header)),
         std::bind(&TCPConnection::HandleReadHeader, this, _1, _2));
 }
 
@@ -31,24 +31,24 @@ void TCPConnection::HandleReadHeader(const boost::system::error_code& err, size_
 {
     if(!err)
     {
-        const Header& head = buf_->header();
-        if (bytes == sizeof(head) && head.size <= MAX_BODY_LEN)
+        const Header* head = buf_.header();
+        if (bytes == sizeof(*head) && head->size <= MAX_BODY_LEN)
         {
-            if (buf_->check_head_crc())
+            if (buf_.check_head_crc())
             {
-                buf_->resize(head.size);
-                boost::asio::async_read(socket_, boost::asio::buffer(buf_->body(), head.size),
+                buf_.reserve_body(head->size);
+                boost::asio::async_read(socket_, boost::asio::buffer(buf_.body(), head->size),
                     std::bind(&TCPConnection::HandleReadBody, this, _1, _2));
             }
             else
             {
-                LOG(ERROR) << "invalid head checksum, " << serial_ << ", size: " << head.size
-                    << ", checksum: " << head.size_crc;
+                LOG(ERROR) << "invalid head checksum, " << serial_ << ", size: " << head->size
+                    << ", checksum: " << head->size_crc;
             }
         }
         else
         {
-            LOG(ERROR) << "header size invalid, serial: " << serial_ << ", size: " << head.size;
+            LOG(ERROR) << "header size invalid, serial: " << serial_ << ", size: " << head->size;
         }
     }
     else
@@ -61,22 +61,22 @@ void TCPConnection::HandleReadBody(const boost::system::error_code& err, size_t 
 {
     if (!err)
     {
-        const Header& head = buf_->header();
-        if (bytes == buf_->body_size())
+        const Header* head = buf_.header();
+        if (bytes == buf_.body_size())
         {            
-            if (buf_->check_body_crc())
+            if (buf_.check_body_crc())
             {
 
             }
             else
             {
-                LOG(ERROR) << "invalid body checksum, " << serial_ << ", size: " << head.size
-                    << ", checksum: " << head.body_crc;
+                LOG(ERROR) << "invalid body checksum, " << serial_ << ", size: " << head->size
+                    << ", checksum: " << head->body_crc;
             }
         }
         else
         {
-            LOG(ERROR) << "body size invalid, serial: " << serial_ << ", size: " << head.size;
+            LOG(ERROR) << "body size invalid, serial: " << serial_ << ", size: " << head->size;
         }
     }
     else
