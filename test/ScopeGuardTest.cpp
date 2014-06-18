@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "ScopeGuard.h"
+#include "core/ScopeGuard.h"
+#include "core/logging.h"
 #include <gtest/gtest.h>
-#include "logging.h"
 #include <functional>
 #include <stdexcept>
 
@@ -115,6 +115,7 @@ TEST(ScopeGuard, DifferentWaysToBind) {
   EXPECT_EQ(11, n);
 }
 
+#ifdef __GNUC__
 TEST(ScopeGuard, GuardException) {
   EXPECT_DEATH({
     ScopeGuard g = makeGuard([&] {
@@ -124,6 +125,7 @@ TEST(ScopeGuard, GuardException) {
   "destructors should never throw!"
   );
 }
+#endif
 
 /**
  * Add an integer to a vector iff it was inserted into the

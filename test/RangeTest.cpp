@@ -17,7 +17,7 @@
 // @author Kristina Holst (kholst@fb.com)
 // @author Andrei Alexandrescu (andrei.alexandrescu@fb.com)
 
-#include "Range.h"
+#include "core/Range.h"
 
 #include <array>
 #include <boost/range/concepts.hpp>
@@ -894,8 +894,10 @@ void testRangeFunc(C&& x, size_t n) {
   Range<const int*> r2 = range(std::forward<C>(x));
   Range<const int*> r3 = range(cx);
   Range<const int*> r5 = range(std::move(cx));
+#ifdef __GNUC__
   EXPECT_EQ(r1.begin(), &x[0]);
   EXPECT_EQ(r1.end(), &x[n]);
+#endif
   EXPECT_EQ(n, r1.size());
   EXPECT_EQ(n, r2.size());
   EXPECT_EQ(n, r3.size());
