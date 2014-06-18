@@ -149,7 +149,7 @@ T* CheckNotNull(const char *file, int line, const char *name, T* val)
 }  // namespace internal
 
 #define CHECK_NOTNULL(A) \
-  ::logging::internal::CheckNotNull(__FILE__, __LINE__, "'" #A "' must not be NULL", (A))
+        internal::CheckNotNull(__FILE__, __LINE__, "'" #A "' must not be NULL", (A))
 
 // Debug Mode Support
 #ifdef NDEBUG
@@ -157,25 +157,26 @@ T* CheckNotNull(const char *file, int line, const char *name, T* val)
 #define DLOG LOG_IF(INFO, false)
 
 #define DCHECK(EXPRESSION) while(false) CHECK(EXPRESSION)
-#define DCHECK_EQ(A, B) DCHECK((A) == (B))
-#define DCHECK_NE(A, B) DCHECK((A) != (B))
-#define DCHECK_LT(A, B) DCHECK((A) <  (B))
-#define DCHECK_LE(A, B) DCHECK((A) <= (B))
-#define DCHECK_GT(A, B) DCHECK((A) >  (B))
-#define DCHECK_GE(A, B) DCHECK((A) >= (B))
+#define DCHECK_EQ(A, B)     DCHECK((A) == (B))
+#define DCHECK_NE(A, B)     DCHECK((A) != (B))
+#define DCHECK_LT(A, B)     DCHECK((A) <  (B))
+#define DCHECK_LE(A, B)     DCHECK((A) <= (B))
+#define DCHECK_GT(A, B)     DCHECK((A) >  (B))
+#define DCHECK_GE(A, B)     DCHECK((A) >= (B))
+#define DCHECK_NOTNULL
 
 #else  // NDEBUG
 
 #define DLOG LOG
 
-#define DCHECK    CHECK
-#define DCHECK_EQ CHECK_EQ
-#define DCHECK_NE CHECK_NE
-#define DCHECK_LT CHECK_LT
-#define DCHECK_LE CHECK_LE
-#define DCHECK_GT CHECK_GT
-#define DCHECK_GE CHECK_GE
-
+#define DCHECK              CHECK
+#define DCHECK_EQ           CHECK_EQ
+#define DCHECK_NE           CHECK_NE
+#define DCHECK_LT           CHECK_LT
+#define DCHECK_LE           CHECK_LE
+#define DCHECK_GT           CHECK_GT
+#define DCHECK_GE           CHECK_GE
+#define DCHECK_NOTNULL      CHECK_NOTNULL
 #endif  // !NDEBUG
 
 
