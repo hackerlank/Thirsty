@@ -102,7 +102,15 @@ solution 'UnitTest'
     language 'C++'
     flags {'ExtraWarnings'}
     targetdir 'bin'
+    
+    configuration 'Debug'
+        defines { 'DEBUG' }
+        flags { 'Symbols' }
 
+    configuration 'Release'
+        defines { 'NDEBUG' }
+        flags { 'Symbols', 'Optimize' }
+        
     project 'tests'
         location 'build/test'
         kind 'ConsoleApp'
@@ -126,6 +134,12 @@ solution 'UnitTest'
         {
             'test/*.h',
             'test/*.cpp',
+            'src/**.h',
+            'src/**.cpp',
+        }
+        excludes
+        {
+            'src/main.cpp',
         }
         includedirs
         {
