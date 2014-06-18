@@ -44,7 +44,7 @@ void TCPServer::Close(int64_t serial)
     {
         auto& conn = iter->second;
         conn->Close();
-        connections_.erase(iter);        
+        connections_.erase(iter);
     }
     else
     {
@@ -52,17 +52,22 @@ void TCPServer::Close(int64_t serial)
     }
 }
 
-void TCPServer::AsynSend(int64_t serial, const char* data, size_t size)
+TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
 {
     auto iter = connections_.find(serial);
     if (iter != connections_.end())
     {
-        auto& conn = iter->second;
-        conn->AsynSend(data, size);
+        return iter->second;
     }
-    else
+    return TCPConnectionPtr();
+}
+
+void TCPServer::AsynSend(int64_t serial, const char* data, size_t size)
+{
+    auto conn = GetConnection(serial);
+    if (conn)
     {
-        // log
+        conn->AsynSend(data, size);
     }
 }
 
@@ -79,7 +84,8 @@ void TCPServer::SendAll(const char* data, size_t size)
 void TCPServer::StartAccept()
 {
     auto serial = current_serial_++;
-    TCPConnectionPtr conn = std::make_shared<TCPConnection>(io_service_, serial);
+    TCPConnectionPtr conn = std::make_shared<TCPConnection>(io_service_, serial,
+        std::bind(&TCPServer::OnConnectionError, this, _1, _2, _3));
     acceptor_.async_accept(conn->GetSocket(), std::bind(&TCPServer::HandleAccept, this, _1, conn));
 }
 
@@ -91,12 +97,14 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
         connections_[conn->GetSerial()] = conn;
         conn->AsynRead();
     }
-    else
-    {
-        conn.reset();
-    }
     if (acceptor_.is_open())
     {
         StartAccept();
     }
+}
+
+void TCPServer::OnConnectionError(int64_t serial, int error, const std::string& msg)
+{
+    Close(serial);
+    fprintf(stderr, "%d: %s\n", error, msg.data());
 }

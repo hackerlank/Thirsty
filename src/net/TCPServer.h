@@ -25,10 +25,14 @@ public:
 
     void SendAll(const char* data, size_t size);
 
+    TCPConnectionPtr  GetConnection(int64_t serial);
+
 private:
     // Initiate an asynchronous accept operation.
     void StartAccept();
     void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr ptr);
+
+    void OnConnectionError(int64_t serial, int error, const std::string& msg);
 
 private:
     // The io_service used to perform asynchronous operations.
@@ -38,7 +42,7 @@ private:
     boost::asio::ip::tcp::acceptor  acceptor_;
 
     // current serial number
-    int64_t     current_serial_; 
+    int64_t     current_serial_;
 
     // Connections identified by serial number
     std::unordered_map<int64_t, TCPConnectionPtr>    connections_;

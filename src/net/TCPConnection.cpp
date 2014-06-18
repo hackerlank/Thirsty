@@ -6,14 +6,17 @@
 using namespace std::placeholders;
 
 
-TCPConnection::TCPConnection(boost::asio::io_service& io_service, int64_t serial)
+TCPConnection::TCPConnection(boost::asio::io_service& io_service, int64_t serial, ErrorHandler error_callback)
     : socket_(io_service),
-      serial_(serial)
+      serial_(serial),
+      on_error_(error_callback)
 {
+    assert(error_callback);
 }
 
 TCPConnection::~TCPConnection()
 {
+    Close();
 }
 
 void TCPConnection::Close()
@@ -23,7 +26,7 @@ void TCPConnection::Close()
 
 void TCPConnection::AsynRead()
 {
-    boost::asio::async_read(socket_, boost::asio::buffer(buf_.data(), sizeof(Header)),
+    boost::asio::async_read(socket_, boost::asio::buffer(recv_buf_.data(), sizeof(Header)),
         std::bind(&TCPConnection::HandleReadHead, this, _1, _2));
 }
 
@@ -31,14 +34,15 @@ void TCPConnection::HandleReadHead(const boost::system::error_code& err, size_t 
 {
     if(!err)
     {
-        const Header* head = buf_.header();
+        const Header* head = recv_buf_.header();
         if (bytes == sizeof(*head) && head->size <= MAX_BODY_LEN)
         {
-            if (buf_.check_head_crc())
+            if (recv_buf_.check_head_crc())
             {
-                buf_.reserve_body(head->size);
-                boost::asio::async_read(socket_, boost::asio::buffer(buf_.body(), head->size),
+                recv_buf_.reserve_body(head->size);
+                boost::asio::async_read(socket_, boost::asio::buffer(recv_buf_.body(), head->size),
                     std::bind(&TCPConnection::HandleReadBody, this, _1, _2));
+                return ;
             }
             else
             {
@@ -61,11 +65,12 @@ void TCPConnection::HandleReadBody(const boost::system::error_code& err, size_t 
 {
     if (!err)
     {
-        const Header* head = buf_.header();
-        if (bytes == buf_.body_size())
-        {            
-            if (buf_.check_body_crc())
+        const Header* head = recv_buf_.header();
+        if (bytes == recv_buf_.body_size())
+        {
+            if (recv_buf_.check_body_crc())
             {
+                AsynSend(recv_buf_.body(), recv_buf_.body_size());
                 AsynRead();
             }
             else
