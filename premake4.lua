@@ -25,12 +25,21 @@ solution 'Thirsty'
         location 'build'
         kind 'ConsoleApp'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
+        if os.get() == 'windows' then
         defines
         {
             'BOOST_DATE_TIME_NO_LIB',
             'BOOST_REGEX_NO_LIB',
             '_WIN32_WINNT=0x0501',
+            '_CRT_SECURE_NO_WARNINGS',
         }
+        elseif os.get() == 'linux' then
+        defines
+        {
+            'BOOST_DATE_TIME_NO_LIB',
+            'BOOST_REGEX_NO_LIB',
+        }        
+        end
         files
         {
             'src/**.h',
@@ -98,12 +107,21 @@ solution 'UnitTest'
         location 'build/test'
         kind 'ConsoleApp'
         uuid 'AB7D1C15-7A44-41a7-8864-230D8E345608'
+        if os.get() == 'windows' then
         defines
         {
             'BOOST_DATE_TIME_NO_LIB',
             'BOOST_REGEX_NO_LIB',
             '_WIN32_WINNT=0x0501',
+            '_CRT_SECURE_NO_WARNINGS',
         }
+        elseif os.get() == 'linux' then
+        defines
+        {
+            'BOOST_DATE_TIME_NO_LIB',
+            'BOOST_REGEX_NO_LIB',
+        }        
+        end
         files
         {
             'test/*.h',
