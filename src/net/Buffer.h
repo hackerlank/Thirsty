@@ -28,10 +28,10 @@ public:
     Buffer(const void* data, size_t size);
     Buffer(Buffer&& other);
     ~Buffer();
-    
+
     size_t          size() const { return data_.size(); }
     char*           data() { return &data_[0]; }
-    const char*     data() const { return &data_[0]; }    
+    const char*     data() const { return &data_[0]; }
     Header*         header() { return reinterpret_cast<Header*>(data()); }
     const Header*   header() const { return reinterpret_cast<const Header*>(data()); }
 
@@ -43,10 +43,10 @@ public:
 
     bool            check_head_crc() const;
     bool            check_body_crc() const;
-    
+
     void            make_head_checksum();
     void            make_body_checksum();
-    
+
 private:
     std::vector<char>       data_;
 };
