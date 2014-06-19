@@ -18,15 +18,7 @@ template <> const char *const MaxString<bool>::value = "true";
 template <> const char *const MaxString<uint8_t>::value = "255";
 template <> const char *const MaxString<uint16_t>::value = "65535";
 template <> const char *const MaxString<uint32_t>::value = "4294967295";
-
-#if (ULONG_MAX == UINT_MAX) // 32-bit linux
-template <> const char *const MaxString<unsigned long>::value =
-"4294967295";
-#else
-template <> const char *const MaxString<unsigned long>::value =
-"18446744073709551615";
-#endif
-
+template <> const char *const MaxString<uint64_t>::value = "18446744073709551615";
 
 } // namespace detail
 

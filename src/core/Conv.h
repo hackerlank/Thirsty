@@ -30,6 +30,7 @@
 #include <type_traits>
 #include "Platform.h"
 #include "logging.h"
+#include "Range.h"
 #include <boost/implicit_cast.hpp>
 
 
@@ -140,11 +141,11 @@ inline uint32_t uint64ToBufferUnsafe(uint64_t v, char *const buffer)
         // computes them in one shot.
         const uint64_t q = v / 10;
         const uint32_t r = static_cast<uint32_t>(v % 10);
-        buffer[pos--] = '0' + r;
+        buffer[pos--] = '0' + static_cast<uint8_t>(r);
         v = q;
     }
     // Last digit is trivial to handle
-    buffer[pos] = static_cast<uint32_t>(v)+'0';
+    buffer[pos] = static_cast<uint8_t>(v) + '0';
     return result;
 }
 
@@ -162,7 +163,7 @@ template <class T> struct IsSomeString
 /**
  * A single char gets appended.
  */
-inline void toAppend(std::string* result, char value)
+inline void toAppend(char value, std::string* result)
 {
     DCHECK_NOTNULL(result);
     *result += value;
@@ -174,7 +175,7 @@ inline void toAppend(std::string* result, char value)
 template <class Src>
 typename std::enable_if<
     std::is_convertible<Src, const char*>::value>::type
-toAppend(std::string* result, Src value)
+toAppend(Src value, std::string* result)
 {
     DCHECK_NOTNULL(result);
     // Treat null pointers like an empty string, as in:
@@ -190,10 +191,15 @@ toAppend(std::string* result, Src value)
 /**
  * Strings get appended, too.
  */
-inline void toAppend(std::string* result, const std::string& value)
+inline void toAppend(const std::string& value, std::string* result)
 {
     DCHECK_NOTNULL(result);
     result->append(value);
+}
+
+inline void toAppend(StringPiece value, std::string* result)
+{
+    result->append(value.data(), value.size());
 }
 
 /**
@@ -209,14 +215,14 @@ typename std::enable_if<
     std::is_integral<Src>::value 
     && std::is_signed<Src>::value 
     && sizeof(Src) >= 4>::type
-toAppend(std::string* result, Src value) 
+toAppend(Src value, std::string* result)
 {
     DCHECK_NOTNULL(result);
     char buffer[20];
     if (value < 0) 
     {
         result->push_back('-');
-        result->append(buffer, uint64ToBufferUnsafe(-value, buffer));
+        result->append(buffer, uint64ToBufferUnsafe(-int64_t(value), buffer));
     }
     else 
     {
@@ -232,7 +238,7 @@ typename std::enable_if<
     std::is_integral<Src>::value 
     && !std::is_signed<Src>::value
     && sizeof(Src) >= 4>::type
-toAppend(std::string* result, Src value) 
+toAppend(Src value, std::string* result)
 {
     DCHECK_NOTNULL(result);
     char buffer[20];
@@ -248,13 +254,13 @@ template <class Src>
 typename std::enable_if<
     std::is_integral<Src>::value
     && sizeof(Src) < 4>::type
-toAppend(std::string* result, Src value) 
+toAppend(Src value, std::string* result)
 {
     DCHECK_NOTNULL(result);
     typedef typename
         std::conditional<std::is_signed<Src>::value, 
         int64_t, uint64_t>::type Intermediate;
-    toAppend(result, static_cast<Intermediate>(value));
+    toAppend(static_cast<Intermediate>(value), result);
 }
 
 /**
@@ -263,10 +269,10 @@ toAppend(std::string* result, Src value)
 template <class Src>
 typename std::enable_if<
     std::is_enum<Src>::value>::type
-toAppend(std::string* result, Src value)
+toAppend(Src value, std::string* result)
 {
-    toAppend(result,
-        static_cast<typename std::underlying_type<Src>::type>(value));
+    toAppend(static_cast<typename std::underlying_type<Src>::type>(value),
+        result);
 }
 
 /*******************************************************************************
@@ -297,7 +303,7 @@ void toAppend(std::string* result, double value, DtoaMode mode, uint32_t numDigi
 template <class Src>
 typename std::enable_if<
     std::is_floating_point<Src>::value>::type
-toAppend(std::string* result, Src value)
+toAppend(Src value, std::string* result)
 {
     toAppend(result, static_cast<double>(value), DtoaMode::MODE_SHORTEST, 0U);
 }
@@ -308,21 +314,26 @@ toAppend(std::string* result, Src value)
 inline void toAppend(std::string* result) {}
 
 /**
- * Variadic conversion to string. Appends each element in turn.
- */
-template <class T, class... Ts>
-void toAppend(std::string* result, const T& first, const Ts&... vs) 
-{
-    toAppend(result, first);
-    toAppend(result, vs...);
+* to<SomeString>(SomeString str) returns itself. If std::string
+* uses Copy-on-Write, it's much more efficient by avoiding copying 
+* the underlying char array.
+*/
+template <class Tgt, class Src>
+typename std::enable_if<
+    IsSomeString<Tgt>::value && std::is_same<Tgt, Src>::value,
+    Tgt>::type
+to(const Src& value) {
+    return value;
 }
 
-template <class T, class... Ts>
-typename std::enable_if<IsSomeString<T>::value, T>::type
-to(const Ts&... vs)
+template <class Tgt, class Src>
+typename std::enable_if<
+    IsSomeString<Tgt>::value && !IsSomeString<Src>::value, 
+    Tgt>::type
+to(const Src& value)
 {
-    std::string result;
-    toAppend(&result, vs...);
+    Tgt result;
+    toAppend(value, &result);
     return std::move(result);
 }
 
@@ -592,7 +603,7 @@ typename std::enable_if<
     && !std::is_signed<Tgt>::value
     && !std::is_same<typename std::remove_cv<Tgt>::type, bool>::value,
     Tgt>::type
-to(const char * b, const char * e)
+to(const char* b, const char* e)
 {
     DCHECK(b && e);
     return detail::digits_to<Tgt>(b, e);
@@ -608,14 +619,14 @@ typename std::enable_if<
     std::is_integral<Tgt>::value 
     && std::is_signed<Tgt>::value,
     Tgt>::type
-to(const char * b, const char * e) 
+to(const char* b, const char* e) 
 {
     FOLLY_RANGE_CHECK(b < e, "Empty input string in conversion to integral");
     if (!isdigit(*b)) 
     {
         if (*b == '-') 
         {
-            const auto r = Conv<typename std::make_unsigned<Tgt>::type>(b + 1, e);
+            const auto r = to<typename std::make_unsigned<Tgt>::type>(b + 1, e);
             Tgt result = -static_cast<Tgt>(r);
             FOLLY_RANGE_CHECK(result <= 0, "Negative overflow.");
             return result;
@@ -623,8 +634,71 @@ to(const char * b, const char * e)
         FOLLY_RANGE_CHECK(*b == '+', "Invalid lead character");
         ++b;
     }
-    Tgt result = Conv<typename std::make_unsigned<Tgt>::type>(b, e);
+    Tgt result = to<typename std::make_unsigned<Tgt>::type>(b, e);
     FOLLY_RANGE_CHECK(result >= 0, "Overflow.");
+    return result;
+}
+
+/**
+ * Parsing strings to integrals. These routines differ from
+ * to<integral>(string) in that they take a POINTER TO a StringPiece
+ * and alter that StringPiece to reflect progress information.
+ */
+
+
+/**
+* StringPiece to integrals, with progress information. Alters the
+* StringPiece parameter to munch the already-parsed characters.
+*/
+template <class Tgt>
+typename std::enable_if<
+    std::is_integral<Tgt>::value
+    && !std::is_same<typename std::remove_cv<Tgt>::type, bool>::value,
+    Tgt>::type
+to(StringPiece * src) {
+    auto b = src->data(), past = src->data() + src->size();
+    for (;; ++b) {
+        FOLLY_RANGE_CHECK(b < past, "No digits found in input string");
+        if (!isspace(*b)) break;
+    }
+
+    auto m = b;
+
+    // First digit is customized because we test for sign
+    bool negative = false;
+    /* static */ if (std::is_signed<Tgt>::value) {
+        if (!isdigit(*m)) {
+            if (*m == '-') {
+                negative = true;
+            }
+            else {
+                FOLLY_RANGE_CHECK(*m == '+', "Invalid leading character in conversion"
+                    " to integral");
+            }
+            ++b;
+            ++m;
+        }
+    }
+    FOLLY_RANGE_CHECK(m < past, "No digits found in input string");
+    FOLLY_RANGE_CHECK(isdigit(*m), "Non-digit character found");
+    m = detail::findFirstNonDigit<Tgt>(m + 1, past);
+
+    Tgt result;
+    /* static */ if (!std::is_signed<Tgt>::value) {
+        result = detail::digits_to<typename std::make_unsigned<Tgt>::type>(b, m);
+    }
+    else {
+        auto t = detail::digits_to<typename std::make_unsigned<Tgt>::type>(b, m);
+        if (negative) {
+            result = -t;
+            FOLLY_RANGE_CHECK(is_non_positive(result), "Negative overflow");
+        }
+        else {
+            result = t;
+            FOLLY_RANGE_CHECK(is_non_negative(result), "Overflow");
+        }
+    }
+    src->advance(m - src->data());
     return result;
 }
 
@@ -633,7 +707,7 @@ typename std::enable_if<
     std::is_integral<Tgt>::value,Tgt>::type
 to(const std::string& str)
 {
-    return Conv<Tgt>(str.c_str(), str.c_str() + str.size());
+    return to<Tgt>(str.c_str(), str.c_str() + str.size());
 }
 
 
@@ -671,15 +745,19 @@ to(const Src & value)
  * Enum to anything and back
  ******************************************************************************/
 template <class Tgt, class Src>
-typename std::enable_if<std::is_enum<Src>::value, Tgt>::type
+typename std::enable_if<
+    std::is_integral<Tgt>::value && std::is_enum<Src>::value, 
+    Tgt>::type
 to(const Src & value) 
 {
-    return Conv<Tgt>(static_cast<typename std::underlying_type<Src>::type>(value));
+    return to<Tgt>(static_cast<typename std::underlying_type<Src>::type>(value));
 }
 
 template <class Tgt, class Src>
-typename std::enable_if<std::is_enum<Tgt>::value, Tgt>::type
+typename std::enable_if<
+    std::is_enum<Tgt>::value && std::_Is_integral<Src>::value, 
+    Tgt>::type
 to(const Src & value) 
 {
-    return static_cast<Tgt>(Conv<typename std::underlying_type<Tgt>::type>(value));
+    return static_cast<Tgt>(to<typename std::underlying_type<Tgt>::type>(value));
 }
