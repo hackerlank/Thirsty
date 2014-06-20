@@ -138,7 +138,7 @@ class LogFinisher
 
 namespace internal {
 template<typename T>
-T* CheckNotNull(const char *file, int line, const char *name, T* val) 
+T* CheckNotNull(const char *name, T* val) 
 {
     if (val == NULL) 
     {
@@ -149,7 +149,7 @@ T* CheckNotNull(const char *file, int line, const char *name, T* val)
 }  // namespace internal
 
 #define CHECK_NOTNULL(A) \
-        internal::CheckNotNull(__FILE__, __LINE__, "'" #A "' must not be NULL", (A))
+        internal::CheckNotNull("'" #A "' must not be NULL", (A))
 
 // Debug Mode Support
 #ifdef NDEBUG
