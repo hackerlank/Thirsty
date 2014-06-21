@@ -223,6 +223,43 @@ TEST(Conv, StringPieceToDouble) {
     }
 }
 
+TEST(Conv, testVariadicTo)
+{
+    string s;
+    toAppend(&s);
+    toAppend(&s, "Lorem ipsum ", 1234, string(" dolor amet "), 567.89, '!');
+    EXPECT_EQ(s, "Lorem ipsum 1234 dolor amet 567.89!");
+
+    s = to<string>("");
+    EXPECT_TRUE(s.empty());
+
+    s = to<string>("Lorem ipsum ", nullptr, 1234, " dolor amet ", 567.89, '.');
+    EXPECT_EQ(s, "Lorem ipsum 1234 dolor amet 567.89.");
+}
+
+TEST(Conv, testVariadicToDelim)
+{
+    string s("Yukkuri shiteitte ne!!!");
+
+    string charDelim = toDelim<string>('$', s);
+    EXPECT_EQ(charDelim, s);
+
+    string strDelim = toDelim<string>(string(">_<"), s);
+    EXPECT_EQ(strDelim, s);
+
+    s.clear();
+    toAppendDelim(&s,
+        ":", "Lorem ipsum ", 1234, string(" dolor amet "), 567.89, '!');
+    EXPECT_EQ(s, "Lorem ipsum :1234: dolor amet :567.89:!");
+
+    s = toDelim<string>(':', "");
+    EXPECT_TRUE(s.empty());
+
+    s = toDelim<string>(
+        ":", "Lorem ipsum ", nullptr, 1234, " dolor amet ", 567.89, '.');
+    EXPECT_EQ(s, "Lorem ipsum ::1234: dolor amet :567.89:.");
+}
+
 TEST(Conv, testEnum)
 {
     enum A { x = 42, y = 420, z = 65 };

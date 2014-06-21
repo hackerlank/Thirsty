@@ -163,11 +163,12 @@ template <class T> struct IsSomeString
 /**
  * A single char gets appended.
  */
-inline void toAppend(char value, std::string* result)
+inline void toAppend(std::string* result, char value)
 {
     DCHECK_NOTNULL(result);
     *result += value;
 }
+
 
 /**
  * Everything implicitly convertible to const char* gets appended.
@@ -175,7 +176,7 @@ inline void toAppend(char value, std::string* result)
 template <class Src>
 typename std::enable_if<
     std::is_convertible<Src, const char*>::value>::type
-toAppend(Src value, std::string* result)
+toAppend(std::string* result, Src value)
 {
     DCHECK_NOTNULL(result);
     // Treat null pointers like an empty string, as in:
@@ -188,16 +189,7 @@ toAppend(Src value, std::string* result)
 }
 
 
-/**
- * Strings get appended, too.
- */
-inline void toAppend(const std::string& value, std::string* result)
-{
-    DCHECK_NOTNULL(result);
-    result->append(value);
-}
-
-inline void toAppend(StringPiece value, std::string* result)
+inline void toAppend(std::string* result, StringPiece value)
 {
     result->append(value.data(), value.size());
 }
@@ -215,7 +207,7 @@ typename std::enable_if<
     std::is_integral<Src>::value 
     && std::is_signed<Src>::value 
     && sizeof(Src) >= 4>::type
-toAppend(Src value, std::string* result)
+toAppend(std::string* result, Src value)
 {
     DCHECK_NOTNULL(result);
     char buffer[20];
@@ -238,7 +230,7 @@ typename std::enable_if<
     std::is_integral<Src>::value 
     && !std::is_signed<Src>::value
     && sizeof(Src) >= 4>::type
-toAppend(Src value, std::string* result)
+toAppend(std::string* result, Src value)
 {
     DCHECK_NOTNULL(result);
     char buffer[20];
@@ -254,13 +246,13 @@ template <class Src>
 typename std::enable_if<
     std::is_integral<Src>::value
     && sizeof(Src) < 4>::type
-toAppend(Src value, std::string* result)
+toAppend(std::string* result, Src value)
 {
     DCHECK_NOTNULL(result);
     typedef typename
         std::conditional<std::is_signed<Src>::value, 
         int64_t, uint64_t>::type Intermediate;
-    toAppend(static_cast<Intermediate>(value), result);
+    toAppend(result, static_cast<Intermediate>(value));
 }
 
 /**
@@ -269,10 +261,10 @@ toAppend(Src value, std::string* result)
 template <class Src>
 typename std::enable_if<
     std::is_enum<Src>::value>::type
-toAppend(Src value, std::string* result)
+toAppend(std::string* result, Src value)
 {
-    toAppend(static_cast<typename std::underlying_type<Src>::type>(value),
-        result);
+    toAppend(result,
+        static_cast<typename std::underlying_type<Src>::type>(value));
 }
 
 /*******************************************************************************
@@ -323,7 +315,7 @@ toAppend(
 template <class Src>
 typename std::enable_if<
     std::is_floating_point<Src>::value>::type
-toAppend(Src value, std::string* result)
+toAppend(std::string* result, Src value)
 {
     toAppend(
         value, result, double_conversion::DoubleToStringConverter::SHORTEST, 0);
@@ -334,11 +326,86 @@ toAppend(Src value, std::string* result)
  */
 inline void toAppend(std::string* ) {}
 
+
 /**
-* to<SomeString>(SomeString str) returns itself. If std::string
-* uses Copy-on-Write, it's much more efficient by avoiding copying 
-* the underlying char array.
+ * Variadic conversion to string. Appends each element in turn.
+ */
+template <class T, class... Ts>
+typename std::enable_if<sizeof...(Ts) >= 1>::type
+toAppend(std::string* result, const T& v, const Ts&... vs) {
+    toAppend(result, v);
+    toAppend(result, vs...);
+}
+
+/**
+ * Variadic base case: do nothing.
+ */
+template <class Delimiter, class Tgt>
+typename std::enable_if<IsSomeString<Tgt>::value>::type
+toAppendDelim(Tgt* result, const Delimiter& delim) {
+}
+
+/**
+ * 1 element: same as toAppend.
+ */
+template <class Delimiter, class T, class Tgt>
+typename std::enable_if<IsSomeString<Tgt>::value>::type
+toAppendDelim(Tgt* tgt, const Delimiter& delim, const T& v) {
+    toAppend(tgt, v);
+}
+
+/**
+ * Append to string with a delimiter in between elements.
+ */
+template <class Delimiter, class T, class... Ts>
+typename std::enable_if<sizeof...(Ts) >= 1>::type
+toAppendDelim(std::string* result, const Delimiter& delim, const T& v, const Ts&... vs) {
+    toAppend(result, delim, v);
+    toAppendDelim(result, delim, vs...);
+}
+
+
+/**
+ * toDelim<SomeString>(SomeString str) returns itself.
+ */
+template <class Tgt, class Delim, class Src>
+typename std::enable_if<
+    IsSomeString<Tgt>::value && std::is_same<Tgt, Src>::value,
+    Tgt>::type
+toDelim(const Delim& delim, const Src & value) {
+    return value;
+}
+
+/**
+* toDelim<SomeString>(delim, v1, v2, ...) uses toAppendDelim() as
+* back-end for all types.
 */
+template <class Tgt, class Delim, class... Ts>
+typename std::enable_if<
+    IsSomeString<Tgt>::value && sizeof...(Ts) >= 1,
+    Tgt>::type
+toDelim(const Delim& delim, const Ts&... vs) {
+    Tgt result;
+    toAppendDelim(&result, delim, vs...);
+    return result;
+}
+
+template <class Tgt, class... Ts>
+typename std::enable_if<
+    IsSomeString<Tgt>::value && (sizeof...(Ts) >= 1),
+    Tgt>::type
+to(const Ts&... vs)
+{
+    Tgt result;
+    toAppend(&result, vs...);
+    return result;
+}
+
+/**
+ * to<SomeString>(SomeString str) returns itself. If std::string
+ * uses Copy-on-Write, it's much more efficient by avoiding copying 
+ * the underlying char array.
+ */
 template <class Tgt, class Src>
 typename std::enable_if<
     IsSomeString<Tgt>::value && std::is_same<Tgt, Src>::value,
@@ -354,7 +421,7 @@ typename std::enable_if<
 to(const Src& value)
 {
     Tgt result;
-    toAppend(value, &result);
+    toAppend(&result, value);
     return std::move(result);
 }
 
