@@ -360,7 +360,7 @@ toAppendDelim(Tgt* tgt, const Delimiter& delim, const T& v) {
 template <class Delimiter, class T, class... Ts>
 typename std::enable_if<sizeof...(Ts) >= 1>::type
 toAppendDelim(std::string* result, const Delimiter& delim, const T& v, const Ts&... vs) {
-    toAppend(result, delim, v);
+    toAppend(result, v, delim);
     toAppendDelim(result, delim, vs...);
 }
 
@@ -387,7 +387,7 @@ typename std::enable_if<
 toDelim(const Delim& delim, const Ts&... vs) {
     Tgt result;
     toAppendDelim(&result, delim, vs...);
-    return result;
+    return std::move(result);
 }
 
 template <class Tgt, class... Ts>
@@ -398,7 +398,7 @@ to(const Ts&... vs)
 {
     Tgt result;
     toAppend(&result, vs...);
-    return result;
+    return std::move(result);
 }
 
 /**
@@ -686,7 +686,7 @@ bool str_to_bool(StringPiece * src);
  */
 inline void enforceWhitespace(const char* b, const char* e) {
     for (; b != e; ++b) {
-        FOLLY_RANGE_CHECK(isspace(*b), to<std::string>("Non-whitespace: "));
+        FOLLY_RANGE_CHECK(isspace(*b), to<std::string>("Non-whitespace: ", *b));
     }
 }
 
@@ -968,7 +968,7 @@ to(const Src & value)
     if (value != witness) 
     {
         throw std::range_error(
-            Conv<std::string>("to<>: loss of precision when converting ", value,
+            to<std::string>("to<>: loss of precision when converting ", value,
             " to type ", typeid(Tgt).name()).c_str());
     }
     return result;
