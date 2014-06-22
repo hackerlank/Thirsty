@@ -17,8 +17,10 @@
 #pragma once
 
 #include <cstdint>
-#include <intrin.h>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 /**
  * Identification of an Intel CPU.
@@ -34,11 +36,13 @@ public:
         // as they do on Intel
         c_ = 0;
         d_ = 0;
-#if _MSC_VER >= 1600
+#if defined(_MSC_VER) && _MSC_VER >= 1600
         int cpu_info[4] = {};
         __cpuid(cpu_info, 1);
         c_ = cpu_info[2];
         d_ = cpu_info[3];
+#elif defined(__GNUC__)
+        __asm__("cpuid" : "=c"(c_), "=d"(d_) : "a"(1) : "ebx");
 #endif
     }
 
