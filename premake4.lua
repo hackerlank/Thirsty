@@ -38,7 +38,8 @@ solution 'Thirsty'
         {
             'BOOST_DATE_TIME_NO_LIB',
             'BOOST_REGEX_NO_LIB',
-        }        
+        }
+        buildoptions{ '-std=c++11'}
         end
         files
         {
@@ -128,7 +129,8 @@ solution 'UnitTest'
         {
             'BOOST_DATE_TIME_NO_LIB',
             'BOOST_REGEX_NO_LIB',
-        }        
+        }
+        buildoptions{ '-std=c++11'}
         end
         files
         {
