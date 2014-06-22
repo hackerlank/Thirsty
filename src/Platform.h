@@ -8,6 +8,8 @@
 #define EXPORT          __declspec(dllexport)
 #define IMPORT          __declspec(dllimport)
 
+#define snprintf        sprintf_s
+
 #elif defined(__GNUC__)   // GNU C++
 
 #define ALIGN(x)        __attribute__((aligned(x)))
