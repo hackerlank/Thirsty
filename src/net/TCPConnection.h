@@ -44,9 +44,14 @@ private:
     // Socket for the connection.
     boost::asio::ip::tcp::socket        socket_;
 
-    ErrorHandler    on_error_;      // error callback
-    int64_t         serial_;        // serial number of this connection
-    Buffer          recv_buf_;      // recv buffer
+    // recv buffer
+    Buffer          recv_buf_;
+
+    // serial number of this connection
+    int64_t         serial_ = 0;
+
+    // error callback
+    ErrorHandler    on_error_;
 };
 
 typedef std::shared_ptr<TCPConnection>  TCPConnectionPtr;

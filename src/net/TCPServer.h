@@ -42,7 +42,7 @@ private:
     boost::asio::ip::tcp::acceptor  acceptor_;
 
     // current serial number
-    int64_t     current_serial_;
+    int64_t     current_serial_ = 1000;
 
     // Connections identified by serial number
     std::unordered_map<int64_t, TCPConnectionPtr>    connections_;

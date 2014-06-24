@@ -7,8 +7,7 @@ using namespace std::placeholders;
 
 TCPServer::TCPServer(boost::asio::io_service& io_service)
     : io_service_(io_service),
-      acceptor_(io_service_),
-      current_serial_(1000)
+      acceptor_(io_service_)
 {
 }
 
