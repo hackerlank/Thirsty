@@ -1,5 +1,7 @@
 #include "TCPServer.h"
 #include <functional>
+#include "core/logging.h"
+#include "core/StringPrintf.h"
 
 
 using namespace std::placeholders;
@@ -16,8 +18,13 @@ TCPServer::~TCPServer()
     Stop();
 }
 
-void TCPServer::Start(const std::string& addr, const std::string& port)
+void TCPServer::Start(const std::string& addr, 
+                      const std::string& port,
+                      ReadCallback callback)
 {
+    assert(callback);
+    on_read_ = callback;
+
     using namespace boost::asio::ip;
     tcp::resolver resolver(io_service_);
     tcp::resolver::query query(addr, port);
@@ -36,7 +43,7 @@ void TCPServer::Stop()
     connections_.clear();
 }
 
-void TCPServer::Close(int64_t serial)
+void TCPServer::CloseSession(int64_t serial)
 {
     auto iter = connections_.find(serial);
     if (iter != connections_.end())
@@ -47,7 +54,7 @@ void TCPServer::Close(int64_t serial)
     }
     else
     {
-        // log
+        LOG(ERROR) << __FUNCTION__ << ": serial " << serial << " not found.\n";
     }
 }
 
@@ -61,12 +68,12 @@ TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
     return TCPConnectionPtr();
 }
 
-void TCPServer::AsynSend(int64_t serial, const char* data, size_t size)
+void TCPServer::SendTo(int64_t serial, const char* data, size_t size)
 {
     auto conn = GetConnection(serial);
     if (conn)
     {
-        conn->AsynSend(data, size);
+        conn->AsynWrite(data, size);
     }
 }
 
@@ -75,7 +82,7 @@ void TCPServer::SendAll(const char* data, size_t size)
     for (auto& value : connections_)
     {
         auto& connection = value.second;
-        connection->AsynSend(data, size);
+        connection->AsynWrite(data, size);
     }
 }
 
@@ -84,7 +91,7 @@ void TCPServer::StartAccept()
 {
     auto serial = current_serial_++;
     TCPConnectionPtr conn = std::make_shared<TCPConnection>(io_service_, serial,
-        std::bind(&TCPServer::OnConnectionError, this, _1, _2, _3));
+        std::bind(&TCPServer::OnConnectionError, this, _1, _2, _3), on_read_);
     acceptor_.async_accept(conn->GetSocket(), std::bind(&TCPServer::HandleAccept, this, _1, conn));
 }
 
@@ -104,6 +111,6 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
 
 void TCPServer::OnConnectionError(int64_t serial, int error, const std::string& msg)
 {
-    Close(serial);
-    fprintf(stderr, "%d: %s\n", error, msg.data());
+    CloseSession(serial);
+    LOG(ERROR) << "serial " << serial << " closed, " << error << ": " << msg;
 }
