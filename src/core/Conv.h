@@ -30,6 +30,7 @@
 #include <type_traits>
 #include "Platform.h"
 #include "logging.h"
+#include "Range.h"
 #include <boost/implicit_cast.hpp>
 
 
