@@ -1,6 +1,5 @@
 #include "logging.h"
-#include <atomic>
-#include <mutex>
+#include "Platform.h"
 
 using std::string;
 
@@ -15,7 +14,7 @@ void DefaultLogHandler(LogLevel level,
 
   // We use fprintf() instead of cerr because we want this to work at static
   // initialization time.
-  fprintf(stderr, "[libprotobuf %s %s:%d] %s\n",
+  fprintf(stderr, "[%s %s:%d] %s\n",
           level_names[level], filename, line, message.c_str());
   fflush(stderr);  // Needed on MSVC.
 }
@@ -56,7 +55,7 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
     /* values which we print with this, but well use snprintf() */  \
     /* anyway to be extra safe. */                                  \
     char buffer[128];                                               \
-    sprintf_s(buffer, sizeof(buffer), FORMAT, value);               \
+    snprintf(buffer, sizeof(buffer), FORMAT, value);               \
     /* Guard against broken MSVC snprintf(). */                     \
     buffer[sizeof(buffer)-1] = '\0';                                \
     message_ += buffer;                                             \
@@ -90,6 +89,7 @@ void LogMessage::Finish()
 
 void LogFinisher::operator=(LogMessage& other) 
 {
+    other << "\n";
     other.Finish();
 }
 

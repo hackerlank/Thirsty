@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <time.h>
-#include <objbase.h>
 #include <gtest/gtest.h>
 
 
@@ -13,13 +12,11 @@ class MyTestEnvironment : public testing::Environment
 public:
     void  SetUp()
     {
-        ::CoInitialize(NULL);
         srand((unsigned)time(NULL));
     }
 
     void  TearDown()
     {
-        ::CoUninitialize();
     }
 };
 

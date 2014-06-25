@@ -1,4 +1,8 @@
-#include "StrUtils.h"
+// Copyright 2012 Google Inc.  All rights reserved.
+// http://code.google.com/p/protobuf/
+//
+
+#include "StringPrintf.h"
 #include <cstdarg>
 #include <algorithm>
 

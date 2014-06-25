@@ -1,14 +1,16 @@
 #include "TCPClient.h"
 #include <functional>
+#include "core/logging.h"
+#include "core/StringPrintf.h"
 
-
+using namespace std;
 using namespace std::placeholders;
+
 
 TCPClient::TCPClient(boost::asio::io_service& io_service)
     : io_service_(io_service),
       socket_(io_service)
 {
-
 }
 
 TCPClient::~TCPClient()
@@ -21,8 +23,17 @@ void TCPClient::Close()
     socket_.close();
 }
 
-void TCPClient::AsynConnect(const std::string& host, int16_t port)
+void TCPClient::StartRead(ReadCallback callback)
 {
+    assert(callback);
+    on_read_ = callback;
+    AsynReadHead();
+}
+
+void TCPClient::AsynConnect(const std::string& host, int16_t port, ConnectCallback callback)
+{
+    assert(callback);
+    on_connect_ = callback;
     using namespace boost::asio;
     ip::tcp::endpoint endpoint(ip::address::from_string(host), port);
     socket_.async_connect(endpoint, std::bind(&TCPClient::HandleConnect, this, _1, host, port));
@@ -35,21 +46,25 @@ void TCPClient::AsynWrite(const char* data, size_t bytes)
         std::bind(&TCPClient::HandleWrite, this, _1, _2, buf));
 }
 
-void TCPClient::AsynRead()
+void TCPClient::AsynReadHead()
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buf_.data(), sizeof(Header)),
         std::bind(&TCPClient::HandleReadHead, this, _1, _2));
 }
 
-void TCPClient::HandleConnect(const boost::system::error_code& err, const std::string& host, int16_t port)
+void TCPClient::HandleConnect(const boost::system::error_code& err, 
+                              const std::string& host, 
+                              int16_t port)
 {
     if (!err)
     {
-        AsynRead();
+        on_connect_(host, port);
     }
     else
     {
-        // log
+        LOG(ERROR) << stringPrintf("connect host[%s:%d] failed, %d:%s", host.c_str(), port,
+            err.value(), err.message().c_str());
+        Close();
     }
 }
 
@@ -84,7 +99,8 @@ void TCPClient::HandleReadBody(const boost::system::error_code& err, size_t byte
         {
             if (buf_.check_body_crc())
             {
-                AsynRead();
+                on_read_(buf_.body(), bytes);
+                AsynReadHead();
             }
         }
     }

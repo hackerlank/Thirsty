@@ -1,6 +1,5 @@
 #include "Conv.h"
 #include <iterator>
-#include "double-conversion.h" // V8 JavaScript implementation
 
 using namespace double_conversion;
 
@@ -18,44 +17,106 @@ template <> const char *const MaxString<bool>::value = "true";
 template <> const char *const MaxString<uint8_t>::value = "255";
 template <> const char *const MaxString<uint16_t>::value = "65535";
 template <> const char *const MaxString<uint32_t>::value = "4294967295";
-
-#if (ULONG_MAX == UINT_MAX) // 32-bit linux
-template <> const char *const MaxString<unsigned long>::value =
-"4294967295";
-#else
-template <> const char *const MaxString<unsigned long>::value =
-"18446744073709551615";
-#endif
+template <> const char *const MaxString<uint64_t>::value = "18446744073709551615";
 
 
-} // namespace detail
-
-
-void toAppend(std::string* result, double value, DtoaMode mode, uint32_t numDigits)
+inline bool bool_str_cmp(const char** b, size_t len, const char* value) 
 {
-    DoubleToStringConverter conv(DoubleToStringConverter::NO_FLAGS,
-        "infinity", "NaN", 'E',
-        -6,  // decimal in shortest low
-        21,  // decimal in shortest high
-        6,   // max leading padding zeros
-        1);  // max trailing padding zeros
+    // Can't use strncasecmp, since we want to ensure that the full value matches
+    const char* p = *b;
+    const char* e = *b + len;
+    const char* v = value;
+    while (*v != '\0') {
+        if (p == e || tolower(*p) != *v) { // value is already lowercase
+            return false;
+        }
+        ++p;
+        ++v;
+    }
 
-    char buffer[256];
-    StringBuilder builder(buffer, sizeof(buffer));
-    switch (mode) 
+    *b = p;
+    return true;
+}
+
+bool str_to_bool(StringPiece* src)
+{
+    auto b = src->begin(), e = src->end();
+    for (;; ++b) 
     {
-    case DoubleToStringConverter::SHORTEST:
-        conv.ToShortest(value, &builder);
-        break;
-    case DoubleToStringConverter::FIXED:
-        conv.ToFixed(value, numDigits, &builder);
-        break;
-    default:
-        CHECK(mode == DoubleToStringConverter::PRECISION);
-        conv.ToPrecision(value, numDigits, &builder);
+        FOLLY_RANGE_CHECK(b < e,
+            "No non-whitespace characters found in input string");
+        if (!isspace(*b)) break;
+    }
+
+    bool result;
+    size_t len = e - b;
+    switch (*b) {
+    case '0':
+    case '1':
+    {
+        // Attempt to parse the value as an integer
+        StringPiece tmp(*src);
+        uint8_t value = to<uint8_t>(&tmp);
+        // Only accept 0 or 1
+        FOLLY_RANGE_CHECK(value <= 1,
+            "Integer overflow when parsing bool: must be 0 or 1");
+        b = tmp.begin();
+        result = (value == 1);
         break;
     }
-    const size_t length = builder.position();
-    builder.Finalize();
-    result->append(buffer, length);
+    case 'y':
+    case 'Y':
+        result = true;
+        if (!bool_str_cmp(&b, len, "yes"))
+        {
+            ++b;  // accept the single 'y' character
+        }
+        break;
+    case 'n':
+    case 'N':
+        result = false;
+        if (!bool_str_cmp(&b, len, "no"))
+        {
+            ++b;
+        }
+        break;
+    case 't':
+    case 'T':
+        result = true;
+        if (!bool_str_cmp(&b, len, "true"))
+        {
+            ++b;
+        }
+        break;
+    case 'f':
+    case 'F':
+        result = false;
+        if (!bool_str_cmp(&b, len, "false"))
+        {
+            ++b;
+        }
+        break;
+    case 'o':
+    case 'O':
+        if (bool_str_cmp(&b, len, "on"))
+        {
+            result = true;
+        }
+        else if (bool_str_cmp(&b, len, "off"))
+        {
+            result = false;
+        }
+        else
+        {
+            FOLLY_RANGE_CHECK(false, "Invalid value for bool");
+        }
+        break;
+    default:
+        FOLLY_RANGE_CHECK(false, "Invalid value for bool");
+    }
+
+    src->assign(b, e);
+    return result;
 }
+
+} // namespace detail

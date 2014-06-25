@@ -1,14 +1,18 @@
 #include "TCPServer.h"
 #include <functional>
+#include <vector>
+#include <boost/date_time.hpp>
+#include "core/logging.h"
+#include "core/StringPrintf.h"
 
 
 using namespace std::placeholders;
 
 
-TCPServer::TCPServer(boost::asio::io_service& io_service)
+TCPServer::TCPServer(boost::asio::io_service& io_service, size_t max_conn)
     : io_service_(io_service),
       acceptor_(io_service_),
-      current_serial_(1000)
+      max_connections_(max_conn)
 {
 }
 
@@ -17,8 +21,13 @@ TCPServer::~TCPServer()
     Stop();
 }
 
-void TCPServer::Start(const std::string& addr, const std::string& port)
+void TCPServer::Start(const std::string& addr, 
+                      const std::string& port,
+                      ReadCallback callback)
 {
+    assert(callback);
+    on_read_ = callback;
+
     using namespace boost::asio::ip;
     tcp::resolver resolver(io_service_);
     tcp::resolver::query query(addr, port);
@@ -29,27 +38,32 @@ void TCPServer::Start(const std::string& addr, const std::string& port)
     acceptor_.listen();
 
     StartAccept();
+
+    heartbeat_timer_ = std::make_shared<Timer>(io_service_, kHeartBeatCheckTime,
+        std::bind(&TCPServer::DropDeadConnections, this));
 }
 
 void TCPServer::Stop()
 {
-    io_service_.stop();
+    acceptor_.cancel();
     connections_.clear();
 }
 
-void TCPServer::Close(int64_t serial)
+void TCPServer::CloseSession(int64_t serial)
 {
-    auto iter = connections_.find(serial);
-    if (iter != connections_.end())
+    io_service_.post([this, serial]()
     {
-        auto& conn = iter->second;
-        conn->Close();
-        connections_.erase(iter);
-    }
-    else
-    {
-        // log
-    }
+        auto conn = this->GetConnection(serial);
+        if (conn)
+        {
+            conn->Close();
+            this->connections_.erase(serial);
+        }
+        else
+        {
+            LOG(ERROR) << __FUNCTION__ << ": serial " << serial << " not found.\n";
+        }
+    });
 }
 
 TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
@@ -62,12 +76,12 @@ TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
     return TCPConnectionPtr();
 }
 
-void TCPServer::AsynSend(int64_t serial, const char* data, size_t size)
+void TCPServer::SendTo(int64_t serial, const char* data, size_t size)
 {
     auto conn = GetConnection(serial);
     if (conn)
     {
-        conn->AsynSend(data, size);
+        conn->AsynWrite(data, size);
     }
 }
 
@@ -76,7 +90,7 @@ void TCPServer::SendAll(const char* data, size_t size)
     for (auto& value : connections_)
     {
         auto& connection = value.second;
-        connection->AsynSend(data, size);
+        connection->AsynWrite(data, size);
     }
 }
 
@@ -85,7 +99,7 @@ void TCPServer::StartAccept()
 {
     auto serial = current_serial_++;
     TCPConnectionPtr conn = std::make_shared<TCPConnection>(io_service_, serial,
-        std::bind(&TCPServer::OnConnectionError, this, _1, _2, _3));
+        std::bind(&TCPServer::OnConnectionError, this, _1, _2, _3), on_read_);
     acceptor_.async_accept(conn->GetSocket(), std::bind(&TCPServer::HandleAccept, this, _1, conn));
 }
 
@@ -94,8 +108,15 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
 {
     if (!err)
     {
-        connections_[conn->GetSerial()] = conn;
-        conn->AsynRead();
+        if (connections_.size() < max_connections_)
+        {
+            connections_[conn->GetSerial()] = conn;
+            conn->AsynRead();
+        }
+        else
+        {
+            LOG(ERROR) << "max connection limit: " << max_connections_;
+        }
     }
     if (acceptor_.is_open())
     {
@@ -105,6 +126,28 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
 
 void TCPServer::OnConnectionError(int64_t serial, int error, const std::string& msg)
 {
-    Close(serial);
-    fprintf(stderr, "%d: %s\n", error, msg.data());
+    CloseSession(serial);
+    LOG(ERROR) << "serial " << serial << " closed, " << error << ": " << msg;
+}
+
+void TCPServer::DropDeadConnections()
+{
+    std::vector<int64_t> dead_connections;
+    dead_connections.reserve(32);
+    time_t now = time(NULL);
+    for (auto& item : connections_)
+    {
+        auto& conn = item.second;
+        auto elapsed = now - conn->GetLastRecvTime();
+        if (elapsed >= kConnectionDeadTime)
+        {
+            dead_connections.emplace_back(item.first);
+        }
+    }
+    for (auto serial : dead_connections)
+    {
+        CloseSession(serial);
+    }
+
+    heartbeat_timer_->Again();
 }
