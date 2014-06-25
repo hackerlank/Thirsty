@@ -7,6 +7,7 @@
 #include <boost/asio.hpp>
 #include "TCPConnection.h"
 #include "Timer.h"
+#include "core/Range.h"
 
 enum
 {
@@ -22,7 +23,7 @@ public:
     ~TCPServer();
 
     void Start(const std::string& addr, 
-               const std::string& port,
+               int16_t port,
                ReadCallback callback);
 
     void Stop();
@@ -31,7 +32,12 @@ public:
     void CloseSession(int64_t serial);
 
     // send data to connection
-    void SendTo(int64_t serial, const char* data, size_t size);
+    void SendTo(int64_t serial, const void* data, size_t size);
+
+    void SendTo(int64_t serial, ByteRange range)
+    {
+        SendTo(serial, range.data(), range.size());
+    }
 
     void SendAll(const char* data, size_t size);
 

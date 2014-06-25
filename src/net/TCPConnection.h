@@ -6,10 +6,13 @@
 #include <functional>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
+#include "core/Range.h"
 #include "Buffer.h"
 
-typedef std::function<void (int64_t, int, const std::string&)>  ErrorCallback;
-typedef std::function<void(int64_t, const char*, size_t)>       ReadCallback;
+
+typedef std::function<void(int64_t, int32_t, const std::string&)>   ErrorCallback;
+typedef std::function<void(int64_t, ByteRange)>                     ReadCallback;
+
 
 class TCPConnection
     : public std::enable_shared_from_this<TCPConnection>,
@@ -27,7 +30,7 @@ public:
     void AsynRead();
 
     // Send messages
-    void AsynWrite(const char* data, size_t size);
+    void AsynWrite(const void* data, size_t size);
 
     // stop this connection
     void Close();
@@ -41,7 +44,7 @@ public:
 private:
     // handle completion of a read operation.
     void HandleReadHead(const boost::system::error_code& err, size_t bytes);
-    void HandleReadBody(const boost::system::error_code& err, size_t bytes);
+    void HandleReadBody(const boost::system::error_code& err, size_t bytes, BufferPtr ptr);
 
     // handle completion of a write operation.
     void HandleWrite(const boost::system::error_code& err, size_t bytes, BufferPtr ptr);
@@ -52,8 +55,8 @@ private:
 
     bool            stopped_ = false;
 
-    // recv buffer
-    Buffer          recv_buf_;
+    // recv header
+    Header          head_;
 
     // serial number of this connection
     int64_t         serial_ = 0;

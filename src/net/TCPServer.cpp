@@ -22,16 +22,13 @@ TCPServer::~TCPServer()
 }
 
 void TCPServer::Start(const std::string& addr, 
-                      const std::string& port,
+                      int16_t port,
                       ReadCallback callback)
 {
+    using namespace boost::asio::ip;
     assert(callback);
     on_read_ = callback;
-
-    using namespace boost::asio::ip;
-    tcp::resolver resolver(io_service_);
-    tcp::resolver::query query(addr, port);
-    tcp::endpoint endpoint = *resolver.resolve(query);
+    tcp::endpoint endpoint(address::from_string(addr), port);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(tcp::acceptor::reuse_address(true));
     acceptor_.bind(endpoint);
@@ -51,19 +48,7 @@ void TCPServer::Stop()
 
 void TCPServer::CloseSession(int64_t serial)
 {
-    io_service_.post([this, serial]()
-    {
-        auto conn = this->GetConnection(serial);
-        if (conn)
-        {
-            conn->Close();
-            this->connections_.erase(serial);
-        }
-        else
-        {
-            LOG(ERROR) << __FUNCTION__ << ": serial " << serial << " not found.\n";
-        }
-    });
+    connections_.erase(serial);
 }
 
 TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
@@ -76,7 +61,7 @@ TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
     return TCPConnectionPtr();
 }
 
-void TCPServer::SendTo(int64_t serial, const char* data, size_t size)
+void TCPServer::SendTo(int64_t serial, const void* data, size_t size)
 {
     auto conn = GetConnection(serial);
     if (conn)
