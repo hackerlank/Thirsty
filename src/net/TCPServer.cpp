@@ -7,9 +7,10 @@
 using namespace std::placeholders;
 
 
-TCPServer::TCPServer(boost::asio::io_service& io_service)
+TCPServer::TCPServer(boost::asio::io_service& io_service, size_t max_conn)
     : io_service_(io_service),
-      acceptor_(io_service_)
+      acceptor_(io_service_),
+      max_connections_(max_conn)
 {
 }
 
@@ -100,8 +101,15 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
 {
     if (!err)
     {
-        connections_[conn->GetSerial()] = conn;
-        conn->AsynRead();
+        if (connections_.size() < max_connections_)
+        {
+            connections_[conn->GetSerial()] = conn;
+            conn->AsynRead();
+        }
+        else
+        {
+            LOG(ERROR) << "max connection limit: " << max_connections_;
+        }
     }
     if (acceptor_.is_open())
     {

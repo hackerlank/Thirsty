@@ -11,7 +11,7 @@
 class TCPServer : private boost::noncopyable
 {
 public:
-    explicit TCPServer(boost::asio::io_service& io_service);
+    explicit TCPServer(boost::asio::io_service& io_service, size_t max_conn);
     ~TCPServer();
 
     void Start(const std::string& addr, 
@@ -20,10 +20,10 @@ public:
 
     void Stop();
 
-    // Close a connection
+    // close a connection
     void CloseSession(int64_t serial);
 
-    // Send data to connection
+    // send data to connection
     void SendTo(int64_t serial, const char* data, size_t size);
 
     void SendAll(const char* data, size_t size);
@@ -31,17 +31,17 @@ public:
     TCPConnectionPtr  GetConnection(int64_t serial);
 
 private:
-    // Initiate an asynchronous accept operation.
+    // initiate an asynchronous accept operation.
     void StartAccept();
     void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr ptr);
 
     void OnConnectionError(int64_t serial, int error, const std::string& msg);
 
 private:
-    // The io_service used to perform asynchronous operations.
+    // the io_service used to perform asynchronous operations.
     boost::asio::io_service&        io_service_;
 
-    // Acceptor used to listen for incoming connections.
+    // acceptor used to listen for incoming connections.
     boost::asio::ip::tcp::acceptor  acceptor_;
 
     // current serial number
@@ -49,7 +49,9 @@ private:
 
     ReadCallback    on_read_;
 
-    // Connections identified by serial number
+    const size_t    max_connections_ = 2000;
+
+    // connections identified by serial number
     std::unordered_map<int64_t, TCPConnectionPtr>    connections_;
 
 };
