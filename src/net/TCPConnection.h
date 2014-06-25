@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <ctime>
 #include <functional>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
@@ -34,7 +35,8 @@ public:
     // get the socket associated with the connection.
     boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
 
-    int64_t GetSerial() const { return serial_; }
+    int64_t     GetSerial() const { return serial_; }
+    time_t      GetLastRecvTime() const { return last_recv_time_; }
 
 private:
     // handle completion of a read operation.
@@ -48,11 +50,15 @@ private:
     // socket for the connection.
     boost::asio::ip::tcp::socket        socket_;
 
+    bool            stopped_ = false;
+
     // recv buffer
     Buffer          recv_buf_;
 
     // serial number of this connection
     int64_t         serial_ = 0;
+
+    time_t          last_recv_time_ = 0;
 
     // error callback
     ErrorCallback    on_error_;

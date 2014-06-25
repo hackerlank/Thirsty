@@ -6,6 +6,13 @@
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
 #include "TCPConnection.h"
+#include "Timer.h"
+
+enum
+{
+    kHeartBeatCheckTime = 180,      // check every 3 minutes
+    kConnectionDeadTime = 600,      // no more than 5 minutes
+};
 
 
 class TCPServer : private boost::noncopyable
@@ -31,11 +38,10 @@ public:
     TCPConnectionPtr  GetConnection(int64_t serial);
 
 private:
-    // initiate an asynchronous accept operation.
     void StartAccept();
     void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr ptr);
-
     void OnConnectionError(int64_t serial, int error, const std::string& msg);
+    void DropDeadConnections();
 
 private:
     // the io_service used to perform asynchronous operations.
@@ -44,15 +50,20 @@ private:
     // acceptor used to listen for incoming connections.
     boost::asio::ip::tcp::acceptor  acceptor_;
 
+    // connections identified by serial number
+    std::unordered_map<int64_t, TCPConnectionPtr>    connections_;
+
     // current serial number
     int64_t         current_serial_ = 1000;
 
+    // read data callback
     ReadCallback    on_read_;
 
+    // max connection limit
     const size_t    max_connections_ = 2000;
 
-    // connections identified by serial number
-    std::unordered_map<int64_t, TCPConnectionPtr>    connections_;
+    // heartbeat checking
+    TimerPtr        heartbeat_timer_;
 
 };
 

@@ -1,5 +1,7 @@
 #include "TCPServer.h"
 #include <functional>
+#include <vector>
+#include <boost/date_time.hpp>
 #include "core/logging.h"
 #include "core/StringPrintf.h"
 
@@ -36,27 +38,32 @@ void TCPServer::Start(const std::string& addr,
     acceptor_.listen();
 
     StartAccept();
+
+    heartbeat_timer_ = std::make_shared<Timer>(io_service_, kHeartBeatCheckTime,
+        std::bind(&TCPServer::DropDeadConnections, this));
 }
 
 void TCPServer::Stop()
 {
-    io_service_.stop();
+    acceptor_.cancel();
     connections_.clear();
 }
 
 void TCPServer::CloseSession(int64_t serial)
 {
-    auto iter = connections_.find(serial);
-    if (iter != connections_.end())
+    io_service_.post([this, serial]()
     {
-        auto& conn = iter->second;
-        conn->Close();
-        connections_.erase(iter);
-    }
-    else
-    {
-        LOG(ERROR) << __FUNCTION__ << ": serial " << serial << " not found.\n";
-    }
+        auto conn = this->GetConnection(serial);
+        if (conn)
+        {
+            conn->Close();
+            this->connections_.erase(serial);
+        }
+        else
+        {
+            LOG(ERROR) << __FUNCTION__ << ": serial " << serial << " not found.\n";
+        }
+    });
 }
 
 TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
@@ -121,4 +128,26 @@ void TCPServer::OnConnectionError(int64_t serial, int error, const std::string& 
 {
     CloseSession(serial);
     LOG(ERROR) << "serial " << serial << " closed, " << error << ": " << msg;
+}
+
+void TCPServer::DropDeadConnections()
+{
+    std::vector<int64_t> dead_connections;
+    dead_connections.reserve(32);
+    time_t now = time(NULL);
+    for (auto& item : connections_)
+    {
+        auto& conn = item.second;
+        auto elapsed = now - conn->GetLastRecvTime();
+        if (elapsed >= kConnectionDeadTime)
+        {
+            dead_connections.emplace_back(item.first);
+        }
+    }
+    for (auto serial : dead_connections)
+    {
+        CloseSession(serial);
+    }
+
+    heartbeat_timer_->Again();
 }

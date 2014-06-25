@@ -27,11 +27,14 @@ TCPConnection::~TCPConnection()
 
 void TCPConnection::Close()
 {
+    stopped_ = true;
+    socket_.cancel();
     socket_.close();
 }
 
 void TCPConnection::AsynRead()
 {
+    last_recv_time_ = time(NULL);
     boost::asio::async_read(socket_, boost::asio::buffer(recv_buf_.data(), sizeof(Header)),
         std::bind(&TCPConnection::HandleReadHead, this, _1, _2));
 }
