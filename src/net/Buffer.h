@@ -22,33 +22,23 @@ struct Header
 class Buffer : boost::noncopyable
 {
 public:
-    enum {RESERVED_SIZE = 20};
-
-    Buffer();
+    explicit Buffer(size_t size);
     Buffer(const void* data, size_t size);
     Buffer(Buffer&& other);
     ~Buffer();
 
-    size_t          size() const { return data_.size(); }
-    char*           data() { return &data_[0]; }
-    const char*     data() const { return &data_[0]; }
-    Header*         header() { return reinterpret_cast<Header*>(data()); }
-    const Header*   header() const { return reinterpret_cast<const Header*>(data()); }
-
-    size_t          body_size() const { return header()->size; }
-    char*           body() { return data() + sizeof(Header); }
-    const char*     body() const { return data() + sizeof(Header); }
-
-    void            reserve_body(size_t bodysize);
-
-    bool            check_head_crc() const;
-    bool            check_body_crc() const;
-
-    void            make_head_checksum();
-    void            make_body_checksum();
+    size_t          size() const { return size_; }
+    uint8_t*        data() { return &data_[0]; }
+    const uint8_t*  data() const { return &data_[0]; }
+    
+    uint8_t*        begin() { return data(); }
+    const uint8_t*  begin() const { return data(); }
+    uint8_t*        end() { return data() + size(); }
+    const uint8_t*  end() const { return data() + size(); }
 
 private:
-    std::vector<char>       data_;
+    const size_t    size_;
+    uint8_t*        data_;
 };
 
 

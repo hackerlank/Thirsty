@@ -1,70 +1,34 @@
 #include "Buffer.h"
 #include <cassert>
 #include <cstring>   // memcpy
-#include <zlib.h>
+
 
 
 //////////////////////////////////////////////////////////////////////////
-Buffer::Buffer()
-    : data_(sizeof(Header)+RESERVED_SIZE, '0')
+Buffer::Buffer(size_t size)
+    : size_(size)
 {
-    Header* head = header();
-    head->size = RESERVED_SIZE;
-    make_head_checksum();
-    make_body_checksum();
+    assert(size);
+    data_ = (uint8_t*)malloc(size);
 }
 
 Buffer::Buffer(const void* data, size_t size)
-    : data_(sizeof(Header)+size, '0')
+    : size_(size)
 {
     assert(data && size);
-    Header* head = header();
-    head->size = size;
-    memcpy(body(), data, size);
-    make_head_checksum();
-    make_body_checksum();
+    data_ = (uint8_t*)malloc(size);
+    memcpy(data_, data, size);
 }
 
 Buffer::Buffer(Buffer&& other)
-    : data_(std::move(other.data_))
+    : size_(other.size_),
+      data_(other.data_)
 {
+    other.data_ = nullptr;
 }
 
 Buffer::~Buffer()
 {
-}
-
-
-void Buffer::reserve_body(size_t bodysize)
-{
-    if (bodysize > body_size())
-    {
-        data_.resize(bodysize);
-    }
-}
-
-void Buffer::make_head_checksum()
-{
-    Header* head = header();
-    head->size_crc = crc32(0, (const Bytef*)&head->size, sizeof(head->size));
-}
-
-void Buffer::make_body_checksum()
-{
-    Header* head = header();
-    head->body_crc = crc32(0, (const Bytef*)body(), head->size);
-}
-
-bool Buffer::check_head_crc() const
-{
-    const Header* head = header();
-    auto checksum = crc32(0, (const Bytef*)&head->size, sizeof(head->size));
-    return (checksum == head->size_crc);
-}
-
-bool Buffer::check_body_crc() const
-{
-    const Header* head = header();
-    auto checksum = crc32(0, (const Bytef*)body(), head->size);
-    return head->body_crc == checksum;
+    free(data_);
+    data_ = nullptr;
 }
