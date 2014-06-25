@@ -89,6 +89,7 @@ void LogMessage::Finish()
 
 void LogFinisher::operator=(LogMessage& other) 
 {
+    other << "\n";
     other.Finish();
 }
 

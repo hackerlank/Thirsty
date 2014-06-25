@@ -182,18 +182,6 @@ T* CheckNotNull(const char *name, T* val)
 
 // Log message manipulator
 
-// Terminates a string
-inline internal::LogMessage& ends(internal::LogMessage& msg) 
-{
-    return msg << " ";
-}
-
-// Terminates a line
-inline internal::LogMessage& endl(internal::LogMessage& msg)
-{
-    return msg << "\n";
-}
-
 typedef void LogHandler(LogLevel level, 
                         const char* filename, 
                         int line,
