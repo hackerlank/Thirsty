@@ -31,7 +31,7 @@ void Timer::Cancel()
 
 void Timer::Schedule()
 {
-    timer_.expires_from_now(boost::posix_time::milliseconds(expire_time_));
+    timer_.expires_from_now(boost::posix_time::seconds(expire_time_));
     timer_.async_wait(std::bind(&Timer::HandleTimeout, this, _1));
 }
 
