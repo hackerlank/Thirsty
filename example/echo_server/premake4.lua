@@ -32,18 +32,18 @@ solution 'ServerExample'
         files
         {
             'echo_server.cpp',
-            '../src/**.h',
-            '../src/**.cpp',
+            '../../src/**.h',
+            '../../src/**.cpp',
         }
         excludes
         {
-            '../src/main.cpp',
+            '../../src/main.cpp',
         }
         includedirs
         {
-            '../src/',
-            '../dep/double-conversion/src',
-            '../dep/zlib/src',
+            '../../src/',
+            '../../dep/double-conversion/src',
+            '../../dep/zlib/src',
             BOOST_ROOT,
         }
         libdirs
@@ -119,18 +119,18 @@ solution 'ClientExample'
         files
         {
             'echo_client.cpp',
-            '../src/**.h',
-            '../src/**.cpp',            
+            '../../src/**.h',
+            '../../src/**.cpp',            
         }
         excludes
         {
-            '../src/main.cpp',
+            '../../src/main.cpp',
         }
         includedirs
         {
-            '../src',
-            '../dep/double-conversion/src',
-            '../dep/zlib/src',
+            '../../src',
+            '../../dep/double-conversion/src',
+            '../../dep/zlib/src',
             BOOST_ROOT,
         }
         libdirs
@@ -152,12 +152,12 @@ solution 'ClientExample'
         }
         files
         {
-            '../dep/double-conversion/src/*.cc',
-            '../dep/double-conversion/src/*.h',
+            '../../dep/double-conversion/src/*.cc',
+            '../../dep/double-conversion/src/*.h',
         }
         includedirs
         {
-            '../dep/double-conversion/src',
+            '../../dep/double-conversion/src',
         }
         
     project 'zlib'
@@ -170,7 +170,7 @@ solution 'ClientExample'
         }
         files
         {
-            '../dep/zlib/src/*.h',
-            '../dep/zlib/src/*.c',
+            '../../dep/zlib/src/*.h',
+            '../../dep/zlib/src/*.c',
         }
             
