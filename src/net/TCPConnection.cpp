@@ -28,7 +28,6 @@ TCPConnection::~TCPConnection()
 void TCPConnection::Close()
 {
     stopped_ = true;
-    socket_.cancel();
     socket_.close();
 }
 
