@@ -21,7 +21,7 @@ public:
     TCPClient(boost::asio::io_service& io_service, ErrorCallback callback);
     ~TCPClient();
 
-    void    StartRead(ReadCallback callback);
+    void    PostRead(ReadCallback callback);
     void    Close();
 
     void    AsynConnect(const std::string& host, 
