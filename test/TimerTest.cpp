@@ -36,7 +36,11 @@ TEST(Timer, Schedule)
 }
 
 // how many timers to bench
+#ifdef NDEBUG
 size_t global_counter = 100000;
+#else
+size_t global_counter = 1000;
+#endif
 
 static void TimeoutHandle2(TimerPtr timer, int* counter, io_servie_ptr ios_ptr)
 {
