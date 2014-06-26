@@ -19,10 +19,9 @@ public:
 
     ~Timer();
 
-    void Again() { Schedule(); }
+    void    Schedule();
 
 private:
-    void    Schedule();
     void    HandleTimeout(const boost::system::error_code& err);
     void    Cancel();
 

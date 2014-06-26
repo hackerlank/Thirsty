@@ -14,7 +14,6 @@ Timer::Timer(boost::asio::io_service& io_service,
       callback_(callback)
 {
     assert(callback);
-    Schedule();
 }
 
 Timer::~Timer()
