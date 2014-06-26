@@ -36,8 +36,12 @@ void TCPServer::Start(const std::string& addr,
 
     StartAccept();
 
-    heartbeat_timer_ = std::make_shared<Timer>(io_service_, kHeartBeatCheckTime,
-        std::bind(&TCPServer::DropDeadConnections, this));
+    if (!heartbeat_timer_)
+    {
+        heartbeat_timer_ = std::make_shared<Timer>(io_service_, kHeartBeatCheckTime,
+            std::bind(&TCPServer::DropDeadConnections, this));
+    }
+    heartbeat_timer_->Schedule();
 }
 
 void TCPServer::Stop()
@@ -134,5 +138,5 @@ void TCPServer::DropDeadConnections()
         CloseSession(serial);
     }
 
-    heartbeat_timer_->Again();
+    heartbeat_timer_->Schedule();
 }
