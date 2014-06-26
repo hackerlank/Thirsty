@@ -25,7 +25,7 @@ TCPClientPtr CreateClient(boost::asio::io_service& io_service,
         printf("connect to server(%s:%d) OK.\n", host.c_str(), port);
         string msg = "a quick fox jumps over the lazy dog.";
         client->AsynWrite(msg.data(), msg.length()+1);
-        client->StartRead([client](ByteRange range)
+        client->PostRead([client](ByteRange range)
         {
             //printf("recv %d bytes from server.\n", bytes, data);
             this_thread::sleep_for(chrono::seconds(1));
@@ -37,24 +37,33 @@ TCPClientPtr CreateClient(boost::asio::io_service& io_service,
 
 int main(int argc, char* argv[])
 {
-    string host = "127.0.0.1";
-    int16_t port = 32450;
-    int32_t num = 2000;
-    if (argc >= 4)
+    try
     {
-        host = argv[1];
-        port = to<int16_t>(argv[2]);
-        num = to<int32_t>(argv[3]);
+        string host = "127.0.0.1";
+        int16_t port = 32450;
+        int32_t num = 2000;
+        if (argc >= 4)
+        {
+            host = argv[1];
+            port = to<int16_t>(argv[2]);
+            num = to<int32_t>(argv[3]);
+        }
+
+        vector<TCPClientPtr>    clients;
+        boost::asio::io_service io_service;
+        for (int i = 0; i < num; i++)
+        {
+            auto client = CreateClient(io_service, host, port);
+            clients.emplace_back(client);
+        }
+
+        io_service.run();
+    }
+    catch (const std::exception& ex)
+    {
+        cout << typeid(ex).name() << ": " << ex.what() << endl;
+        return 1;
     }
 
-    vector<TCPClientPtr>    clients;
-    boost::asio::io_service io_service;
-    for (int i = 0; i < num; i++)
-    {
-        auto client = CreateClient(io_service, host, port);
-        clients.emplace_back(client);
-    }
-
-    io_service.run();
     return 0;
 }
