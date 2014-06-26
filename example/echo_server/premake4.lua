@@ -2,7 +2,7 @@
 -- Premake4 build script (http://industriousone.com/premake/download)
 --
 
-local BOOST_ROOT = os.getenv('BOOST_ROOT')
+local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/incldue'
 
 solution 'ServerExample'
     configurations {'Debug', 'Release'}
@@ -22,13 +22,6 @@ solution 'ServerExample'
         location 'build'
         kind 'ConsoleApp'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
-        defines
-        {
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-            '_WIN32_WINNT=0x0501',
-            '_CRT_SECURE_NO_WARNINGS',
-        }
         files
         {
             'echo_server.cpp',
@@ -38,7 +31,19 @@ solution 'ServerExample'
         excludes
         {
             '../../src/main.cpp',
+        }        
+        defines
+        {
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
         }
+
         includedirs
         {
             '../../src/',
@@ -109,13 +114,6 @@ solution 'ClientExample'
         location 'build'
         kind 'ConsoleApp'
         uuid 'AB7D1C15-7A44-41a7-8864-230D8E345608'
-        defines
-        {
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-            '_WIN32_WINNT=0x0501',
-            '_CRT_SECURE_NO_WARNINGS',
-        }
         files
         {
             'echo_client.cpp',
@@ -126,6 +124,17 @@ solution 'ClientExample'
         {
             '../../src/main.cpp',
         }
+        defines
+        {
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
+        }        
         includedirs
         {
             '../../src',

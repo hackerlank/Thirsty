@@ -2,7 +2,7 @@
 -- Premake4 build script (http://industriousone.com/premake/download)
 --
 
-local BOOST_ROOT = os.getenv('BOOST_ROOT')
+local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/incldue'
 
 --
 -- Thirsty
@@ -25,37 +25,53 @@ solution 'Thirsty'
         location 'build'
         kind 'ConsoleApp'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
-        if os.get() == 'windows' then
-        defines
-        {
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-            '_WIN32_WINNT=0x0501',
-            '_CRT_SECURE_NO_WARNINGS',
-        }
-        elseif os.get() == 'linux' then
-        defines
-        {
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-        }
-        buildoptions{ '-std=c++11'}
-        end
+        
         files
         {
             'src/**.h',
             'src/**.cpp',
         }
+        
+        if os.get() == 'windows' then
+        defines
+        {
+            '_WIN32_WINNT=0x0600',
+            '_CRT_SECURE_NO_WARNINGS',            
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
+        }
+        libdirs
+        {
+            BOOST_ROOT .. '/stage/lib',
+        }        
+        end
+        
+        if os.get() == 'linux' then
+        defines
+        {
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
+        }
+        buildoptions{ '-std=c++11'}
+        end
         includedirs
         {
             'src',
             'dep/double-conversion/src',
             'dep/zlib/src',
             BOOST_ROOT,
-        }
-        libdirs
-        {
-            BOOST_ROOT .. '/stage/lib',
         }
         links
         {
@@ -116,22 +132,6 @@ solution 'UnitTest'
         location 'build/test'
         kind 'ConsoleApp'
         uuid 'AB7D1C15-7A44-41a7-8864-230D8E345608'
-        if os.get() == 'windows' then
-        defines
-        {
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-            '_WIN32_WINNT=0x0501',
-            '_CRT_SECURE_NO_WARNINGS',
-        }
-        elseif os.get() == 'linux' then
-        defines
-        {
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-        }
-        buildoptions{ '-std=c++11'}
-        end
         files
         {
             'test/*.h',
@@ -142,7 +142,42 @@ solution 'UnitTest'
         excludes
         {
             'src/main.cpp',
+        }        
+        if os.get() == 'windows' then
+        defines
+        {
+            '_WIN32_WINNT=0x0600',
+            '_CRT_SECURE_NO_WARNINGS',
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
         }
+        libdirs
+        {
+            BOOST_ROOT .. '/stage/lib',
+        }          
+        end
+        
+        if os.get() == 'linux' then
+        defines
+        {
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
+        }
+        buildoptions{ '-std=c++11'}
+        end
+
         includedirs
         {
             'src',
@@ -150,11 +185,7 @@ solution 'UnitTest'
             'dep/double-conversion/src',
             'dep/zlib/src',
             BOOST_ROOT,
-        }
-        libdirs
-        {
-            BOOST_ROOT .. '/stage/lib',
-        }        
+        }      
         links
         {           
             'libgtest',
