@@ -72,6 +72,5 @@ TEST(Timer, Benchmark)
     }
     printf("Benchmarking %d timer with %d times each....\n", gcounter, times);
     size_t r = ios_ptr->run();
-    time_t elapsed = time(NULL) - now;
     EXPECT_TRUE(r == gcounter * times);
 }
