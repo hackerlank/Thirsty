@@ -22,23 +22,27 @@ struct Header
 class Buffer : boost::noncopyable
 {
 public:
+    typedef uint8_t     value_type;
+    typedef uint8_t*    pointer_type;
+    typedef uint8_t&    reference_type;
+
     explicit Buffer(size_t size);
     Buffer(const void* data, size_t size);
     Buffer(Buffer&& other);
     ~Buffer();
 
-    size_t          size() const { return size_; }
-    uint8_t*        data() { return &data_[0]; }
-    const uint8_t*  data() const { return &data_[0]; }
+    size_t              size() const { return size_; }
+    pointer_type        data() { return data_; }
+    const pointer_type  data() const { return data_; }
     
-    uint8_t*        begin() { return data(); }
-    const uint8_t*  begin() const { return data(); }
-    uint8_t*        end() { return data() + size(); }
-    const uint8_t*  end() const { return data() + size(); }
+    pointer_type         begin() { return data(); }
+    const pointer_type   begin() const { return data(); }
+    pointer_type         end() { return data() + size(); }
+    const pointer_type  end() const { return data() + size(); }
 
 private:
-    const size_t    size_;
-    uint8_t*        data_;
+    const size_t        size_;
+    pointer_type        data_;
 };
 
 
