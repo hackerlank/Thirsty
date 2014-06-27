@@ -21,7 +21,7 @@ public:
     TcpClient(boost::asio::io_service& io_service, ErrorCallback callback);
     ~TcpClient();
 
-    void    PostRead(ReadCallback callback);
+    void    AsynRead(ReadCallback callback);
     void    Close();
 
     void    AsynConnect(const std::string& host, 

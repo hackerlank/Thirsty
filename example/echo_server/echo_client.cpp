@@ -25,7 +25,7 @@ TcpClientPtr CreateClient(boost::asio::io_service& io_service,
         printf("connect to server(%s:%d) OK.\n", host.c_str(), port);
         string msg = "a quick fox jumps over the lazy dog.";
         client->AsynWrite(msg.data(), msg.length()+1);
-        client->PostRead([client](ByteRange range)
+        client->AsynRead([client](ByteRange range)
         {
             //printf("recv %d bytes from server.\n", bytes, data);
             this_thread::sleep_for(chrono::seconds(1));

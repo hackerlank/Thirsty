@@ -26,7 +26,7 @@ void TcpClient::Close()
     socket_.close();
 }
 
-void TcpClient::PostRead(ReadCallback callback)
+void TcpClient::AsynRead(ReadCallback callback)
 {
     assert(callback);
     on_read_ = callback;
