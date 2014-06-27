@@ -16,11 +16,11 @@ enum
 };
 
 
-class TCPServer : private boost::noncopyable
+class TcpServer : private boost::noncopyable
 {
 public:
-    explicit TCPServer(boost::asio::io_service& io_service, size_t max_conn);
-    ~TCPServer();
+    explicit TcpServer(boost::asio::io_service& io_service, size_t max_conn);
+    ~TcpServer();
 
     void Start(const std::string& addr, 
                int16_t port,
@@ -73,4 +73,4 @@ private:
 
 };
 
-typedef std::shared_ptr<TCPServer>    TCPServerPtr;
+typedef std::shared_ptr<TcpServer>    TCPServerPtr;

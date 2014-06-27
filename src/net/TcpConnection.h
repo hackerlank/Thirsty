@@ -14,17 +14,17 @@ typedef std::function<void(int64_t, int32_t, const std::string&)>   ErrorCallbac
 typedef std::function<void(int64_t, ByteRange)>                     ReadCallback;
 
 
-class TCPConnection
-    : public std::enable_shared_from_this<TCPConnection>,
+class TcpConnection
+    : public std::enable_shared_from_this<TcpConnection>,
       private boost::noncopyable
 {
 public:
     // construct a connection with the given io_service.
-    TCPConnection(boost::asio::io_service& io_service, 
+    TcpConnection(boost::asio::io_service& io_service, 
                   int64_t serial, 
                   ErrorCallback on_error,
                   ReadCallback on_read);
-    ~TCPConnection();
+    ~TcpConnection();
 
     // start the first asynchronous operation for the connection.
     void AsynRead();
@@ -70,4 +70,4 @@ private:
     ReadCallback     on_read_;
 };
 
-typedef std::shared_ptr<TCPConnection>  TCPConnectionPtr;
+typedef std::shared_ptr<TcpConnection>  TCPConnectionPtr;

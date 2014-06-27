@@ -13,13 +13,13 @@ typedef std::function<void(const std::string&, int16_t)>    ConnectCallback;
 typedef std::function<void(ByteRange)>                      ReadCallback;
 
 
-class TCPClient
-    : public std::enable_shared_from_this<TCPClient>,
+class TcpClient
+    : public std::enable_shared_from_this<TcpClient>,
       private boost::noncopyable
 {
 public:
-    TCPClient(boost::asio::io_service& io_service, ErrorCallback callback);
-    ~TCPClient();
+    TcpClient(boost::asio::io_service& io_service, ErrorCallback callback);
+    ~TcpClient();
 
     void    PostRead(ReadCallback callback);
     void    Close();
@@ -67,4 +67,4 @@ private:
     ErrorCallback       on_error_;
 };
 
-typedef std::shared_ptr<TCPClient>  TCPClientPtr;
+typedef std::shared_ptr<TcpClient>  TCPClientPtr;

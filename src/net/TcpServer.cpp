@@ -9,19 +9,19 @@
 using namespace std::placeholders;
 
 
-TCPServer::TCPServer(boost::asio::io_service& io_service, size_t max_conn)
+TcpServer::TcpServer(boost::asio::io_service& io_service, size_t max_conn)
     : io_service_(io_service),
       acceptor_(io_service_),
       max_connections_(max_conn)
 {
 }
 
-TCPServer::~TCPServer()
+TcpServer::~TcpServer()
 {
     Stop();
 }
 
-void TCPServer::Start(const std::string& addr, 
+void TcpServer::Start(const std::string& addr, 
                       int16_t port,
                       ReadCallback callback)
 {
@@ -39,23 +39,23 @@ void TCPServer::Start(const std::string& addr,
     if (!heartbeat_timer_)
     {
         heartbeat_timer_ = std::make_shared<Timer>(io_service_, kHeartBeatCheckTime,
-            std::bind(&TCPServer::DropDeadConnections, this));
+            std::bind(&TcpServer::DropDeadConnections, this));
     }
     heartbeat_timer_->Schedule();
 }
 
-void TCPServer::Stop()
+void TcpServer::Stop()
 {
     acceptor_.cancel();
     connections_.clear();
 }
 
-void TCPServer::CloseSession(int64_t serial)
+void TcpServer::CloseSession(int64_t serial)
 {
     connections_.erase(serial);
 }
 
-TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
+TCPConnectionPtr  TcpServer::GetConnection(int64_t serial)
 {
     auto iter = connections_.find(serial);
     if (iter != connections_.end())
@@ -65,7 +65,7 @@ TCPConnectionPtr  TCPServer::GetConnection(int64_t serial)
     return TCPConnectionPtr();
 }
 
-void TCPServer::SendTo(int64_t serial, const void* data, size_t size)
+void TcpServer::SendTo(int64_t serial, const void* data, size_t size)
 {
     auto conn = GetConnection(serial);
     if (conn)
@@ -74,7 +74,7 @@ void TCPServer::SendTo(int64_t serial, const void* data, size_t size)
     }
 }
 
-void TCPServer::SendAll(const char* data, size_t size)
+void TcpServer::SendAll(const char* data, size_t size)
 {
     for (auto& value : connections_)
     {
@@ -84,16 +84,16 @@ void TCPServer::SendAll(const char* data, size_t size)
 }
 
 
-void TCPServer::StartAccept()
+void TcpServer::StartAccept()
 {
     auto serial = current_serial_++;
-    TCPConnectionPtr conn = std::make_shared<TCPConnection>(io_service_, serial,
-        std::bind(&TCPServer::OnConnectionError, this, _1, _2, _3), on_read_);
-    acceptor_.async_accept(conn->GetSocket(), std::bind(&TCPServer::HandleAccept, this, _1, conn));
+    TCPConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, serial,
+        std::bind(&TcpServer::OnConnectionError, this, _1, _2, _3), on_read_);
+    acceptor_.async_accept(conn->GetSocket(), std::bind(&TcpServer::HandleAccept, this, _1, conn));
 }
 
 
-void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnectionPtr conn)
+void TcpServer::HandleAccept(const boost::system::error_code& err, TCPConnectionPtr conn)
 {
     if (!err)
     {
@@ -113,13 +113,13 @@ void TCPServer::HandleAccept(const boost::system::error_code& err, TCPConnection
     }
 }
 
-void TCPServer::OnConnectionError(int64_t serial, int error, const std::string& msg)
+void TcpServer::OnConnectionError(int64_t serial, int error, const std::string& msg)
 {
     CloseSession(serial);
     LOG(ERROR) << "serial " << serial << " closed, " << error << ": " << msg;
 }
 
-void TCPServer::DropDeadConnections()
+void TcpServer::DropDeadConnections()
 {
     std::vector<int64_t> dead_connections;
     dead_connections.reserve(32);

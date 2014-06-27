@@ -8,7 +8,7 @@ using namespace std;
 using namespace std::placeholders;
 
 
-TCPClient::TCPClient(boost::asio::io_service& io_service, ErrorCallback callback)
+TcpClient::TcpClient(boost::asio::io_service& io_service, ErrorCallback callback)
     : io_service_(io_service),
       socket_(io_service),
       on_error_(callback)
@@ -16,24 +16,24 @@ TCPClient::TCPClient(boost::asio::io_service& io_service, ErrorCallback callback
     assert(callback);
 }
 
-TCPClient::~TCPClient()
+TcpClient::~TcpClient()
 {
     Close();
 }
 
-void TCPClient::Close()
+void TcpClient::Close()
 {
     socket_.close();
 }
 
-void TCPClient::PostRead(ReadCallback callback)
+void TcpClient::PostRead(ReadCallback callback)
 {
     assert(callback);
     on_read_ = callback;
     AsynReadHead();
 }
 
-void TCPClient::AsynConnect(const std::string& host, 
+void TcpClient::AsynConnect(const std::string& host, 
                             int16_t port, 
                             ConnectCallback callback)
 {
@@ -41,10 +41,10 @@ void TCPClient::AsynConnect(const std::string& host,
     on_connect_ = callback;
     using namespace boost::asio;
     ip::tcp::endpoint endpoint(ip::address::from_string(host), port);
-    socket_.async_connect(endpoint, std::bind(&TCPClient::HandleConnect, this, _1, host, port));
+    socket_.async_connect(endpoint, std::bind(&TcpClient::HandleConnect, this, _1, host, port));
 }
 
-void TCPClient::AsynWrite(const void* data, size_t bytes)
+void TcpClient::AsynWrite(const void* data, size_t bytes)
 {
     assert(data && bytes);
     Header head = { bytes, 0, 0 };
@@ -54,16 +54,16 @@ void TCPClient::AsynWrite(const void* data, size_t bytes)
     memcpy(buf->data(), &head, sizeof(head));
     memcpy(buf->data() + sizeof(head), data, bytes);
     boost::asio::async_write(socket_, boost::asio::buffer(buf->data(), buf->size()),
-        std::bind(&TCPClient::HandleWrite, this, _1, _2, buf));
+        std::bind(&TcpClient::HandleWrite, this, _1, _2, buf));
 }
 
-void TCPClient::AsynReadHead()
+void TcpClient::AsynReadHead()
 {
     boost::asio::async_read(socket_, boost::asio::buffer(&head_, sizeof(head_)),
-        std::bind(&TCPClient::HandleReadHead, this, _1, _2));
+        std::bind(&TcpClient::HandleReadHead, this, _1, _2));
 }
 
-void TCPClient::HandleConnect(const boost::system::error_code& err, 
+void TcpClient::HandleConnect(const boost::system::error_code& err, 
                               const std::string& host, 
                               int16_t port)
 {
@@ -77,7 +77,7 @@ void TCPClient::HandleConnect(const boost::system::error_code& err,
     }
 }
 
-void TCPClient::HandleWrite(const boost::system::error_code& err, 
+void TcpClient::HandleWrite(const boost::system::error_code& err, 
                             size_t bytes, 
                             BufferPtr buf)
 {
@@ -87,7 +87,7 @@ void TCPClient::HandleWrite(const boost::system::error_code& err,
     }
 }
 
-void TCPClient::HandleReadHead(const boost::system::error_code& err, size_t bytes)
+void TcpClient::HandleReadHead(const boost::system::error_code& err, size_t bytes)
 {
     if (err)
     {
@@ -101,7 +101,7 @@ void TCPClient::HandleReadHead(const boost::system::error_code& err, size_t byte
         {
             BufferPtr buf = std::make_shared<Buffer>(head_.size);
             boost::asio::async_read(socket_, boost::asio::buffer(buf->data(), buf->size()),
-                std::bind(&TCPClient::HandleReadBody, this, _1, _2, buf));
+                std::bind(&TcpClient::HandleReadBody, this, _1, _2, buf));
         }
         else
         {
@@ -116,7 +116,7 @@ void TCPClient::HandleReadHead(const boost::system::error_code& err, size_t byte
     }
 }
 
-void TCPClient::HandleReadBody(const boost::system::error_code& err, 
+void TcpClient::HandleReadBody(const boost::system::error_code& err, 
                                size_t bytes, 
                                BufferPtr buf)
 {
