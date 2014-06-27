@@ -4,13 +4,14 @@
 #include <dbghelp.h>
 #include <stdlib.h>
 #include <cstdlib>
+#pragma comment(lib, "dbghelp")
 #else
 #include <bfd.h>
 #include <cxxabi.h>
 #include <dlfcn.h>
 #include <execinfo.h>
 #endif
-#include "traceback.hpp"
+#include "traceback.h"
 
 // __________________________________________________________________________//
 

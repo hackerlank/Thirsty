@@ -83,7 +83,7 @@ class ErrorInfo: public CallStack {
         << (object_->*what_)();
 
     if (errno_) {
-#ifdef WIN32
+#ifdef _WIN32
       char buffer[1024] = {0};
       if (!strerror_s(buffer, sizeof(buffer), errno_))
       ss << ": [Errno  " << errno_ << "] " << buffer;
