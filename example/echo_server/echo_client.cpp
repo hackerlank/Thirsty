@@ -15,11 +15,11 @@ void OnError(int32_t error, const string& msg)
     printf("Error: %d, %s.\n", error, msg.c_str());
 }
 
-TCPClientPtr CreateClient(boost::asio::io_service& io_service, 
+TcpClientPtr CreateClient(boost::asio::io_service& io_service,
                           const std::string& host, 
                           int16_t port)
 {
-    TCPClientPtr client = std::make_shared<TCPClient>(io_service, OnError);
+    TcpClientPtr client = std::make_shared<TcpClient>(io_service, OnError);
     client->AsynConnect(host, port, [client](const string& host, int16_t port)
     {
         printf("connect to server(%s:%d) OK.\n", host.c_str(), port);
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
             num = to<int32_t>(argv[3]);
         }
 
-        vector<TCPClientPtr>    clients;
+        vector<TcpClientPtr>    clients;
         boost::asio::io_service io_service;
         for (int i = 0; i < num; i++)
         {
