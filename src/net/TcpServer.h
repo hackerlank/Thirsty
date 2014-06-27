@@ -41,11 +41,11 @@ public:
 
     void SendAll(const char* data, size_t size);
 
-    TCPConnectionPtr  GetConnection(int64_t serial);
+    TcpConnectionPtr  GetConnection(int64_t serial);
 
 private:
     void StartAccept();
-    void HandleAccept(const boost::system::error_code& err, TCPConnectionPtr ptr);
+    void HandleAccept(const boost::system::error_code& err, TcpConnectionPtr ptr);
     void OnConnectionError(int64_t serial, int error, const std::string& msg);
     void DropDeadConnections();
 
@@ -57,7 +57,7 @@ private:
     boost::asio::ip::tcp::acceptor  acceptor_;
 
     // connections identified by serial number
-    std::unordered_map<int64_t, TCPConnectionPtr>    connections_;
+    std::unordered_map<int64_t, TcpConnectionPtr>    connections_;
 
     // current serial number
     int64_t         current_serial_ = 1000;
@@ -73,4 +73,4 @@ private:
 
 };
 
-typedef std::shared_ptr<TcpServer>    TCPServerPtr;
+typedef std::shared_ptr<TcpServer>    TcpServerPtr;

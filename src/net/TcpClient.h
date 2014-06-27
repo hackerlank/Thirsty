@@ -67,4 +67,4 @@ private:
     ErrorCallback       on_error_;
 };
 
-typedef std::shared_ptr<TcpClient>  TCPClientPtr;
+typedef std::shared_ptr<TcpClient>  TcpClientPtr;

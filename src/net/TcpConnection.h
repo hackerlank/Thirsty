@@ -70,4 +70,4 @@ private:
     ReadCallback     on_read_;
 };
 
-typedef std::shared_ptr<TcpConnection>  TCPConnectionPtr;
+typedef std::shared_ptr<TcpConnection>  TcpConnectionPtr;

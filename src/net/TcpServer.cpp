@@ -55,14 +55,14 @@ void TcpServer::CloseSession(int64_t serial)
     connections_.erase(serial);
 }
 
-TCPConnectionPtr  TcpServer::GetConnection(int64_t serial)
+TcpConnectionPtr  TcpServer::GetConnection(int64_t serial)
 {
     auto iter = connections_.find(serial);
     if (iter != connections_.end())
     {
         return iter->second;
     }
-    return TCPConnectionPtr();
+    return TcpConnectionPtr();
 }
 
 void TcpServer::SendTo(int64_t serial, const void* data, size_t size)
@@ -87,13 +87,13 @@ void TcpServer::SendAll(const char* data, size_t size)
 void TcpServer::StartAccept()
 {
     auto serial = current_serial_++;
-    TCPConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, serial,
+    TcpConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, serial,
         std::bind(&TcpServer::OnConnectionError, this, _1, _2, _3), on_read_);
     acceptor_.async_accept(conn->GetSocket(), std::bind(&TcpServer::HandleAccept, this, _1, conn));
 }
 
 
-void TcpServer::HandleAccept(const boost::system::error_code& err, TCPConnectionPtr conn)
+void TcpServer::HandleAccept(const boost::system::error_code& err, TcpConnectionPtr conn)
 {
     if (!err)
     {
