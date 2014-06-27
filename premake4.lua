@@ -30,6 +30,7 @@ solution 'Thirsty'
         {
             'src/**.h',
             'src/**.cpp',
+            'src/**.c',
         }
         
         if os.get() == 'windows' then
@@ -138,6 +139,7 @@ solution 'UnitTest'
             'test/*.cpp',
             'src/**.h',
             'src/**.cpp',
+            'src/**.c',
         }
         excludes
         {

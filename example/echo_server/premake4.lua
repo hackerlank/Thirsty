@@ -27,6 +27,7 @@ solution 'ServerExample'
             'echo_server.cpp',
             '../../src/**.h',
             '../../src/**.cpp',
+            '../../src/**.c',
         }
         excludes
         {
@@ -118,7 +119,8 @@ solution 'ClientExample'
         {
             'echo_client.cpp',
             '../../src/**.h',
-            '../../src/**.cpp',            
+            '../../src/**.cpp',  
+            '../../src/**.c',            
         }
         excludes
         {
