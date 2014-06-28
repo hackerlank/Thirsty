@@ -17,12 +17,14 @@
 // @author Andrei Alexandrescu (andrei.alexandrescu@fb.com)
 
 #include "Benchmark.h"
-#include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <limits>
 #include <utility>
 #include <vector>
+#include <tuple>
+#include <memory>
+#include <algorithm>
+#include <iostream>
 #include "Foreach.h"
 #include "Conv.h"
 #include "StringPrintf.h"
@@ -34,10 +36,12 @@ using namespace std;
 BenchmarkSuspender::NanosecondsSpent BenchmarkSuspender::nsSpent;
 
 typedef function<detail::TimeIterPair(unsigned int)> BenchmarkFun;
-static vector<tuple<const char*, const char*, BenchmarkFun>> benchmarks;
+typedef tuple<const char*, const char*, BenchmarkFun> BenchmarkItem;
+static vector<BenchmarkItem> benchmarks;
 
 // Add the global baseline
-BENCHMARK(globalBenchmarkBaseline, n) {
+BENCHMARK(globalBenchmarkBaseline, n) 
+{
 #ifdef _MSC_VER
   _ReadWriteBarrier();
 #else
@@ -45,143 +49,32 @@ BENCHMARK(globalBenchmarkBaseline, n) {
 #endif
 }
 
-void detail::addBenchmarkImpl(const char* file, const char* name,
-                              BenchmarkFun fun) {
-  benchmarks.emplace_back(file, name, std::move(fun));
+void detail::addBenchmarkImpl(const char* file, 
+                              const char* name,
+                              BenchmarkFun fun) 
+{
+    auto item = make_tuple(file, name, fun);
+    benchmarks.push_back(item);
 }
 
-
-/**
- * Given a point, gives density at that point as a number 0.0 < x <=
- * 1.0. The result is 1.0 if all samples are equal to where, and
- * decreases near 0 if all points are far away from it. The density is
- * computed with the help of a radial basis function.
- */
-static double density(const double * begin, const double *const end,
-                      const double where, const double bandwidth) {
-  assert(begin < end);
-  assert(bandwidth > 0.0);
-  double sum = 0.0;
-  FOR_EACH_RANGE (i, begin, end) {
-    auto d = (*i - where) / bandwidth;
-    sum += exp(- d * d);
-  }
-  return sum / (end - begin);
-}
-
-/**
- * Computes mean and variance for a bunch of data points. Note that
- * mean is currently not being used.
- */
-static pair<double, double>
-meanVariance(const double * begin, const double *const end) {
-  assert(begin < end);
-  double sum = 0.0, sum2 = 0.0;
-  FOR_EACH_RANGE (i, begin, end) {
-    sum += *i;
-    sum2 += *i * *i;
-  }
-  auto const n = end - begin;
-  return make_pair(sum / n, sqrt((sum2 - sum * sum / n) / n));
-}
-
-/**
- * Computes the mode of a sample set through brute force. Assumes
- * input is sorted.
- */
-static double mode(const double * begin, const double *const end) {
-  assert(begin < end);
-  // Lower bound and upper bound for result and their respective
-  // densities.
-  auto
-    result = 0.0,
-    bestDensity = 0.0;
-
-  // Get the variance so we pass it down to density()
-  auto const sigma = meanVariance(begin, end).second;
-  if (!sigma) {
-    // No variance means constant signal
-    return *begin;
-  }
-
-  FOR_EACH_RANGE (i, begin, end) {
-    assert(i == begin || *i >= i[-1]);
-    auto candidate = density(begin, end, *i, sigma * sqrt(2.0));
-    if (candidate > bestDensity) {
-      // Found a new best
-      bestDensity = candidate;
-      result = *i;
-    } else {
-      // Density is decreasing... we could break here if we definitely
-      // knew this is unimodal.
-    }
-  }
-
-  return result;
-}
 
 /**
  * Given a bunch of benchmark samples, estimate the actual run time.
  */
-static double estimateTime(double * begin, double * end) {
-  assert(begin < end);
-
-  // Current state of the art: get the minimum. After some
-  // experimentation, it seems taking the minimum is the best.
-
-  return *min_element(begin, end);
-
-  // What follows after estimates the time as the mode of the
-  // distribution.
-
-  // Select the awesomest (i.e. most frequent) result. We do this by
-  // sorting and then computing the longest run length.
-  sort(begin, end);
-
-  // Eliminate outliers. A time much larger than the minimum time is
-  // considered an outlier.
-  while (end[-1] > 2.0 * *begin) {
-    --end;
-    if (begin == end) {
-      LOG(INFO) << *begin;
-    }
+static double estimateTime(double * begin, double * end) 
+{
     assert(begin < end);
-  }
 
-  double result = 0;
+    // Current state of the art: get the minimum. After some
+    // experimentation, it seems taking the minimum is the best.
 
-  /* Code used just for comparison purposes */ {
-    unsigned bestFrequency = 0;
-    unsigned candidateFrequency = 1;
-    double candidateValue = *begin;
-    for (auto current = begin + 1; ; ++current) {
-      if (current == end || *current != candidateValue) {
-        // Done with the current run, see if it was best
-        if (candidateFrequency > bestFrequency) {
-          bestFrequency = candidateFrequency;
-          result = candidateValue;
-        }
-        if (current == end) {
-          break;
-        }
-        // Start a new run
-        candidateValue = *current;
-        candidateFrequency = 1;
-      } else {
-        // Cool, inside a run, increase the frequency
-        ++candidateFrequency;
-      }
-    }
-  }
-
-  result = mode(begin, end);
-
-  return result;
+    return *min_element(begin, end);
 }
 
 
 static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
-    const double globalBaseline) {
+                                            const double globalBaseline) 
+{
     // Minimum # of microseconds we'll accept for each benchmark.
     static const auto minNanoseconds = 100 * 1000UL;
 
@@ -198,10 +91,13 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
     double epochResults[epochs] = { 0 };
     size_t actualEpochs = 0;
 
-    for (; actualEpochs < epochs; ++actualEpochs) {
-        for (unsigned int n = 1000; n < (1UL << 30); n *= 2) {
+    for (; actualEpochs < epochs; ++actualEpochs)
+    {
+        for (unsigned int n = 1000; n < (1UL << 30); n *= 2)
+        {
             auto const nsecsAndIter = fun(n);
-            if (nsecsAndIter.first < minNanoseconds) {
+            if (nsecsAndIter.first < minNanoseconds) 
+            {
                 continue;
             }
             // We got an accurate enough timing, done. But only save if
@@ -213,7 +109,8 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
         }
         high_resolution_time_point now = bc::high_resolution_clock::now();
         auto duration = bc::duration_cast<bc::nanoseconds>(now - global);
-        if (duration.count() >= timeBudgetInNs) {
+        if (duration.count() >= timeBudgetInNs) 
+        {
             // No more time budget available.
             ++actualEpochs;
             break;
@@ -225,162 +122,186 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
 }
 
 
-struct ScaleInfo {
-  double boundary;
-  const char* suffix;
+struct ScaleInfo 
+{
+    double boundary;
+    const char* suffix;
 };
 
-static const ScaleInfo kTimeSuffixes[] {
-  { 365.25 * 24 * 3600, "years" },
-  { 24 * 3600, "days" },
-  { 3600, "hr" },
-  { 60, "min" },
-  { 1, "s" },
-  { 1E-3, "ms" },
-  { 1E-6, "us" },
-  { 1E-9, "ns" },
-  { 1E-12, "ps" },
-  { 1E-15, "fs" },
-  { 0, nullptr },
+static const ScaleInfo kTimeSuffixes[] 
+{
+        { 365.25 * 24 * 3600, "years" },
+        { 24 * 3600, "days" },
+        { 3600, "hr" },
+        { 60, "min" },
+        { 1, "s" },
+        { 1E-3, "ms" },
+        { 1E-6, "us" },
+        { 1E-9, "ns" },
+        { 1E-12, "ps" },
+        { 1E-15, "fs" },
+        { 0, nullptr },
 };
 
-static const ScaleInfo kMetricSuffixes[] {
-  { 1E24, "Y" },  // yotta
-  { 1E21, "Z" },  // zetta
-  { 1E18, "X" },  // "exa" written with suffix 'X' so as to not create
-                  //   confusion with scientific notation
-  { 1E15, "P" },  // peta
-  { 1E12, "T" },  // terra
-  { 1E9, "G" },   // giga
-  { 1E6, "M" },   // mega
-  { 1E3, "K" },   // kilo
-  { 1, "" },
-  { 1E-3, "m" },  // milli
-  { 1E-6, "u" },  // micro
-  { 1E-9, "n" },  // nano
-  { 1E-12, "p" }, // pico
-  { 1E-15, "f" }, // femto
-  { 1E-18, "a" }, // atto
-  { 1E-21, "z" }, // zepto
-  { 1E-24, "y" }, // yocto
-  { 0, nullptr },
+static const ScaleInfo kMetricSuffixes[] 
+{
+        { 1E24, "Y" },  // yotta
+        { 1E21, "Z" },  // zetta
+        { 1E18, "X" },  // "exa" written with suffix 'X' so as to not create
+        //   confusion with scientific notation
+        { 1E15, "P" },  // peta
+        { 1E12, "T" },  // terra
+        { 1E9, "G" },   // giga
+        { 1E6, "M" },   // mega
+        { 1E3, "K" },   // kilo
+        { 1, "" },
+        { 1E-3, "m" },  // milli
+        { 1E-6, "u" },  // micro
+        { 1E-9, "n" },  // nano
+        { 1E-12, "p" }, // pico
+        { 1E-15, "f" }, // femto
+        { 1E-18, "a" }, // atto
+        { 1E-21, "z" }, // zepto
+        { 1E-24, "y" }, // yocto
+        { 0, nullptr },
 };
 
-static string humanReadable(double n, unsigned int decimals,
-                            const ScaleInfo* scales) {
-  if (std::isinf(n) || std::isnan(n)) {
-    return to<string>(n);
-  }
+static string humanReadable(double n, unsigned int decimals, const ScaleInfo* scales)
+    
+{
+    if (std::isinf(n) || std::isnan(n)) 
+    {
+        return to<string>(n);
+    }
 
-  const double absValue = fabs(n);
-  const ScaleInfo* scale = scales;
-  while (absValue < scale[0].boundary && scale[1].suffix != nullptr) {
-    ++scale;
-  }
+    const double absValue = fabs(n);
+    const ScaleInfo* scale = scales;
+    while (absValue < scale[0].boundary && scale[1].suffix != nullptr) 
+    {
+        ++scale;
+    }
 
-  const double scaledValue = n / scale->boundary;
-  return stringPrintf("%.*f%s", decimals, scaledValue, scale->suffix);
+    const double scaledValue = n / scale->boundary;
+    return stringPrintf("%.*f%s", decimals, scaledValue, scale->suffix);
 }
 
-static string readableTime(double n, unsigned int decimals) {
-  return humanReadable(n, decimals, kTimeSuffixes);
+static string readableTime(double n, unsigned int decimals) 
+{
+    return humanReadable(n, decimals, kTimeSuffixes);
 }
 
-static string metricReadable(double n, unsigned int decimals) {
-  return humanReadable(n, decimals, kMetricSuffixes);
+static string metricReadable(double n, unsigned int decimals) 
+{
+    return humanReadable(n, decimals, kMetricSuffixes);
 }
 
 static void printBenchmarkResultsAsTable(
-  const vector<tuple<const char*, const char*, double> >& data) {
-  // Width available
-  static const unsigned int columns = 76;
+    const vector<tuple<const char*, const char*, double> >& data)
+{
+    // Width available
+    static const unsigned int columns = 76;
 
-  // Compute the longest benchmark name
-  size_t longestName = 0;
-  FOR_EACH_RANGE (i, 1, benchmarks.size()) {
-    longestName = max(longestName, strlen(get<1>(benchmarks[i])));
-  }
+    // Compute the longest benchmark name
+    size_t longestName = 0;
+    FOR_EACH_RANGE(i, 1, benchmarks.size()) 
+    {
+        longestName = max(longestName, strlen(get<1>(benchmarks[i])));
+    }
 
-  // Print a horizontal rule
-  auto separator = [&](char pad) {
-    puts(string(columns, pad).c_str());
-  };
+    // Print a horizontal rule
+    auto separator = [&](char pad) 
+    {
+        puts(string(columns, pad).c_str());
+    };
 
-  // Print header for a file
-  auto header = [&](const char* file) {
+    // Print header for a file
+    auto header = [&](const char* file) 
+    {
+        separator('=');
+        printf("%-*srelative  time/iter  iters/s\n",
+            columns - 28, file);
+        separator('=');
+    };
+
+    double baselineNsPerIter = numeric_limits<double>::max();
+    const char* lastFile = "";
+
+    for (auto& datum : data) 
+    {
+        auto file = get<0>(datum);
+        if (strcmp(file, lastFile)) 
+        {
+            // New file starting
+            header(file);
+            lastFile = file;
+        }
+
+        string s = get<1>(datum);
+        if (s == "-") 
+        {
+            separator('-');
+            continue;
+        }
+        bool useBaseline /* = void */;
+        if (s[0] == '%') 
+        {
+            s.erase(0, 1);
+            useBaseline = true;
+        }
+        else 
+        {
+            baselineNsPerIter = get<2>(datum);
+            useBaseline = false;
+        }
+        s.resize(columns - 29, ' ');
+        auto nsPerIter = get<2>(datum);
+        auto secPerIter = nsPerIter / 1E9;
+        auto itersPerSec = 1 / secPerIter;
+        if (!useBaseline) 
+        {
+            // Print without baseline
+            printf("%*s           %9s  %7s\n",
+                static_cast<int>(s.size()), s.c_str(),
+                readableTime(secPerIter, 2).c_str(),
+                metricReadable(itersPerSec, 2).c_str());
+        }
+        else 
+        {
+            // Print with baseline
+            auto rel = baselineNsPerIter / nsPerIter * 100.0;
+            printf("%*s %7.2f%%  %9s  %7s\n",
+                static_cast<int>(s.size()), s.c_str(),
+                rel,
+                readableTime(secPerIter, 2).c_str(),
+                metricReadable(itersPerSec, 2).c_str());
+        }
+    }
     separator('=');
-    printf("%-*srelative  time/iter  iters/s\n",
-           columns - 28, file);
-    separator('=');
-  };
-
-  double baselineNsPerIter = numeric_limits<double>::max();
-  const char* lastFile = "";
-
-  for (auto& datum : data) {
-    auto file = get<0>(datum);
-    if (strcmp(file, lastFile)) {
-      // New file starting
-      header(file);
-      lastFile = file;
-    }
-
-    string s = get<1>(datum);
-    if (s == "-") {
-      separator('-');
-      continue;
-    }
-    bool useBaseline /* = void */;
-    if (s[0] == '%') {
-      s.erase(0, 1);
-      useBaseline = true;
-    } else {
-      baselineNsPerIter = get<2>(datum);
-      useBaseline = false;
-    }
-    s.resize(columns - 29, ' ');
-    auto nsPerIter = get<2>(datum);
-    auto secPerIter = nsPerIter / 1E9;
-    auto itersPerSec = 1 / secPerIter;
-    if (!useBaseline) {
-      // Print without baseline
-      printf("%*s           %9s  %7s\n",
-             static_cast<int>(s.size()), s.c_str(),
-             readableTime(secPerIter, 2).c_str(),
-             metricReadable(itersPerSec, 2).c_str());
-    } else {
-      // Print with baseline
-      auto rel = baselineNsPerIter / nsPerIter * 100.0;
-      printf("%*s %7.2f%%  %9s  %7s\n",
-             static_cast<int>(s.size()), s.c_str(),
-             rel,
-             readableTime(secPerIter, 2).c_str(),
-             metricReadable(itersPerSec, 2).c_str());
-    }
-  }
-  separator('=');
 }
 
 
-void runBenchmarks() {
-  CHECK(!benchmarks.empty());
-  vector<tuple<const char*, const char*, double>> results;
-  results.reserve(benchmarks.size() - 1);
-  // PLEASE KEEP QUIET. MEASUREMENTS IN PROGRESS.
+void runBenchmarks() 
+{
+    CHECK(!benchmarks.empty());
+    vector<tuple<const char*, const char*, double>> results;
+    results.reserve(benchmarks.size() - 1);
+    // PLEASE KEEP QUIET. MEASUREMENTS IN PROGRESS.
 
-  auto const globalBaseline = runBenchmarkGetNSPerIteration(
-      get<2>(benchmarks.front()), 0);
-  FOR_EACH_RANGE(i, 1, benchmarks.size()) {
-      double elapsed = 0.0;
-      if (strcmp(get<1>(benchmarks[i]), "-") != 0) { // skip separators
-          elapsed = runBenchmarkGetNSPerIteration(get<2>(benchmarks[i]),
-              globalBaseline);
-      }
-      results.emplace_back(get<0>(benchmarks[i]),
-          get<1>(benchmarks[i]), elapsed);
-  }
+    auto const globalBaseline = runBenchmarkGetNSPerIteration(
+        get<2>(benchmarks.front()), 0);
+    FOR_EACH_RANGE(i, 1, benchmarks.size()) 
+    {
+        double elapsed = 0.0;
+        if (strcmp(get<1>(benchmarks[i]), "-") != 0)  // skip separators
+        {
+            elapsed = runBenchmarkGetNSPerIteration(get<2>(benchmarks[i]),
+                globalBaseline);
+        }
+        results.emplace_back(get<0>(benchmarks[i]),
+            get<1>(benchmarks[i]), elapsed);
+    }
 
-  // PLEASE MAKE NOISE. MEASUREMENTS DONE.
-  printBenchmarkResultsAsTable(results);
+    // PLEASE MAKE NOISE. MEASUREMENTS DONE.
+    printBenchmarkResultsAsTable(results);
 }
 

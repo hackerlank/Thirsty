@@ -54,59 +54,69 @@ typedef bc::time_point<bc::high_resolution_clock> high_resolution_time_point;
 /**
  * Supporting type for BENCHMARK_SUSPEND defined below.
  */
-struct BenchmarkSuspender {
-  BenchmarkSuspender() : start_(bc::high_resolution_clock::now()) {
-  }
+struct BenchmarkSuspender
+{
+    BenchmarkSuspender()
+        : start_(bc::high_resolution_clock::now())
+    {
+    }
 
-  BenchmarkSuspender(const BenchmarkSuspender &) = delete;
-  BenchmarkSuspender(BenchmarkSuspender&& rhs) 
-      : start_(rhs.start_)  {
-    rhs.start_ = high_resolution_time_point();
-  }
+    BenchmarkSuspender(const BenchmarkSuspender &) = delete;
+    BenchmarkSuspender(BenchmarkSuspender&& rhs)
+        : start_(rhs.start_)
+    {
+        rhs.start_ = high_resolution_time_point();
+    }
 
-  BenchmarkSuspender& operator=(const BenchmarkSuspender &) = delete;
-  BenchmarkSuspender& operator=(BenchmarkSuspender && rhs) {
-    start_ = rhs.start_;
-    rhs.start_ = high_resolution_time_point();  
-    return *this;
-  }
+    BenchmarkSuspender& operator=(const BenchmarkSuspender &) = delete;
+    BenchmarkSuspender& operator=(BenchmarkSuspender && rhs)
+    {
+        start_ = rhs.start_;
+        rhs.start_ = high_resolution_time_point();
+        return *this;
+    }
 
-  ~BenchmarkSuspender() {
-    tally();
-  }
+    ~BenchmarkSuspender()
+    {
+        tally();
+    }
 
-  void dismiss() {
-    tally();
-    start_ = high_resolution_time_point();
-  }
+    void dismiss()
+    {
+        tally();
+        start_ = high_resolution_time_point();
+    }
 
-  void rehire() {
-    start_ = bc::high_resolution_clock::now();
-  }
+    void rehire()
+    {
+        start_ = bc::high_resolution_clock::now();
+    }
 
-  /**
-   * This helps the macro definition. To get around the dangers of
-   * operator bool, returns a pointer to member (which allows no
-   * arithmetic).
-   */
-  operator int BenchmarkSuspender::*() const {
-    return nullptr;
-  }
+    /**
+     * This helps the macro definition. To get around the dangers of
+     * operator bool, returns a pointer to member (which allows no
+     * arithmetic).
+     */
+    operator int BenchmarkSuspender::*() const
+    {
+        return nullptr;
+    }
 
-  /**
-   * Accumulates nanoseconds spent outside benchmark.
-   */
-  typedef uint64_t NanosecondsSpent;
-  static NanosecondsSpent nsSpent;
+    /**
+     * Accumulates nanoseconds spent outside benchmark.
+     */
+    typedef uint64_t NanosecondsSpent;
+    static NanosecondsSpent nsSpent;
 
 private:
-  void tally() {
-    auto end = bc::high_resolution_clock::now();
-    nsSpent += bc::duration_cast<bc::nanoseconds>(end - start_).count();
-    start_ = end;
-  }
+    void tally()
+    {
+        auto end = bc::high_resolution_clock::now();
+        nsSpent += bc::duration_cast<bc::nanoseconds>(end - start_).count();
+        start_ = end;
+    }
 
-  high_resolution_time_point    start_;
+    high_resolution_time_point    start_;
 };
 
 
@@ -119,26 +129,28 @@ private:
  */
 template <typename Lambda>
 typename std::enable_if<
-  boost::function_types::function_arity<decltype(&Lambda::operator())>::value
-  == 2
+    boost::function_types::function_arity<decltype(&Lambda::operator())>::value
+    == 2
 >::type
-addBenchmark(const char* file, const char* name, Lambda&& lambda) {
-  auto execute = [=](unsigned int times) {
-    BenchmarkSuspender::nsSpent = 0;
-    unsigned int niter;
+addBenchmark(const char* file, const char* name, Lambda&& lambda)
+{
+    auto execute = [=](unsigned int times)
+    {
+        BenchmarkSuspender::nsSpent = 0;
+        unsigned int niter;
 
-    // CORE MEASUREMENT STARTS
-    auto const start = bc::high_resolution_clock::now();
-    niter = lambda(times);
-    auto const end = bc::high_resolution_clock::now();
-    // CORE MEASUREMENT ENDS
+        // CORE MEASUREMENT STARTS
+        auto const start = bc::high_resolution_clock::now();
+        niter = lambda(times);
+        auto const end = bc::high_resolution_clock::now();
+        // CORE MEASUREMENT ENDS
 
-    auto duration = bc::duration_cast<bc::nanoseconds>(end - start);
-    return detail::TimeIterPair(duration.count() - BenchmarkSuspender::nsSpent, niter);
-  };
+        auto duration = bc::duration_cast<bc::nanoseconds>(end - start);
+        return detail::TimeIterPair(duration.count() - BenchmarkSuspender::nsSpent, niter);
+    };
 
-  detail::addBenchmarkImpl(file, name,
-    std::function<detail::TimeIterPair(unsigned int)>(execute));
+    detail::addBenchmarkImpl(file, name,
+        std::function<detail::TimeIterPair(unsigned int)>(execute));
 }
 
 /**
@@ -149,16 +161,18 @@ addBenchmark(const char* file, const char* name, Lambda&& lambda) {
  */
 template <typename Lambda>
 typename std::enable_if<
-  boost::function_types::function_arity<decltype(&Lambda::operator())>::value
-  == 1
+    boost::function_types::function_arity<decltype(&Lambda::operator())>::value
+    == 1
 >::type
-addBenchmark(const char* file, const char* name, Lambda&& lambda) {
-  addBenchmark(file, name, [=](unsigned int times) {
-      unsigned int niter = 0;
-      while (times-- > 0) {
-        niter += lambda();
-      }
-      return niter;
+addBenchmark(const char* file, const char* name, Lambda&& lambda)
+{
+    addBenchmark(file, name, [=](unsigned int times)
+    {
+        unsigned int niter = 0;
+        while (times-- > 0) {
+            niter += lambda();
+        }
+        return niter;
     });
 }
 
@@ -174,16 +188,18 @@ addBenchmark(const char* file, const char* name, Lambda&& lambda) {
 #pragma optimize("", off)
 
 template <class T>
-void doNotOptimizeAway(T&& datum) {
-  datum = datum;
+void doNotOptimizeAway(T&& datum)
+{
+    datum = datum;
 }
 
 #pragma optimize("", on)
 
 #else
 template <class T>
-void doNotOptimizeAway(T&& datum) {
-  asm volatile("" : "+r" (datum));
+void doNotOptimizeAway(T&& datum)
+{
+    asm volatile("" : "+r" (datum));
 }
 #endif
 
