@@ -1,5 +1,6 @@
 #include "logging.h"
 #include "Platform.h"
+#include "StringPrintf.h"
 
 using std::string;
 
@@ -83,7 +84,8 @@ void LogMessage::Finish()
 {
     log_handler_(level_, filename_, line_, message_);
     if (level_ == LOGLEVEL_FATAL) {
-        throw FatalException(filename_, line_, message_);
+        string msg = stringPrintf("%s[%d]: %s", filename_, line_, message_.c_str());
+        throw traceback::RuntimeError(msg);
     }
 }
 
@@ -112,13 +114,3 @@ LogHandler* SetLogHandler(LogHandler* new_func)
     }
     return old;
 }
-
-FatalException::~FatalException() throw() 
-{
-}
-
-const char* FatalException::what() const throw() 
-{
-  return message_.c_str();
-}
-

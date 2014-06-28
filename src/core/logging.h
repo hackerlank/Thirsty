@@ -36,7 +36,7 @@
 #include <cstdint>
 #include <string>
 #include <exception>
-
+#include "traceback.h"
 
 enum LogLevel 
 {
@@ -198,24 +198,3 @@ typedef void LogHandler(LogLevel level,
 // below.
 LogHandler* SetLogHandler(LogHandler* new_func);
 
-class FatalException : public std::exception 
-{
-public:
-    FatalException(const char* filename, int line, const std::string& message)
-        : filename_(filename), line_(line), message_(message) 
-	{}
-    virtual ~FatalException() throw();
-
-    virtual const char* what() const throw();
-
-    const char* filename() const { return filename_; }
-    int line() const { return line_; }
-    const std::string& message() const { return message_; }
-
-private:
-    FatalException& operator = (const FatalException&);
-
-    const char*         filename_;
-    const int           line_;
-    const std::string   message_;
-};
