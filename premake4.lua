@@ -29,6 +29,7 @@ solution 'Thirsty'
         files
         {
             'src/**.h',
+            'src/**.hpp',
             'src/**.cpp',
             'src/**.c',
         }
@@ -50,6 +51,18 @@ solution 'Thirsty'
         libdirs
         {
             BOOST_ROOT .. '/stage/lib',
+        }
+        includedirs
+        {
+            'src',
+            'dep/double-conversion/src',
+            'dep/zlib/src',
+            BOOST_ROOT,
+        }
+        links
+        {
+            'zlib',
+            'double-conversion',
         }        
         end
         
@@ -66,7 +79,6 @@ solution 'Thirsty'
             'BOOST_ASIO_HAS_STD_CHRONO',
         }
         buildoptions{ '-std=c++11'}
-        end
         includedirs
         {
             'src',
@@ -78,7 +90,8 @@ solution 'Thirsty'
         {
             'zlib',
             'double-conversion',
-        }
+        }        
+        end
 
     project 'zlib'
         location 'build'
@@ -162,7 +175,21 @@ solution 'UnitTest'
         libdirs
         {
             BOOST_ROOT .. '/stage/lib',
-        }          
+        }
+        includedirs
+        {
+            'src',
+            'dep/gtest/include',
+            'dep/double-conversion/src',
+            'dep/zlib/src',
+            BOOST_ROOT,
+        }      
+        links
+        {           
+            'libgtest',
+            'double-conversion',
+            'zlib',
+        }        
         end
         
         if os.get() == 'linux' then
@@ -178,8 +205,6 @@ solution 'UnitTest'
             'BOOST_ASIO_HAS_STD_CHRONO',
         }
         buildoptions{ '-std=c++11'}
-        end
-
         includedirs
         {
             'src',
@@ -193,7 +218,8 @@ solution 'UnitTest'
             'libgtest',
             'double-conversion',
             'zlib',
-        }
+        }        
+        end
         
     project 'libgtest'
         location 'build/test'
