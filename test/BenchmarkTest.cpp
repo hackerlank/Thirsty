@@ -23,105 +23,134 @@
 
 using namespace std;
 
-void fun() {
-  static double x = 1;
-  ++x;
-  doNotOptimizeAway(x);
+void fun()
+{
+    static double x = 1;
+    ++x;
+    doNotOptimizeAway(x);
 }
-BENCHMARK(bmFun, n) { fun(); }
-BENCHMARK(bmRepeatedFun, n) {
-  FOR_EACH_RANGE (i, 0, n) {
+
+BENCHMARK(bmFun, n)
+{
     fun();
-  }
-}
-BENCHMARK_DRAW_LINE()
-
-BENCHMARK(gun, n) {
-  static double x = 1;
-  x *= 2000;
-  doNotOptimizeAway(x);
 }
 
-BENCHMARK_DRAW_LINE()
-
-BENCHMARK(baselinevector, n) {
-  vector<int> v;
-
-  BENCHMARK_SUSPEND {
-    v.resize(1000);
-  }
-
-  FOR_EACH_RANGE (i, 0, 100) {
-    v.push_back(42);
-  }
-}
-
-BENCHMARK_RELATIVE(bmVector, n) {
-  vector<int> v;
-  FOR_EACH_RANGE (i, 0, 100) {
-    v.resize(v.size() + 1, 42);
-  }
+BENCHMARK(bmRepeatedFun, n)
+{
+    FOR_EACH_RANGE(i, 0, n)
+    {
+        fun();
+    }
 }
 
 BENCHMARK_DRAW_LINE()
 
-BENCHMARK(superslow, n) {
-  this_thread::sleep_for(chrono::milliseconds(1));
+BENCHMARK(gun, n)
+{
+    static double x = 1;
+    x *= 2000;
+    doNotOptimizeAway(x);
+}
+
+BENCHMARK_DRAW_LINE()
+
+BENCHMARK(baselinevector, n)
+{
+    vector<int> v;
+
+    BENCHMARK_SUSPEND
+    {
+        v.resize(1000);
+    }
+
+        FOR_EACH_RANGE(i, 0, 100)
+    {
+        v.push_back(42);
+    }
+}
+
+BENCHMARK_RELATIVE(bmVector, n)
+{
+    vector<int> v;
+    FOR_EACH_RANGE(i, 0, 100)
+    {
+        v.resize(v.size() + 1, 42);
+    }
+}
+
+BENCHMARK_DRAW_LINE()
+
+BENCHMARK(superslow, n)
+{
+    this_thread::sleep_for(chrono::milliseconds(1));
 }
 
 BENCHMARK_DRAW_LINE()
 
 BENCHMARK(noMulti, n) {
-  fun();
+    fun();
 }
 
-BENCHMARK_MULTI(multiSimple, n) {
-  FOR_EACH_RANGE (i, 0, 10) {
-    fun();
-  }
-  return 10;
-}
-
-BENCHMARK_RELATIVE_MULTI(multiSimpleRel, n) {
-  FOR_EACH_RANGE (i, 0, 10) {
-    fun();
-    fun();
-  }
-  return 10;
-}
-
-BENCHMARK_MULTI(multiIterArgs, iter) {
-  FOR_EACH_RANGE (i, 0, 10 * iter) {
-    fun();
-  }
-  return 10 * iter;
-}
-
-BENCHMARK_RELATIVE_MULTI(multiIterArgsRel, iter) {
-  FOR_EACH_RANGE (i, 0, 10 * iter) {
-    fun();
-    fun();
-  }
-  return 10 * iter;
-}
-
-unsigned paramMulti(unsigned iter, unsigned num) {
-  for (unsigned i = 0; i < iter; ++i) {
-    for (unsigned j = 0; j < num; ++j) {
-      fun();
+BENCHMARK_MULTI(multiSimple, n)
+{
+    FOR_EACH_RANGE(i, 0, 10)
+    {
+        fun();
     }
-  }
-  return num * iter;
+    return 10;
 }
 
-unsigned paramMultiRel(unsigned iter, unsigned num) {
-  for (unsigned i = 0; i < iter; ++i) {
-    for (unsigned j = 0; j < num; ++j) {
-      fun();
-      fun();
+BENCHMARK_RELATIVE_MULTI(multiSimpleRel, n)
+{
+    FOR_EACH_RANGE(i, 0, 10)
+    {
+        fun();
+        fun();
     }
-  }
-  return num * iter;
+    return 10;
+}
+
+BENCHMARK_MULTI(multiIterArgs, iter)
+{
+    FOR_EACH_RANGE(i, 0, 10 * iter)
+    {
+        fun();
+    }
+    return 10 * iter;
+}
+
+BENCHMARK_RELATIVE_MULTI(multiIterArgsRel, iter)
+{
+    FOR_EACH_RANGE(i, 0, 10 * iter) {
+        fun();
+        fun();
+    }
+    return 10 * iter;
+}
+
+unsigned paramMulti(unsigned iter, unsigned num)
+{
+    for (unsigned i = 0; i < iter; ++i)
+    {
+        for (unsigned j = 0; j < num; ++j)
+        {
+            fun();
+        }
+    }
+    return num * iter;
+}
+
+unsigned paramMultiRel(unsigned iter, unsigned num)
+{
+    for (unsigned i = 0; i < iter; ++i)
+    {
+        for (unsigned j = 0; j < num; ++j)
+        {
+            fun();
+            fun();
+        }
+    }
+    return num * iter;
 }
 
 BENCHMARK_PARAM_MULTI(paramMulti, 1);

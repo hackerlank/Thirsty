@@ -25,45 +25,51 @@
 using namespace std;
 
 
-TEST(Conv, Integral2Integral) {
-  // Same size, different signs
-  int64_t s64 = numeric_limits<uint8_t>::max();
-  EXPECT_EQ(to<uint8_t>(s64), s64);
+TEST(Conv, Integral2Integral)
+{
+    // Same size, different signs
+    int64_t s64 = numeric_limits<uint8_t>::max();
+    EXPECT_EQ(to<uint8_t>(s64), s64);
 
-  s64 = numeric_limits<int8_t>::max();
-  EXPECT_EQ(to<int8_t>(s64), s64);
+    s64 = numeric_limits<int8_t>::max();
+    EXPECT_EQ(to<int8_t>(s64), s64);
 
-  s64 = numeric_limits<int32_t>::max();
-  EXPECT_ANY_THROW(to<int8_t>(s64));    // convert large to less
+    s64 = numeric_limits<int32_t>::max();
+    EXPECT_ANY_THROW(to<int8_t>(s64));    // convert large to less
 }
 
-TEST(Conv, Floating2Floating) {
-  float f1 = 1e3;
-  double d1 = to<double>(f1);
-  EXPECT_EQ(f1, d1);
+TEST(Conv, Floating2Floating)
+{
+    float f1 = 1e3;
+    double d1 = to<double>(f1);
+    EXPECT_EQ(f1, d1);
 
-  double d2 = 23.0;
-  auto f2 = to<float>(d2);
-  EXPECT_EQ(double(f2), d2);
+    double d2 = 23.0;
+    auto f2 = to<float>(d2);
+    EXPECT_EQ(double(f2), d2);
 
-  double invalidFloat = std::numeric_limits<double>::max();
-  EXPECT_ANY_THROW(to<float>(invalidFloat));
-  invalidFloat = -std::numeric_limits<double>::max();
-  EXPECT_ANY_THROW(to<float>(invalidFloat));
+    double invalidFloat = std::numeric_limits<double>::max();
+    EXPECT_ANY_THROW(to<float>(invalidFloat));
+    invalidFloat = -std::numeric_limits<double>::max();
+    EXPECT_ANY_THROW(to<float>(invalidFloat));
 
-  try {
-    auto shouldWork = to<float>(std::numeric_limits<double>::min());
-    // The value of `shouldWork' is an implementation defined choice
-    // between the following two alternatives.
-    EXPECT_TRUE(shouldWork == std::numeric_limits<float>::min() ||
-                shouldWork == 0.f);
-  } catch (...) {
-    EXPECT_TRUE(false);
-  }
+    try
+    {
+        auto shouldWork = to<float>(std::numeric_limits<double>::min());
+        // The value of `shouldWork' is an implementation defined choice
+        // between the following two alternatives.
+        EXPECT_TRUE(shouldWork == std::numeric_limits<float>::min() ||
+            shouldWork == 0.f);
+    }
+    catch (...)
+    {
+        EXPECT_TRUE(false);
+    }
 }
 
 
-TEST(Conv, testIntegral2String) {
+TEST(Conv, testIntegral2String)
+{
     char ch = 'X';
     EXPECT_EQ(to<string>(ch), "X");
     EXPECT_EQ(to<string>(uint8_t(-0)), "0");
@@ -73,7 +79,7 @@ TEST(Conv, testIntegral2String) {
     EXPECT_EQ(to<string>(int16_t(SHRT_MIN)), "-32768");
     EXPECT_EQ(to<string>(int16_t(SHRT_MAX)), "32767");
     EXPECT_EQ(to<string>(uint16_t(0)), "0");
-    EXPECT_EQ(to<string>(uint16_t(USHRT_MAX)), "65535");    
+    EXPECT_EQ(to<string>(uint16_t(USHRT_MAX)), "65535");
 
     EXPECT_EQ(to<string>(int32_t(-0)), "0");
     EXPECT_EQ(to<string>(int32_t(INT_MIN)), "-2147483648");
@@ -93,14 +99,16 @@ TEST(Conv, testIntegral2String) {
     EXPECT_EQ(to<string>(z), "2147483647");
 }
 
-TEST(Conv, testFloating2String) {
+TEST(Conv, testFloating2String)
+{
     EXPECT_EQ(to<string>(0.0f), "0");
     EXPECT_EQ(to<string>(0.5), "0.5");
     EXPECT_EQ(to<string>(10.25f), "10.25");
     EXPECT_EQ(to<string>(1.123e10), "11230000000");
 }
 
-TEST(Conv, testString2String) {
+TEST(Conv, testString2String)
+{
     string s = "hello, kitty";
     EXPECT_EQ(to<string>(s), s);
     StringPiece piece(s.data(), 5);
@@ -190,7 +198,8 @@ TEST(Conv, testString2Bool)
     EXPECT_EQ(buf5, sp5.begin());
 }
 
-TEST(Conv, StringPieceToDouble) {
+TEST(Conv, StringPieceToDouble)
+{
     string s = "2134123.125 zorro";
     StringPiece pc(s);
     EXPECT_EQ(to<double>(&pc), 2134123.125);
@@ -200,11 +209,13 @@ TEST(Conv, StringPieceToDouble) {
     EXPECT_EQ(to<double>(StringPiece(s.data(), pc.data())), 2134123.125);
 
     // Test NaN conversion
-    try {
+    try
+    {
         to<double>("not a number");
         EXPECT_TRUE(false);
     }
-    catch (const std::range_error &) {
+    catch (const std::range_error &)
+    {
     }
 
     EXPECT_TRUE(std::isnan(to<double>("NaN")));
@@ -214,12 +225,14 @@ TEST(Conv, StringPieceToDouble) {
     EXPECT_EQ(to<double>("-inf"), -numeric_limits<double>::infinity());
     EXPECT_EQ(to<double>("-infinity"), -numeric_limits<double>::infinity());
     EXPECT_THROW(to<double>("-infinitX"), std::range_error);
-   
-    try {
+
+    try
+    {
         to<double>(""); // empty string to double
         EXPECT_TRUE(false);
     }
-    catch (const std::range_error &) {
+    catch (const std::range_error &)
+    {
     }
 }
 
@@ -267,12 +280,14 @@ TEST(Conv, testEnum)
     EXPECT_EQ(i, 42);
     auto j = to<char>(x);
     EXPECT_EQ(j, 42);
-    try {
+    try
+    {
         auto i = to<char>(y);
         LOG(ERROR) << static_cast<unsigned int>(i);
         EXPECT_TRUE(false);
     }
-    catch (std::range_error& e) {
+    catch (std::range_error& e)
+    {
         //LOG(INFO) << e.what();
     }
 
@@ -299,16 +314,19 @@ TEST(Conv, testEnum)
     EXPECT_EQ("3000000000", s);
     auto e = to<E>(3000000000U);
     EXPECT_EQ(e, m);
-    try {
+    try
+    {
         auto i = to<int32_t>(m);
         LOG(ERROR) << to<uint32_t>(m);
         EXPECT_TRUE(false);
     }
-    catch (std::range_error& e) {
+    catch (std::range_error& e)
+    {
     }
 }
 
-TEST(Conv, NewUint64ToString) {
+TEST(Conv, NewUint64ToString)
+{
     char buf[21];
 
 #define THE_GREAT_EXPECTATIONS(n, len)                      \
@@ -318,7 +336,7 @@ TEST(Conv, NewUint64ToString) {
         auto s = string(#n);                                \
         s = s.substr(0, s.size() - 2);                      \
         EXPECT_EQ(s, buf);                                  \
-    } while (0)
+        } while (0)
 
     THE_GREAT_EXPECTATIONS(0UL, 1);
     THE_GREAT_EXPECTATIONS(1UL, 1);

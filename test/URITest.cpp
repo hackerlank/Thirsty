@@ -22,302 +22,318 @@
 
 using namespace std;
 
-namespace {
 
-}  // namespace
-
-TEST(Uri, Simple) {
-  {
-    string s("http://www.facebook.com/hello/world?query#fragment");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("www.facebook.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("www.facebook.com", u.authority());
-    EXPECT_EQ("/hello/world", u.path());
-    EXPECT_EQ("query", u.query());
-    EXPECT_EQ("fragment", u.fragment());
-    EXPECT_EQ(s, u.str());  // canonical
-  }
+TEST(Uri, Simple)
+{
+    {
+        string s("http://www.facebook.com/hello/world?query#fragment");
+        Uri u(s);
+        EXPECT_EQ("http", u.scheme());
+        EXPECT_EQ("", u.username());
+        EXPECT_EQ("", u.password());
+        EXPECT_EQ("www.facebook.com", u.host());
+        EXPECT_EQ(0, u.port());
+        EXPECT_EQ("www.facebook.com", u.authority());
+        EXPECT_EQ("/hello/world", u.path());
+        EXPECT_EQ("query", u.query());
+        EXPECT_EQ("fragment", u.fragment());
+        EXPECT_EQ(s, u.str());  // canonical
+    }
 
   {
-    string s("http://www.facebook.com:8080/hello/world?query#fragment");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("www.facebook.com", u.host());
-    EXPECT_EQ(8080, u.port());
-    EXPECT_EQ("www.facebook.com:8080", u.authority());
-    EXPECT_EQ("/hello/world", u.path());
-    EXPECT_EQ("query", u.query());
-    EXPECT_EQ("fragment", u.fragment());
-    EXPECT_EQ(s, u.str());  // canonical
-  }
-
-  {
-    string s("http://127.0.0.1:8080/hello/world?query#fragment");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("127.0.0.1", u.host());
-    EXPECT_EQ(8080, u.port());
-    EXPECT_EQ("127.0.0.1:8080", u.authority());
-    EXPECT_EQ("/hello/world", u.path());
-    EXPECT_EQ("query", u.query());
-    EXPECT_EQ("fragment", u.fragment());
-    EXPECT_EQ(s, u.str());  // canonical
-  }
-
-  {
-    string s("http://[::1]:8080/hello/world?query#fragment");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("[::1]", u.host());
-    EXPECT_EQ("::1", u.hostname());
-    EXPECT_EQ(8080, u.port());
-    EXPECT_EQ("[::1]:8080", u.authority());
-    EXPECT_EQ("/hello/world", u.path());
-    EXPECT_EQ("query", u.query());
-    EXPECT_EQ("fragment", u.fragment());
-    EXPECT_EQ(s, u.str());  // canonical
-  }
-
-  {
-    string s("http://[2401:db00:20:7004:face:0:29:0]:8080/hello/world?query");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]", u.host());
-    EXPECT_EQ("2401:db00:20:7004:face:0:29:0", u.hostname());
-    EXPECT_EQ(8080, u.port());
-    EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]:8080", u.authority());
-    EXPECT_EQ("/hello/world", u.path());
-    EXPECT_EQ("query", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());  // canonical
-  }
-
-  {
-    string s("http://[2401:db00:20:7004:face:0:29:0]/hello/world?query");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]", u.host());
-    EXPECT_EQ("2401:db00:20:7004:face:0:29:0", u.hostname());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]", u.authority());
-    EXPECT_EQ("/hello/world", u.path());
-    EXPECT_EQ("query", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());  // canonical
-  }
-
-  {
-    string s("http://user:pass@host.com/");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("user", u.username());
-    EXPECT_EQ("pass", u.password());
-    EXPECT_EQ("host.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("user:pass@host.com", u.authority());
-    EXPECT_EQ("/", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());
-  }
-
-  {
-    string s("http://user@host.com/");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("user", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("host.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("user@host.com", u.authority());
-    EXPECT_EQ("/", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());
-  }
-
-  {
-    string s("http://user:@host.com/");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("user", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("host.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("user@host.com", u.authority());
-    EXPECT_EQ("/", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ("http://user@host.com/", u.str());
-  }
-
-  {
-    string s("http://:pass@host.com/");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("pass", u.password());
-    EXPECT_EQ("host.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ(":pass@host.com", u.authority());
-    EXPECT_EQ("/", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());
-  }
-
-  {
-    string s("http://@host.com/");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("host.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("host.com", u.authority());
-    EXPECT_EQ("/", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ("http://host.com/", u.str());
-  }
-
-  {
-    string s("http://:@host.com/");
-    Uri u(s);
-    EXPECT_EQ("http", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("host.com", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("host.com", u.authority());
-    EXPECT_EQ("/", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ("http://host.com/", u.str());
-  }
-
-  {
-    string s("file:///etc/motd");
-    Uri u(s);
-    EXPECT_EQ("file", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("", u.authority());
-    EXPECT_EQ("/etc/motd", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());
-  }
-
-  {
-    string s("file:/etc/motd");
-    Uri u(s);
-    EXPECT_EQ("file", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("", u.authority());
-    EXPECT_EQ("/etc/motd", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ("file:///etc/motd", u.str());
-  }
-
-  {
-    string s("file://etc/motd");
-    Uri u(s);
-    EXPECT_EQ("file", u.scheme());
-    EXPECT_EQ("", u.username());
-    EXPECT_EQ("", u.password());
-    EXPECT_EQ("etc", u.host());
-    EXPECT_EQ(0, u.port());
-    EXPECT_EQ("etc", u.authority());
-    EXPECT_EQ("/motd", u.path());
-    EXPECT_EQ("", u.query());
-    EXPECT_EQ("", u.fragment());
-    EXPECT_EQ(s, u.str());
-  }
-
-  {
-    string s("2http://www.facebook.com");
-
-    try {
+      string s("http://www.facebook.com:8080/hello/world?query#fragment");
       Uri u(s);
-      CHECK(false) << "Control should not have reached here";
-    } catch (const std::invalid_argument& ex) {
-      EXPECT_TRUE(boost::algorithm::ends_with(ex.what(), s));
-    }
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("www.facebook.com", u.host());
+      EXPECT_EQ(8080, u.port());
+      EXPECT_EQ("www.facebook.com:8080", u.authority());
+      EXPECT_EQ("/hello/world", u.path());
+      EXPECT_EQ("query", u.query());
+      EXPECT_EQ("fragment", u.fragment());
+      EXPECT_EQ(s, u.str());  // canonical
   }
 
   {
-    string s("www[facebook]com");
-
-    try {
-      Uri u("http://" + s);
-      CHECK(false) << "Control should not have reached here";
-    } catch (const std::invalid_argument& ex) {
-      EXPECT_TRUE(boost::algorithm::ends_with(ex.what(), s));
-    }
-  }
-
-  {
-    string s("http://[::1:8080/hello/world?query#fragment");
-
-    try {
+      string s("http://127.0.0.1:8080/hello/world?query#fragment");
       Uri u(s);
-      CHECK(false) << "Control should not have reached here";
-    } catch (const std::invalid_argument& ex) {
-      // success
-    }
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("127.0.0.1", u.host());
+      EXPECT_EQ(8080, u.port());
+      EXPECT_EQ("127.0.0.1:8080", u.authority());
+      EXPECT_EQ("/hello/world", u.path());
+      EXPECT_EQ("query", u.query());
+      EXPECT_EQ("fragment", u.fragment());
+      EXPECT_EQ(s, u.str());  // canonical
   }
 
   {
-    string s("http://::1]:8080/hello/world?query#fragment");
-
-    try {
+      string s("http://[::1]:8080/hello/world?query#fragment");
       Uri u(s);
-      CHECK(false) << "Control should not have reached here";
-    } catch (const std::invalid_argument& ex) {
-      // success
-    }
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("[::1]", u.host());
+      EXPECT_EQ("::1", u.hostname());
+      EXPECT_EQ(8080, u.port());
+      EXPECT_EQ("[::1]:8080", u.authority());
+      EXPECT_EQ("/hello/world", u.path());
+      EXPECT_EQ("query", u.query());
+      EXPECT_EQ("fragment", u.fragment());
+      EXPECT_EQ(s, u.str());  // canonical
   }
 
   {
-    string s("http://::1:8080/hello/world?query#fragment");
-
-    try {
+      string s("http://[2401:db00:20:7004:face:0:29:0]:8080/hello/world?query");
       Uri u(s);
-      CHECK(false) << "Control should not have reached here";
-    } catch (const std::invalid_argument& ex) {
-      // success
-    }
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]", u.host());
+      EXPECT_EQ("2401:db00:20:7004:face:0:29:0", u.hostname());
+      EXPECT_EQ(8080, u.port());
+      EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]:8080", u.authority());
+      EXPECT_EQ("/hello/world", u.path());
+      EXPECT_EQ("query", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());  // canonical
   }
 
   {
-    string s("http://2401:db00:20:7004:face:0:29:0/hello/world?query");
-
-    try {
+      string s("http://[2401:db00:20:7004:face:0:29:0]/hello/world?query");
       Uri u(s);
-      CHECK(false) << "Control should not have reached here";
-    } catch (const std::invalid_argument& ex) {
-      // success
-    }
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]", u.host());
+      EXPECT_EQ("2401:db00:20:7004:face:0:29:0", u.hostname());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("[2401:db00:20:7004:face:0:29:0]", u.authority());
+      EXPECT_EQ("/hello/world", u.path());
+      EXPECT_EQ("query", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());  // canonical
+  }
+
+  {
+      string s("http://user:pass@host.com/");
+      Uri u(s);
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("user", u.username());
+      EXPECT_EQ("pass", u.password());
+      EXPECT_EQ("host.com", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("user:pass@host.com", u.authority());
+      EXPECT_EQ("/", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());
+  }
+
+  {
+      string s("http://user@host.com/");
+      Uri u(s);
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("user", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("host.com", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("user@host.com", u.authority());
+      EXPECT_EQ("/", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());
+  }
+
+  {
+      string s("http://user:@host.com/");
+      Uri u(s);
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("user", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("host.com", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("user@host.com", u.authority());
+      EXPECT_EQ("/", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ("http://user@host.com/", u.str());
+  }
+
+  {
+      string s("http://:pass@host.com/");
+      Uri u(s);
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("pass", u.password());
+      EXPECT_EQ("host.com", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ(":pass@host.com", u.authority());
+      EXPECT_EQ("/", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());
+  }
+
+  {
+      string s("http://@host.com/");
+      Uri u(s);
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("host.com", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("host.com", u.authority());
+      EXPECT_EQ("/", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ("http://host.com/", u.str());
+  }
+
+  {
+      string s("http://:@host.com/");
+      Uri u(s);
+      EXPECT_EQ("http", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("host.com", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("host.com", u.authority());
+      EXPECT_EQ("/", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ("http://host.com/", u.str());
+  }
+
+  {
+      string s("file:///etc/motd");
+      Uri u(s);
+      EXPECT_EQ("file", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("", u.authority());
+      EXPECT_EQ("/etc/motd", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());
+  }
+
+  {
+      string s("file:/etc/motd");
+      Uri u(s);
+      EXPECT_EQ("file", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("", u.authority());
+      EXPECT_EQ("/etc/motd", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ("file:///etc/motd", u.str());
+  }
+
+  {
+      string s("file://etc/motd");
+      Uri u(s);
+      EXPECT_EQ("file", u.scheme());
+      EXPECT_EQ("", u.username());
+      EXPECT_EQ("", u.password());
+      EXPECT_EQ("etc", u.host());
+      EXPECT_EQ(0, u.port());
+      EXPECT_EQ("etc", u.authority());
+      EXPECT_EQ("/motd", u.path());
+      EXPECT_EQ("", u.query());
+      EXPECT_EQ("", u.fragment());
+      EXPECT_EQ(s, u.str());
+  }
+
+  {
+      string s("2http://www.facebook.com");
+
+      try
+      {
+          Uri u(s);
+          CHECK(false) << "Control should not have reached here";
+      }
+      catch (const std::invalid_argument& ex)
+      {
+          EXPECT_TRUE(boost::algorithm::ends_with(ex.what(), s));
+      }
+  }
+
+  {
+      string s("www[facebook]com");
+
+      try
+      {
+          Uri u("http://" + s);
+          CHECK(false) << "Control should not have reached here";
+      }
+      catch (const std::invalid_argument& ex) 
+      {
+          EXPECT_TRUE(boost::algorithm::ends_with(ex.what(), s));
+      }
+  }
+
+  {
+      string s("http://[::1:8080/hello/world?query#fragment");
+
+      try
+      {
+          Uri u(s);
+          CHECK(false) << "Control should not have reached here";
+      }
+      catch (const std::invalid_argument& ex) 
+      {
+          // success
+      }
+  }
+
+  {
+      string s("http://::1]:8080/hello/world?query#fragment");
+
+      try
+      {
+          Uri u(s);
+          CHECK(false) << "Control should not have reached here";
+      }
+      catch (const std::invalid_argument& ex) 
+      {
+          // success
+      }
+  }
+
+  {
+      string s("http://::1:8080/hello/world?query#fragment");
+
+      try
+      {
+          Uri u(s);
+          CHECK(false) << "Control should not have reached here";
+      }
+      catch (const std::invalid_argument& ex) 
+      {
+          // success
+      }
+  }
+
+  {
+      string s("http://2401:db00:20:7004:face:0:29:0/hello/world?query");
+
+      try
+      {
+          Uri u(s);
+          CHECK(false) << "Control should not have reached here";
+      }
+      catch (const std::invalid_argument& ex) 
+      {
+          // success
+      }
   }
 }

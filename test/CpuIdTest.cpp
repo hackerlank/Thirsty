@@ -15,13 +15,18 @@
  */
 
 #include "core/CpuId.h"
-#include "core/logging.h"
 #include <gtest/gtest.h>
+#include <iostream>
 
-
-TEST(CpuId, Simple) {
-  // All CPUs should support MMX
-  CpuId id;
-  EXPECT_TRUE(id.mmx());
+TEST(CpuId, Simple)
+{
+    // All CPUs should support MMX
+    CpuId id;
+    EXPECT_TRUE(id.mmx());
 }
 
+TEST(CpuId, Output)
+{
+    CpuId id;
+    std::cout << id << std::endl;
+}

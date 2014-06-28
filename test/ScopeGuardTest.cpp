@@ -22,108 +22,116 @@
 
 using std::vector;
 
-double returnsDouble() {
-  return 0.0;
+double returnsDouble()
+{
+    return 0.0;
 }
 
-class MyFunctor {
- public:
-  explicit MyFunctor(int* ptr) : ptr_(ptr) {}
+class MyFunctor
+{
+public:
+    explicit MyFunctor(int* ptr) : ptr_(ptr)
+    {}
 
-  void operator()() {
-    ++*ptr_;
-  }
+    void operator()()
+    {
+        ++*ptr_;
+    }
 
- private:
-  int* ptr_;
+private:
+    int* ptr_;
 };
 
-TEST(ScopeGuard, DifferentWaysToBind) {
-  {
-    // There is implicit conversion from func pointer
-    // double (*)() to function<void()>.
-    ScopeGuard g = makeGuard(returnsDouble);
-  }
+TEST(ScopeGuard, DifferentWaysToBind)
+{
+    {
+        // There is implicit conversion from func pointer
+        // double (*)() to function<void()>.
+        ScopeGuard g = makeGuard(returnsDouble);
+    }
 
-  vector<int> v;
-  void (vector<int>::*push_back)(int const&) = &vector<int>::push_back;
+    vector<int> v;
+    void (vector<int>::*push_back)(int const&) = &vector<int>::push_back;
 
-  v.push_back(1);
-  {
-    // binding to member function.
-    ScopeGuard g = makeGuard(std::bind(&vector<int>::pop_back, &v));
-  }
-  EXPECT_EQ(0, v.size());
+    v.push_back(1);
+    {
+        // binding to member function.
+        ScopeGuard g = makeGuard(std::bind(&vector<int>::pop_back, &v));
+    }
+    EXPECT_EQ(0, v.size());
 
-  {
-    // bind member function with args. v is passed-by-value!
-    ScopeGuard g = makeGuard(std::bind(push_back, v, 2));
-  }
-  EXPECT_EQ(0, v.size()); // push_back happened on a copy of v... fail!
+    {
+        // bind member function with args. v is passed-by-value!
+        ScopeGuard g = makeGuard(std::bind(push_back, v, 2));
+    }
+    EXPECT_EQ(0, v.size()); // push_back happened on a copy of v... fail!
 
-  // pass in an argument by pointer so to avoid copy.
-  {
-    ScopeGuard g = makeGuard(std::bind(push_back, &v, 4));
-  }
-  EXPECT_EQ(1, v.size());
+    // pass in an argument by pointer so to avoid copy.
+    {
+        ScopeGuard g = makeGuard(std::bind(push_back, &v, 4));
+    }
+    EXPECT_EQ(1, v.size());
 
-  {
-    // pass in an argument by reference so to avoid copy.
-    ScopeGuard g = makeGuard(std::bind(push_back, std::ref(v), 4));
-  }
-  EXPECT_EQ(2, v.size());
+    {
+        // pass in an argument by reference so to avoid copy.
+        ScopeGuard g = makeGuard(std::bind(push_back, std::ref(v), 4));
+    }
+    EXPECT_EQ(2, v.size());
 
-  // lambda with a reference to v
-  {
-    ScopeGuard g = makeGuard([&] { v.push_back(5); });
-  }
-  EXPECT_EQ(3, v.size());
+    // lambda with a reference to v
+    {
+        ScopeGuard g = makeGuard([&] { v.push_back(5); });
+    }
+    EXPECT_EQ(3, v.size());
 
-  // lambda with a copy of v
-  {
-    ScopeGuard g = makeGuard([v] () mutable { v.push_back(6); });
-  }
-  EXPECT_EQ(3, v.size());
+    // lambda with a copy of v
+    {
+        ScopeGuard g = makeGuard([v]() mutable { v.push_back(6); });
+    }
+    EXPECT_EQ(3, v.size());
 
-  // functor object
-  int n = 0;
-  {
-    MyFunctor f(&n);
-    ScopeGuard g = makeGuard(f);
-  }
-  EXPECT_EQ(1, n);
+    // functor object
+    int n = 0;
+    {
+        MyFunctor f(&n);
+        ScopeGuard g = makeGuard(f);
+    }
+    EXPECT_EQ(1, n);
 
-  // temporary functor object
-  n = 0;
-  {
-    ScopeGuard g = makeGuard(MyFunctor(&n));
-  }
-  EXPECT_EQ(1, n);
+    // temporary functor object
+    n = 0;
+    {
+        ScopeGuard g = makeGuard(MyFunctor(&n));
+    }
+    EXPECT_EQ(1, n);
 
-  // Use auto instead of ScopeGuard
-  n = 2;
-  {
-    auto g = makeGuard(MyFunctor(&n));
-  }
-  EXPECT_EQ(3, n);
+    // Use auto instead of ScopeGuard
+    n = 2;
+    {
+        auto g = makeGuard(MyFunctor(&n));
+    }
+    EXPECT_EQ(3, n);
 
-  // Use const auto& instead of ScopeGuard
-  n = 10;
-  {
-    const auto& g = makeGuard(MyFunctor(&n));
-  }
-  EXPECT_EQ(11, n);
+    // Use const auto& instead of ScopeGuard
+    n = 10;
+    {
+        const auto& g = makeGuard(MyFunctor(&n));
+    }
+    EXPECT_EQ(11, n);
 }
 
 #ifdef __GNUC__
-TEST(ScopeGuard, GuardException) {
-  EXPECT_DEATH({
-    ScopeGuard g = makeGuard([&] {
-      throw std::runtime_error("destructors should never throw!");
-    });
-  },
-  "destructors should never throw!"
-  );
+TEST(ScopeGuard, GuardException)
+{
+    EXPECT_DEATH(
+    {
+        ScopeGuard g = makeGuard([&]
+        {
+            throw std::runtime_error("destructors should never throw!");
+        });
+    },
+    "destructors should never throw!"
+    );
 }
 #endif
 
@@ -132,35 +140,41 @@ TEST(ScopeGuard, GuardException) {
  * db successfuly. Here is a schematic of how you would accomplish
  * this with scope guard.
  */
-void testUndoAction(bool failure) {
-  vector<int64_t> v;
-  { // defines a "mini" scope
+void testUndoAction(bool failure)
+{
+    vector<int64_t> v;
+    { // defines a "mini" scope
 
-    // be optimistic and insert this into memory
-    v.push_back(1);
+        // be optimistic and insert this into memory
+        v.push_back(1);
 
-    // The guard is triggered to undo the insertion unless dismiss() is called.
-    ScopeGuard guard = makeGuard([&] { v.pop_back(); });
+        // The guard is triggered to undo the insertion unless dismiss() is called.
+        ScopeGuard guard = makeGuard([&] { v.pop_back(); });
 
-    // Do some action; Use the failure argument to pretend
-    // if it failed or succeeded.
+        // Do some action; Use the failure argument to pretend
+        // if it failed or succeeded.
 
-    // if there was no failure, dismiss the undo guard action.
-    if (!failure) {
-      guard.dismiss();
+        // if there was no failure, dismiss the undo guard action.
+        if (!failure)
+        {
+            guard.dismiss();
+        }
+    } // all stack allocated in the mini-scope will be destroyed here.
+
+    if (failure)
+    {
+        EXPECT_EQ(0, v.size()); // the action failed => undo insertion
     }
-  } // all stack allocated in the mini-scope will be destroyed here.
-
-  if (failure) {
-    EXPECT_EQ(0, v.size()); // the action failed => undo insertion
-  } else {
-    EXPECT_EQ(1, v.size()); // the action succeeded => keep insertion
-  }
+    else
+    {
+        EXPECT_EQ(1, v.size()); // the action succeeded => keep insertion
+    }
 }
 
-TEST(ScopeGuard, UndoAction) {
-  testUndoAction(true);
-  testUndoAction(false);
+TEST(ScopeGuard, UndoAction)
+{
+    testUndoAction(true);
+    testUndoAction(false);
 }
 
 /**
@@ -182,108 +196,141 @@ TEST(ScopeGuard, UndoAction) {
  *
  * We can approximate this behavior in C++ with ScopeGuard.
  */
-enum class ErrorBehavior {
-  SUCCESS,
-  HANDLED_ERROR,
-  UNHANDLED_ERROR,
+enum class ErrorBehavior
+{
+    SUCCESS,
+    HANDLED_ERROR,
+    UNHANDLED_ERROR,
 };
 
-void testFinally(ErrorBehavior error) {
-  bool cleanupOccurred = false;
+void testFinally(ErrorBehavior error)
+{
+    bool cleanupOccurred = false;
 
-  try {
-    ScopeGuard guard = makeGuard([&] { cleanupOccurred = true; });
+    try
+    {
+        ScopeGuard guard = makeGuard([&] { cleanupOccurred = true; });
 
-    try {
-      if (error == ErrorBehavior::HANDLED_ERROR) {
-        throw std::runtime_error("throwing an expected error");
-      } else if (error == ErrorBehavior::UNHANDLED_ERROR) {
-        throw "never throw raw strings";
-      }
-    } catch (const std::runtime_error&) {
+        try
+        {
+            if (error == ErrorBehavior::HANDLED_ERROR)
+            {
+                throw std::runtime_error("throwing an expected error");
+            }
+            else if (error == ErrorBehavior::UNHANDLED_ERROR)
+            {
+                throw "never throw raw strings";
+            }
+        }
+        catch (const std::runtime_error&)
+        {
+        }
     }
-  } catch (...) {
-    // Outer catch to swallow the error for the UNHANDLED_ERROR behavior
-  }
+    catch (...)
+    {
+        // Outer catch to swallow the error for the UNHANDLED_ERROR behavior
+    }
 
-  EXPECT_TRUE(cleanupOccurred);
+    EXPECT_TRUE(cleanupOccurred);
 }
 
-TEST(ScopeGuard, TryCatchFinally) {
-  testFinally(ErrorBehavior::SUCCESS);
-  testFinally(ErrorBehavior::HANDLED_ERROR);
-  testFinally(ErrorBehavior::UNHANDLED_ERROR);
+TEST(ScopeGuard, TryCatchFinally)
+{
+    testFinally(ErrorBehavior::SUCCESS);
+    testFinally(ErrorBehavior::HANDLED_ERROR);
+    testFinally(ErrorBehavior::UNHANDLED_ERROR);
 }
 
-TEST(ScopeGuard, TEST_SCOPE_EXIT) {
-  int x = 0;
-  {
-    SCOPE_EXIT { ++x; };
-    EXPECT_EQ(0, x);
-  }
-  EXPECT_EQ(1, x);
+TEST(ScopeGuard, TEST_SCOPE_EXIT)
+{
+    int x = 0;
+    {
+        SCOPE_EXIT{ ++x; };
+        EXPECT_EQ(0, x);
+    }
+    EXPECT_EQ(1, x);
 }
 
-class Foo {
+class Foo
+{
 public:
-  Foo() {}
-  ~Foo() {
-    try {
-      auto e = std::current_exception();
-      int test = 0;
-      {
-        SCOPE_EXIT { ++test; };
-        EXPECT_EQ(0, test);
-      }
-      EXPECT_EQ(1, test);
-    } catch (const std::exception& ex) {
-      LOG(FATAL) << "Unexpected exception: " << ex.what();
+    Foo() {}
+    ~Foo()
+    {
+        try
+        {
+            auto e = std::current_exception();
+            int test = 0;
+            {
+                SCOPE_EXIT{ ++test; };
+                EXPECT_EQ(0, test);
+            }
+            EXPECT_EQ(1, test);
+        }
+        catch (const std::exception& ex) {
+            LOG(FATAL) << "Unexpected exception: " << ex.what();
+        }
     }
-  }
 };
 
-TEST(ScopeGuard, TEST_SCOPE_FAILURE2) {
-  try {
-    Foo f;
-    throw std::runtime_error("test");
-  } catch (...) {
-  }
-}
-
-void testScopeFailAndScopeSuccess(ErrorBehavior error, bool expectFail) {
-  bool scopeFailExecuted = false;
-  bool scopeSuccessExecuted = false;
-
-  try {
-    SCOPE_FAIL { scopeFailExecuted = true; };
-    SCOPE_SUCCESS { scopeSuccessExecuted = true; };
-
-    try {
-      if (error == ErrorBehavior::HANDLED_ERROR) {
-        throw std::runtime_error("throwing an expected error");
-      } else if (error == ErrorBehavior::UNHANDLED_ERROR) {
-        throw "never throw raw strings";
-      }
-    } catch (const std::runtime_error&) {
+TEST(ScopeGuard, TEST_SCOPE_FAILURE2)
+{
+    try
+    {
+        Foo f;
+        throw std::runtime_error("test");
     }
-  } catch (...) {
-    // Outer catch to swallow the error for the UNHANDLED_ERROR behavior
-  }
-
-  EXPECT_EQ(expectFail, scopeFailExecuted);
-  EXPECT_EQ(!expectFail, scopeSuccessExecuted);
+    catch (...) {
+    }
 }
 
-TEST(ScopeGuard, TEST_SCOPE_FAIL_AND_SCOPE_SUCCESS) {
-  testScopeFailAndScopeSuccess(ErrorBehavior::SUCCESS, false);
-  testScopeFailAndScopeSuccess(ErrorBehavior::HANDLED_ERROR, false);
-  testScopeFailAndScopeSuccess(ErrorBehavior::UNHANDLED_ERROR, true);
+void testScopeFailAndScopeSuccess(ErrorBehavior error, bool expectFail)
+{
+    bool scopeFailExecuted = false;
+    bool scopeSuccessExecuted = false;
+
+    try
+    {
+        SCOPE_FAIL{ scopeFailExecuted = true; };
+        SCOPE_SUCCESS{ scopeSuccessExecuted = true; };
+
+        try
+        {
+            if (error == ErrorBehavior::HANDLED_ERROR)
+            {
+                throw std::runtime_error("throwing an expected error");
+            }
+            else if (error == ErrorBehavior::UNHANDLED_ERROR)
+            {
+                throw "never throw raw strings";
+            }
+        }
+        catch (const std::runtime_error&)
+        {
+        }
+    }
+    catch (...)
+    {
+        // Outer catch to swallow the error for the UNHANDLED_ERROR behavior
+    }
+
+    EXPECT_EQ(expectFail, scopeFailExecuted);
+    EXPECT_EQ(!expectFail, scopeSuccessExecuted);
 }
 
-TEST(ScopeGuard, TEST_SCOPE_SUCCESS_THROW) {
-  auto lambda = []() {
-    SCOPE_SUCCESS { throw std::runtime_error("ehm"); };
-  };
-  EXPECT_THROW(lambda(), std::runtime_error);
+TEST(ScopeGuard, TEST_SCOPE_FAIL_AND_SCOPE_SUCCESS)
+{
+    testScopeFailAndScopeSuccess(ErrorBehavior::SUCCESS, false);
+    testScopeFailAndScopeSuccess(ErrorBehavior::HANDLED_ERROR, false);
+    testScopeFailAndScopeSuccess(ErrorBehavior::UNHANDLED_ERROR, true);
+}
+
+TEST(ScopeGuard, TEST_SCOPE_SUCCESS_THROW)
+{
+    auto lambda = []()
+    {
+        SCOPE_SUCCESS{ throw std::runtime_error("ehm"); };
+    };
+    EXPECT_THROW(lambda(), std::runtime_error);
 }
 
