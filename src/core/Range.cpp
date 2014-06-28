@@ -19,7 +19,7 @@
 
 #include "Range.h"
 #include <iostream>
-
+#include "Platform.h"
 
 
 /**
@@ -28,27 +28,32 @@
 const AsciiCaseSensitive asciiCaseSensitive = AsciiCaseSensitive();
 const AsciiCaseInsensitive asciiCaseInsensitive = AsciiCaseInsensitive();
 
-std::ostream& operator<<(std::ostream& os, const StringPiece& piece) {
-  os.write(piece.start(), piece.size());
-  return os;
+std::ostream& operator<<(std::ostream& os, const StringPiece& piece)
+{
+    os.write(piece.start(), piece.size());
+    return os;
 }
 
 namespace detail {
 
 size_t qfind_first_byte_of_memchr(const StringPiece& haystack,
-                                  const StringPiece& needles) {
-  size_t best = haystack.size();
-  for (char needle: needles) {
-    const void* ptr = memchr(haystack.data(), needle, best);
-    if (ptr) {
-      auto found = static_cast<const char*>(ptr) - haystack.data();
-      best = std::min<size_t>(best, found);
+                                  const StringPiece& needles)
+{
+    size_t best = haystack.size();
+    for (char needle : needles)
+    {
+        const void* ptr = memchr(haystack.data(), needle, best);
+        if (ptr)
+        {
+            auto found = static_cast<const char*>(ptr)-haystack.data();
+            best = std::min<size_t>(best, found);
+        }
     }
-  }
-  if (best == haystack.size()) {
-    return StringPiece::npos;
-  }
-  return best;
+    if (best == haystack.size())
+    {
+        return StringPiece::npos;
+    }
+    return best;
 }
 
 }  // namespace detail
@@ -67,27 +72,31 @@ static_assert(kMinPageSize >= 16,
 // Aho, Hopcroft, and Ullman refer to this trick in "The Design and Analysis
 // of Computer Algorithms" (1974), but the best description is here:
 // http://research.swtch.com/sparse
-class FastByteSet {
- public:
-  FastByteSet() : size_(0) { }  // no init of arrays required!
+class FastByteSet
+{
+public:
+    FastByteSet() : size_(0) { }  // no init of arrays required!
 
-  inline void add(uint8_t i) {
-    if (!contains(i)) {
-      dense_[size_] = i;
-      sparse_[i] = size_;
-      size_++;
+    inline void add(uint8_t i)
+    {
+        if (!contains(i))
+        {
+            dense_[size_] = i;
+            sparse_[i] = size_;
+            size_++;
+        }
     }
-  }
-  inline bool contains(uint8_t i) const {
-    DCHECK_LE(size_, 256);
-    return sparse_[i] < size_ && dense_[sparse_[i]] == i;
-  }
+    inline bool contains(uint8_t i) const
+    {
+        DCHECK_LE(size_, 256);
+        return sparse_[i] < size_ && dense_[sparse_[i]] == i;
+    }
 
- private:
-  uint16_t size_;  // can't use uint8_t because it would overflow if all
-                   // possible values were inserted.
-  uint8_t sparse_[256];
-  uint8_t dense_[256];
+private:
+    uint16_t size_;  // can't use uint8_t because it would overflow if all
+    // possible values were inserted.
+    uint8_t sparse_[256];
+    uint8_t dense_[256];
 };
 
 }  // namespace
@@ -95,37 +104,45 @@ class FastByteSet {
 namespace detail {
 
 size_t qfind_first_byte_of_byteset(const StringPiece& haystack,
-                                   const StringPiece& needles) {
-  FastByteSet s;
-  for (auto needle: needles) {
-    s.add(needle);
-  }
-  for (size_t index = 0; index < haystack.size(); ++index) {
-    if (s.contains(haystack[index])) {
-      return index;
+                                   const StringPiece& needles)
+{
+    FastByteSet s;
+    for (auto needle : needles)
+    {
+        s.add(needle);
     }
-  }
-  return StringPiece::npos;
+    for (size_t index = 0; index < haystack.size(); ++index)
+    {
+        if (s.contains(haystack[index])) {
+            return index;
+        }
+    }
+    return StringPiece::npos;
 }
 
 size_t qfind_first_byte_of_nosse(const StringPiece& haystack,
-                                 const StringPiece& needles) {
-  if (needles.empty() || haystack.empty()) {
-    return StringPiece::npos;
-  }
-  // The thresholds below were empirically determined by benchmarking.
-  // This is not an exact science since it depends on the CPU, the size of
-  // needles, and the size of haystack.
-  if (haystack.size() == 1 ||
-      (haystack.size() < 4 && needles.size() <= 16)) {
-    return qfind_first_of(haystack, needles, asciiCaseSensitive);
-  } else if ((needles.size() >= 4 && haystack.size() <= 10) ||
-             (needles.size() >= 16 && haystack.size() <= 64) ||
-             needles.size() >= 32) {
-    return qfind_first_byte_of_byteset(haystack, needles);
-  }
+                                 const StringPiece& needles)
+{
+    if (needles.empty() || haystack.empty())
+    {
+        return StringPiece::npos;
+    }
+    // The thresholds below were empirically determined by benchmarking.
+    // This is not an exact science since it depends on the CPU, the size of
+    // needles, and the size of haystack.
+    if (haystack.size() == 1 ||
+        (haystack.size() < 4 && needles.size() <= 16))
+    {
+        return qfind_first_of(haystack, needles, asciiCaseSensitive);
+    }
+    else if ((needles.size() >= 4 && haystack.size() <= 10) ||
+        (needles.size() >= 16 && haystack.size() <= 64) ||
+        needles.size() >= 32)
+    {
+        return qfind_first_byte_of_byteset(haystack, needles);
+    }
 
-  return qfind_first_byte_of_memchr(haystack, needles);
+    return qfind_first_byte_of_memchr(haystack, needles);
 }
 
 }  // namespace detail
