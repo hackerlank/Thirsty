@@ -35,7 +35,7 @@
 #include <double-conversion.h> // V8 JavaScript implementation
 
 #define FOLLY_RANGE_CHECK(condition, message)                           \
-    ((condition) ? (void)0 : throw std::range_error(                    \
+    ((condition) ? (void)0 : throw traceback::RangeError(               \
     (__FILE__ "(" + std::to_string((long long int) __LINE__) + "): "    \
     + (message)).c_str()))
 
@@ -103,10 +103,10 @@ inline uint32_t digits10(uint64_t v)
     uint32_t result = 1;
     for (;;) 
     {
-        if (v < 10) return result;
-        if (v < 100) return result + 1;
-        if (v < 1000) return result + 2;
-        if (v < 10000) return result + 3;
+        if LIKELY((v < 10)) return result;
+        if LIKELY((v < 100)) return result + 1;
+        if LIKELY((v < 1000)) return result + 2;
+        if LIKELY((v < 10000)) return result + 3;
         // Skip ahead by 4 orders of magnitude
         v /= 10000U;
         result += 4;
@@ -280,7 +280,8 @@ toAppend(
   Src value,
   Tgt * result,
   double_conversion::DoubleToStringConverter::DtoaMode mode,
-  unsigned int numDigits) {
+  unsigned int numDigits) 
+{
     using namespace double_conversion;
     DoubleToStringConverter
         conv(DoubleToStringConverter::NO_FLAGS,
@@ -291,7 +292,8 @@ toAppend(
         1);  // max trailing padding zeros
     char buffer[256];
     StringBuilder builder(buffer, sizeof(buffer));
-    switch (mode) {
+    switch (mode) 
+    {
     case DoubleToStringConverter::SHORTEST:
         conv.ToShortest(value, &builder);
         break;
@@ -332,7 +334,8 @@ inline void toAppend(std::string* ) {}
  */
 template <class T, class... Ts>
 typename std::enable_if<sizeof...(Ts) >= 1>::type
-toAppend(std::string* result, const T& v, const Ts&... vs) {
+toAppend(std::string* result, const T& v, const Ts&... vs) 
+{
     toAppend(result, v);
     toAppend(result, vs...);
 }
@@ -342,7 +345,8 @@ toAppend(std::string* result, const T& v, const Ts&... vs) {
  */
 template <class Delimiter, class Tgt>
 typename std::enable_if<IsSomeString<Tgt>::value>::type
-toAppendDelim(Tgt* result, const Delimiter& delim) {
+toAppendDelim(Tgt* result, const Delimiter& delim) 
+{
 }
 
 /**
@@ -350,7 +354,8 @@ toAppendDelim(Tgt* result, const Delimiter& delim) {
  */
 template <class Delimiter, class T, class Tgt>
 typename std::enable_if<IsSomeString<Tgt>::value>::type
-toAppendDelim(Tgt* tgt, const Delimiter& delim, const T& v) {
+toAppendDelim(Tgt* tgt, const Delimiter& delim, const T& v) 
+{
     toAppend(tgt, v);
 }
 
@@ -359,7 +364,8 @@ toAppendDelim(Tgt* tgt, const Delimiter& delim, const T& v) {
  */
 template <class Delimiter, class T, class... Ts>
 typename std::enable_if<sizeof...(Ts) >= 1>::type
-toAppendDelim(std::string* result, const Delimiter& delim, const T& v, const Ts&... vs) {
+toAppendDelim(std::string* result, const Delimiter& delim, const T& v, const Ts&... vs) 
+{
     toAppend(result, v, delim);
     toAppendDelim(result, delim, vs...);
 }
@@ -372,7 +378,8 @@ template <class Tgt, class Delim, class Src>
 typename std::enable_if<
     IsSomeString<Tgt>::value && std::is_same<Tgt, Src>::value,
     Tgt>::type
-toDelim(const Delim& delim, const Src & value) {
+toDelim(const Delim& delim, const Src & value) 
+{
     return value;
 }
 
@@ -384,7 +391,8 @@ template <class Tgt, class Delim, class... Ts>
 typename std::enable_if<
     IsSomeString<Tgt>::value && sizeof...(Ts) >= 1,
     Tgt>::type
-toDelim(const Delim& delim, const Ts&... vs) {
+toDelim(const Delim& delim, const Ts&... vs) 
+{
     Tgt result;
     toAppendDelim(&result, delim, vs...);
     return std::move(result);
@@ -410,7 +418,8 @@ template <class Tgt, class Src>
 typename std::enable_if<
     IsSomeString<Tgt>::value && std::is_same<Tgt, Src>::value,
     Tgt>::type
-to(const Src& value) {
+to(const Src& value) 
+{
     return value;
 }
 
@@ -477,7 +486,8 @@ template <class T> struct MaxString
 // still not overflow uint16_t.
 const int32_t OOR = 10000;
 
-ALIGN(16) const uint16_t shift1[] = {
+ALIGN(16) const uint16_t shift1[] = 
+{
     OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR,  // 0-9
     OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR,  //  10
     OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR, OOR,  //  20
@@ -755,9 +765,11 @@ typename std::enable_if<
     std::is_integral<Tgt>::value
     && !std::is_same<typename std::remove_cv<Tgt>::type, bool>::value,
     Tgt>::type
-to(StringPiece* src) {
+to(StringPiece* src) 
+{
     auto b = src->data(), past = src->data() + src->size();
-    for (;; ++b) {
+    for (;; ++b) 
+    {
         FOLLY_RANGE_CHECK(b < past, "No digits found in input string");
         if (!isspace(*b)) break;
     }
@@ -766,12 +778,16 @@ to(StringPiece* src) {
 
     // First digit is customized because we test for sign
     bool negative = false;
-    /* static */ if (std::is_signed<Tgt>::value) {
-        if (!isdigit(*m)) {
-            if (*m == '-') {
+    /* static */ if (std::is_signed<Tgt>::value) 
+    {
+        if (!isdigit(*m)) 
+        {
+            if (*m == '-') 
+            {
                 negative = true;
             }
-            else {
+            else 
+            {
                 FOLLY_RANGE_CHECK(*m == '+', "Invalid leading character in conversion"
                     " to integral");
             }
@@ -784,16 +800,20 @@ to(StringPiece* src) {
     m = detail::findFirstNonDigit<Tgt>(m + 1, past);
 
     Tgt result;
-    /* static */ if (!std::is_signed<Tgt>::value) {
+    /* static */ if (!std::is_signed<Tgt>::value) 
+    {
         result = detail::digits_to<typename std::make_unsigned<Tgt>::type>(b, m);
     }
-    else {
+    else 
+    {
         auto t = detail::digits_to<typename std::make_unsigned<Tgt>::type>(b, m);
-        if (negative) {
+        if (negative) 
+        {
             result = -t;
             FOLLY_RANGE_CHECK(result <= 0, "Negative overflow");
         }
-        else {
+        else 
+        {
             result = t;
             FOLLY_RANGE_CHECK(result >= 0, "Overflow");
         }
@@ -811,7 +831,8 @@ template <class Tgt>
 typename std::enable_if<
     std::is_same<typename std::remove_cv<Tgt>::type, bool>::value,
     Tgt>::type
-to(StringPiece* src) {
+to(StringPiece* src) 
+{
     return detail::str_to_bool(src);
 }
 
@@ -823,7 +844,8 @@ template <class Tgt>
 typename std::enable_if<
     std::is_integral<Tgt>::value,
     Tgt>::type
-to(StringPiece src) {
+to(StringPiece src) 
+{
     Tgt result = to<Tgt>(&src);
     detail::enforceWhitespace(src.data(), src.data() + src.size());
     return result;
@@ -842,7 +864,8 @@ template <class Tgt>
 inline typename std::enable_if<
     std::is_floating_point<Tgt>::value,
     Tgt>::type
-to(StringPiece *const src) {
+to(StringPiece *const src) 
+{
     using namespace double_conversion;
     static StringToDoubleConverter
         conv(StringToDoubleConverter::ALLOW_TRAILING_JUNK
@@ -858,13 +881,16 @@ to(StringPiece *const src) {
     auto result = conv.StringToDouble(src->data(), src->size(),
         &length); // processed char count
 
-    if (!std::isnan(result)) {
+    if (!std::isnan(result)) 
+    {
         src->advance(length);
         return result;
     }
 
-    for (;; src->advance(1)) {
-        if (src->empty()) {
+    for (;; src->advance(1)) 
+    {
+        if (src->empty()) 
+        {
             throw std::range_error("Unable to convert an empty string"
                 " to a floating point value.");
         }
@@ -875,16 +901,19 @@ to(StringPiece *const src) {
 
     // Was that "inf[inity]"?
     if (src->size() >= 3 && toupper((*src)[0]) == 'I'
-        && toupper((*src)[1]) == 'N' && toupper((*src)[2]) == 'F') {
+        && toupper((*src)[1]) == 'N' && toupper((*src)[2]) == 'F') 
+    {
         if (src->size() >= 8 &&
             toupper((*src)[3]) == 'I' &&
             toupper((*src)[4]) == 'N' &&
             toupper((*src)[5]) == 'I' &&
             toupper((*src)[6]) == 'T' &&
-            toupper((*src)[7]) == 'Y') {
+            toupper((*src)[7]) == 'Y') 
+        {
             src->advance(8);
         }
-        else {
+        else 
+        {
             src->advance(3);
         }
         return std::numeric_limits<Tgt>::infinity();
@@ -893,16 +922,19 @@ to(StringPiece *const src) {
     // Was that "-inf[inity]"?
     if (src->size() >= 4 && toupper((*src)[0]) == '-'
         && toupper((*src)[1]) == 'I' && toupper((*src)[2]) == 'N'
-        && toupper((*src)[3]) == 'F') {
+        && toupper((*src)[3]) == 'F') 
+    {
         if (src->size() >= 9 &&
             toupper((*src)[4]) == 'I' &&
             toupper((*src)[5]) == 'N' &&
             toupper((*src)[6]) == 'I' &&
             toupper((*src)[7]) == 'T' &&
-            toupper((*src)[8]) == 'Y') {
+            toupper((*src)[8]) == 'Y') 
+        {
             src->advance(9);
         }
-        else {
+        else 
+        {
             src->advance(4);
         }
         return -std::numeric_limits<Tgt>::infinity();
@@ -910,7 +942,8 @@ to(StringPiece *const src) {
 
     // "nan"?
     if (src->size() >= 3 && toupper((*src)[0]) == 'N'
-        && toupper((*src)[1]) == 'A' && toupper((*src)[2]) == 'N') {
+        && toupper((*src)[1]) == 'A' && toupper((*src)[2]) == 'N') 
+    {
         src->advance(3);
         return std::numeric_limits<Tgt>::quiet_NaN();
     }
@@ -920,7 +953,8 @@ to(StringPiece *const src) {
         toupper((*src)[0]) == '-' &&
         toupper((*src)[1]) == 'N' &&
         toupper((*src)[2]) == 'A' &&
-        toupper((*src)[3]) == 'N') {
+        toupper((*src)[3]) == 'N') 
+    {
         src->advance(4);
         return -std::numeric_limits<Tgt>::quiet_NaN();
     }
@@ -938,7 +972,8 @@ template <class Tgt>
 typename std::enable_if<
     std::is_floating_point<Tgt>::value,
     Tgt>::type
-to(StringPiece src) {
+to(StringPiece src) 
+{
     Tgt result = to<double>(&src);
     detail::enforceWhitespace(src.data(), src.data() + src.size());
     return result;

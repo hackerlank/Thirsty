@@ -26,8 +26,10 @@ inline bool bool_str_cmp(const char** b, size_t len, const char* value)
     const char* p = *b;
     const char* e = *b + len;
     const char* v = value;
-    while (*v != '\0') {
-        if (p == e || tolower(*p) != *v) { // value is already lowercase
+    while (*v != '\0') 
+    {
+        if (p == e || tolower(*p) != *v) // value is already lowercase
+        {
             return false;
         }
         ++p;
@@ -41,7 +43,7 @@ inline bool bool_str_cmp(const char** b, size_t len, const char* value)
 bool str_to_bool(StringPiece* src)
 {
     auto b = src->begin(), e = src->end();
-    for (;; ++b) 
+    for (;; ++b)
     {
         FOLLY_RANGE_CHECK(b < e,
             "No non-whitespace characters found in input string");
@@ -50,7 +52,8 @@ bool str_to_bool(StringPiece* src)
 
     bool result;
     size_t len = e - b;
-    switch (*b) {
+    switch (*b)
+    {
     case '0':
     case '1':
     {
