@@ -1,7 +1,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
-#include "net/TCPServer.h"
+#include "net/TcpServer.h"
 #include "core/Conv.h"
 
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
         cout << typeid(ex).name() << ": " << ex.what() << endl;
         return 1;
     }
-    
+
 
     return 0;
 }

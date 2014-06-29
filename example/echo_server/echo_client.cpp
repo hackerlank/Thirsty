@@ -3,7 +3,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-#include "net/TCPClient.h"
+#include "net/TcpClient.h"
 #include "core/Conv.h"
 #include "core/Range.h"
 
@@ -16,7 +16,7 @@ void OnError(int32_t error, const string& msg)
 }
 
 TcpClientPtr CreateClient(boost::asio::io_service& io_service,
-                          const std::string& host, 
+                          const std::string& host,
                           int16_t port)
 {
     TcpClientPtr client = std::make_shared<TcpClient>(io_service, OnError);
