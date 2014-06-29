@@ -479,3 +479,182 @@ TEST(StringUtils, join)
     join("_", input4, output);
     EXPECT_EQ(output, "_f_a_c_e_b_o_o_k_");
 }
+
+static double pow2(int exponent) 
+{
+    return double(int64_t(1) << exponent);
+}
+
+struct PrettyTestCase
+{
+    std::string prettyString;
+    double realValue;
+    PrettyType prettyType;
+};
+
+
+PrettyTestCase prettyTestCases[] =
+{
+    { string("8.53e+007 s "), 85.3e6, PRETTY_TIME },
+    { string("8.53e+007 s "), 85.3e6, PRETTY_TIME },
+    { string("85.3 ms"), 85.3e-3, PRETTY_TIME },
+    { string("85.3 us"), 85.3e-6, PRETTY_TIME },
+    { string("85.3 ns"), 85.3e-9, PRETTY_TIME },
+    { string("85.3 ps"), 85.3e-12, PRETTY_TIME },
+    { string("8.53e-014 s "), 85.3e-15, PRETTY_TIME },
+
+    { string("0 s "), 0, PRETTY_TIME },
+    { string("1 s "), 1.0, PRETTY_TIME },
+    { string("1 ms"), 1.0e-3, PRETTY_TIME },
+    { string("1 us"), 1.0e-6, PRETTY_TIME },
+    { string("1 ns"), 1.0e-9, PRETTY_TIME },
+    { string("1 ps"), 1.0e-12, PRETTY_TIME },
+
+    // check bytes printing
+    { string("853 B "), 853., PRETTY_BYTES },
+    { string("833 kB"), 853.e3, PRETTY_BYTES },
+    { string("813.5 MB"), 853.e6, PRETTY_BYTES },
+    { string("7.944 GB"), 8.53e9, PRETTY_BYTES },
+    { string("794.4 GB"), 853.e9, PRETTY_BYTES },
+    { string("775.8 TB"), 853.e12, PRETTY_BYTES },
+
+    { string("0 B "), 0, PRETTY_BYTES },
+    { string("1 B "), pow2(0), PRETTY_BYTES },
+    { string("1 kB"), pow2(10), PRETTY_BYTES },
+    { string("1 MB"), pow2(20), PRETTY_BYTES },
+    { string("1 GB"), pow2(30), PRETTY_BYTES },
+    { string("1 TB"), pow2(40), PRETTY_BYTES },
+
+    { string("853 B  "), 853., PRETTY_BYTES_IEC },
+    { string("833 KiB"), 853.e3, PRETTY_BYTES_IEC },
+    { string("813.5 MiB"), 853.e6, PRETTY_BYTES_IEC },
+    { string("7.944 GiB"), 8.53e9, PRETTY_BYTES_IEC },
+    { string("794.4 GiB"), 853.e9, PRETTY_BYTES_IEC },
+    { string("775.8 TiB"), 853.e12, PRETTY_BYTES_IEC },
+
+    { string("0 B  "), 0, PRETTY_BYTES_IEC },
+    { string("1 B  "), pow2(0), PRETTY_BYTES_IEC },
+    { string("1 KiB"), pow2(10), PRETTY_BYTES_IEC },
+    { string("1 MiB"), pow2(20), PRETTY_BYTES_IEC },
+    { string("1 GiB"), pow2(30), PRETTY_BYTES_IEC },
+    { string("1 TiB"), pow2(40), PRETTY_BYTES_IEC },
+
+    // check bytes metric printing
+    { string("853 B "), 853., PRETTY_BYTES_METRIC },
+    { string("853 kB"), 853.e3, PRETTY_BYTES_METRIC },
+    { string("853 MB"), 853.e6, PRETTY_BYTES_METRIC },
+    { string("8.53 GB"), 8.53e9, PRETTY_BYTES_METRIC },
+    { string("853 GB"), 853.e9, PRETTY_BYTES_METRIC },
+    { string("853 TB"), 853.e12, PRETTY_BYTES_METRIC },
+
+    { string("0 B "), 0, PRETTY_BYTES_METRIC },
+    { string("1 B "), 1.0, PRETTY_BYTES_METRIC },
+    { string("1 kB"), 1.0e+3, PRETTY_BYTES_METRIC },
+    { string("1 MB"), 1.0e+6, PRETTY_BYTES_METRIC },
+
+    { string("1 GB"), 1.0e+9, PRETTY_BYTES_METRIC },
+    { string("1 TB"), 1.0e+12, PRETTY_BYTES_METRIC },
+
+    // check metric-units (powers of 1000) printing
+    { string("853  "), 853., PRETTY_UNITS_METRIC },
+    { string("853 k"), 853.e3, PRETTY_UNITS_METRIC },
+    { string("853 M"), 853.e6, PRETTY_UNITS_METRIC },
+    { string("8.53 bil"), 8.53e9, PRETTY_UNITS_METRIC },
+    { string("853 bil"), 853.e9, PRETTY_UNITS_METRIC },
+    { string("853 tril"), 853.e12, PRETTY_UNITS_METRIC },
+
+    // check binary-units (powers of 1024) printing
+    { string("0  "), 0, PRETTY_UNITS_BINARY },
+    { string("1  "), pow2(0), PRETTY_UNITS_BINARY },
+    { string("1 k"), pow2(10), PRETTY_UNITS_BINARY },
+    { string("1 M"), pow2(20), PRETTY_UNITS_BINARY },
+    { string("1 G"), pow2(30), PRETTY_UNITS_BINARY },
+    { string("1 T"), pow2(40), PRETTY_UNITS_BINARY },
+
+    { string("1023  "), pow2(10) - 1, PRETTY_UNITS_BINARY },
+    { string("1024 k"), pow2(20) - 1, PRETTY_UNITS_BINARY },
+    { string("1024 M"), pow2(30) - 1, PRETTY_UNITS_BINARY },
+    { string("1024 G"), pow2(40) - 1, PRETTY_UNITS_BINARY },
+
+    { string("0   "), 0, PRETTY_UNITS_BINARY_IEC },
+    { string("1   "), pow2(0), PRETTY_UNITS_BINARY_IEC },
+    { string("1 Ki"), pow2(10), PRETTY_UNITS_BINARY_IEC },
+    { string("1 Mi"), pow2(20), PRETTY_UNITS_BINARY_IEC },
+    { string("1 Gi"), pow2(30), PRETTY_UNITS_BINARY_IEC },
+    { string("1 Ti"), pow2(40), PRETTY_UNITS_BINARY_IEC },
+
+    { string("1023   "), pow2(10) - 1, PRETTY_UNITS_BINARY_IEC },
+    { string("1024 Ki"), pow2(20) - 1, PRETTY_UNITS_BINARY_IEC },
+    { string("1024 Mi"), pow2(30) - 1, PRETTY_UNITS_BINARY_IEC },
+    { string("1024 Gi"), pow2(40) - 1, PRETTY_UNITS_BINARY_IEC },
+
+    //check border SI cases
+
+    { string("1 Y"), 1e24, PRETTY_SI },
+    { string("10 Y"), 1e25, PRETTY_SI },
+    { string("1 y"), 1e-24, PRETTY_SI },
+    { string("10 y"), 1e-23, PRETTY_SI },
+
+    // check that negative values work
+    { string("-85.3 s "), -85.3, PRETTY_TIME },
+    { string("-85.3 ms"), -85.3e-3, PRETTY_TIME },
+    { string("-85.3 us"), -85.3e-6, PRETTY_TIME },
+    { string("-85.3 ns"), -85.3e-9, PRETTY_TIME },
+    // end of test
+    { string("endoftest"), 0, PRETTY_NUM_TYPES }
+};
+
+TEST(StringUtils, PrettyPrint) 
+{
+    for (int i = 0; prettyTestCases[i].prettyType != PRETTY_NUM_TYPES; ++i)
+    {
+        const PrettyTestCase& prettyTest = prettyTestCases[i];
+        EXPECT_EQ(prettyTest.prettyString,
+            prettyPrint(prettyTest.realValue, prettyTest.prettyType));
+    }
+}
+
+
+TEST(StringUtils, PrettyToDouble)
+{
+    // check manually created tests
+    for (int i = 0; prettyTestCases[i].prettyType != PRETTY_NUM_TYPES; ++i)
+    {
+        PrettyTestCase testCase = prettyTestCases[i];
+        PrettyType formatType = testCase.prettyType;
+        double x = testCase.realValue;
+        std::string testString = testCase.prettyString;
+        double recoveredX = 0.0;
+        EXPECT_NO_THROW(recoveredX = prettyToDouble(testString, formatType));
+        double relativeError = fabs(x) < 1e-5 ? (x - recoveredX) :
+            (x - recoveredX) / x;
+        EXPECT_NEAR(0, relativeError, 1e-3);
+    }
+
+    // checks for compatibility with prettyPrint over the whole parameter space
+    for (int i = 0; i < PRETTY_NUM_TYPES; ++i)
+    {
+        PrettyType formatType = static_cast<PrettyType>(i);
+        for (double x = 1e-18; x < 1e40; x *= 1.9)
+        {
+            bool addSpace = static_cast<PrettyType> (i) == PRETTY_SI;
+            for (int it = 0; it < 2; ++it, addSpace = true)
+            {
+                double recoveredX = 0.0;
+                EXPECT_NO_THROW(recoveredX = prettyToDouble(
+                    prettyPrint(x, formatType, addSpace), formatType));
+                double relativeError = (x - recoveredX) / x;
+                EXPECT_NEAR(0, relativeError, 1e-3);
+            }
+        }
+    }
+
+    // check for incorrect values
+    EXPECT_THROW(prettyToDouble("10Mx", PRETTY_SI), std::range_error);
+    EXPECT_THROW(prettyToDouble("10 Mx", PRETTY_SI), std::range_error);
+    EXPECT_THROW(prettyToDouble("10 M x", PRETTY_SI), std::range_error);
+
+    StringPiece testString = "10Mx";
+    EXPECT_DOUBLE_EQ(prettyToDouble(&testString, PRETTY_UNITS_METRIC), 10e6);
+    EXPECT_EQ(testString, "x");
+}
