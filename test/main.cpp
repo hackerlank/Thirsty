@@ -27,4 +27,8 @@ int main(int argc, char* argv[])
         cout << err.diagnostic() << endl;
         return 1;
     }
+    catch(exception& ex)
+    {
+        cout << ex.what() << endl;
+    }
 }
