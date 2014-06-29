@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "net/http/Uri.h"
+#include "net/http/URI.h"
 #include <gtest/gtest.h>
 #include <boost/algorithm/string.hpp>
 #include "core/logging.h"
@@ -275,7 +275,7 @@ TEST(Uri, Simple)
           Uri u("http://" + s);
           CHECK(false) << "Control should not have reached here";
       }
-      catch (const std::invalid_argument& ex) 
+      catch (const std::invalid_argument& ex)
       {
           EXPECT_TRUE(boost::algorithm::ends_with(ex.what(), s));
       }
@@ -289,7 +289,7 @@ TEST(Uri, Simple)
           Uri u(s);
           CHECK(false) << "Control should not have reached here";
       }
-      catch (const std::invalid_argument& ex) 
+      catch (const std::invalid_argument& ex)
       {
           // success
       }
@@ -303,7 +303,7 @@ TEST(Uri, Simple)
           Uri u(s);
           CHECK(false) << "Control should not have reached here";
       }
-      catch (const std::invalid_argument& ex) 
+      catch (const std::invalid_argument& ex)
       {
           // success
       }
@@ -317,7 +317,7 @@ TEST(Uri, Simple)
           Uri u(s);
           CHECK(false) << "Control should not have reached here";
       }
-      catch (const std::invalid_argument& ex) 
+      catch (const std::invalid_argument& ex)
       {
           // success
       }
@@ -331,7 +331,7 @@ TEST(Uri, Simple)
           Uri u(s);
           CHECK(false) << "Control should not have reached here";
       }
-      catch (const std::invalid_argument& ex) 
+      catch (const std::invalid_argument& ex)
       {
           // success
       }
