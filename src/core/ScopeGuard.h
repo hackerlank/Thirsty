@@ -19,7 +19,7 @@
 #include <cstddef>
 #include <functional>
 #include <new>
-
+#include "Platform.h"
 #include "Preprocessor.h"
 #include "UncaughtExceptionCounter.h"
 
@@ -66,7 +66,7 @@
  *   and triendl.kj article:
  *     http://www.codeproject.com/KB/cpp/scope_guard.aspx
  */
-class ScopeGuardImplBase 
+class ScopeGuardImplBase
 {
 public:
     void dismiss() _NOEXCEPT
@@ -76,11 +76,11 @@ public:
 
 protected:
     ScopeGuardImplBase()
-        : dismissed_(false) 
+        : dismissed_(false)
     {}
 
     ScopeGuardImplBase(ScopeGuardImplBase&& other)
-        : dismissed_(other.dismissed_) 
+        : dismissed_(other.dismissed_)
     {
         other.dismissed_ = true;
     }
@@ -89,7 +89,7 @@ protected:
 };
 
 template <typename FunctionType>
-class ScopeGuardImpl : public ScopeGuardImplBase 
+class ScopeGuardImpl : public ScopeGuardImplBase
 {
 public:
     explicit ScopeGuardImpl(const FunctionType& fn)
@@ -100,13 +100,13 @@ public:
 
     ScopeGuardImpl(ScopeGuardImpl&& other)
         : ScopeGuardImplBase(std::move(other))
-        , function_(std::move(other.function_)) 
+        , function_(std::move(other.function_))
     {
     }
 
     ~ScopeGuardImpl() _NOEXCEPT
     {
-        if (!dismissed_) 
+        if (!dismissed_)
         {
             execute();
         }
@@ -122,7 +122,7 @@ private:
 
 template <typename FunctionType>
 ScopeGuardImpl<typename std::decay<FunctionType>::type>
-makeGuard(FunctionType&& fn) 
+makeGuard(FunctionType&& fn)
 {
     return ScopeGuardImpl<typename std::decay<FunctionType>::type>(
         std::forward<FunctionType>(fn));
@@ -150,28 +150,28 @@ namespace detail {
  * Used to implement SCOPE_FAIL and SCOPE_SUCCES below.
  */
 template <typename FunctionType, bool executeOnException>
-class ScopeGuardForNewException 
+class ScopeGuardForNewException
 {
 public:
     explicit ScopeGuardForNewException(const FunctionType& fn)
-        : function_(fn) 
+        : function_(fn)
     {
     }
 
     explicit ScopeGuardForNewException(FunctionType&& fn)
-        : function_(std::move(fn)) 
+        : function_(std::move(fn))
     {
     }
 
     ScopeGuardForNewException(ScopeGuardForNewException&& other)
         : function_(std::move(other.function_))
-        , exceptionCounter_(std::move(other.exceptionCounter_)) 
+        , exceptionCounter_(std::move(other.exceptionCounter_))
     {
     }
 
-    ~ScopeGuardForNewException() _NOEXCEPT_OP(executeOnException) 
+    ~ScopeGuardForNewException() _NOEXCEPT_OP(executeOnException)
     {
-        if (executeOnException == exceptionCounter_.isNewUncaughtException()) 
+        if (executeOnException == exceptionCounter_.isNewUncaughtException())
         {
             function_();
         }
@@ -193,7 +193,7 @@ enum class ScopeGuardOnFail {};
 
 template <typename FunctionType>
 ScopeGuardForNewException<typename std::decay<FunctionType>::type, true>
-    operator+(detail::ScopeGuardOnFail, FunctionType&& fn) 
+    operator+(detail::ScopeGuardOnFail, FunctionType&& fn)
 {
     return
         ScopeGuardForNewException<typename std::decay<FunctionType>::type, true>(
@@ -207,7 +207,7 @@ enum class ScopeGuardOnSuccess {};
 
 template <typename FunctionType>
 ScopeGuardForNewException<typename std::decay<FunctionType>::type, false>
-    operator+(ScopeGuardOnSuccess, FunctionType&& fn) 
+    operator+(ScopeGuardOnSuccess, FunctionType&& fn)
 {
         return
             ScopeGuardForNewException<typename std::decay<FunctionType>::type, false>(
@@ -223,7 +223,7 @@ enum class ScopeGuardOnExit {};
 
 template <typename FunctionType>
 ScopeGuardImpl<typename std::decay<FunctionType>::type>
-    operator+(detail::ScopeGuardOnExit, FunctionType&& fn) 
+    operator+(detail::ScopeGuardOnExit, FunctionType&& fn)
 {
         return ScopeGuardImpl<typename std::decay<FunctionType>::type>(
             std::forward<FunctionType>(fn));

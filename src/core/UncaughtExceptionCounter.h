@@ -17,6 +17,7 @@
 #pragma once
 
 #include <exception>
+#include "Platform.h"
 
 #if defined(__GNUG__) || defined(__CLANG__)
 #define FOLLY_EXCEPTION_COUNT_USE_CXA_GET_GLOBALS
@@ -24,7 +25,7 @@ namespace __cxxabiv1 {
     // forward declaration (originally defined in unwind-cxx.h from from libstdc++)
     struct __cxa_eh_globals;
     // declared in cxxabi.h from libstdc++-v3
-    extern "C" __cxa_eh_globals* __cxa_get_globals() _NOEXCEPT;
+    extern "C" __cxa_eh_globals* __cxa_get_globals() noexcept;
 }
 #elif defined(_MSC_VER) && (_MSC_VER >= 1400) // MSVC++ 8.0 or greater
 #define FOLLY_EXCEPTION_COUNT_USE_GETPTD
