@@ -12,6 +12,8 @@
 #define snprintf        sprintf_s
 
 #elif defined(__GNUC__)   // GNU C++ 4.7 or later
+#define _NOEXCEPT       noexcept
+#define _NOEXCEPT_OP(x) noexcept(x)
 #define LIKELY(x)       (__builtin_expect((x), 1))
 #define UNLIKELY(x)     (__builtin_expect((x), 0))
 #define ALIGN(x)        __attribute__((aligned(x)))
