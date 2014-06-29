@@ -1,4 +1,4 @@
-#include "TCPServer.h"
+#include "TcpServer.h"
 #include <functional>
 #include <vector>
 #include <boost/date_time.hpp>
@@ -21,7 +21,7 @@ TcpServer::~TcpServer()
     Stop();
 }
 
-void TcpServer::Start(const std::string& addr, 
+void TcpServer::Start(const std::string& addr,
                       int16_t port,
                       ReadCallback callback)
 {

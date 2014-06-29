@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
-#include "TCPConnection.h"
+#include "TcpConnection.h"
 #include "Timer.h"
 #include "core/Range.h"
 
@@ -22,7 +22,7 @@ public:
     explicit TcpServer(boost::asio::io_service& io_service, size_t max_conn);
     ~TcpServer();
 
-    void Start(const std::string& addr, 
+    void Start(const std::string& addr,
                int16_t port,
                ReadCallback callback);
 

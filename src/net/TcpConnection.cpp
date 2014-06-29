@@ -1,4 +1,4 @@
-#include "TCPConnection.h"
+#include "TcpConnection.h"
 #include <functional>
 #include <zlib.h>
 #include "core/logging.h"
@@ -8,8 +8,8 @@ using namespace std;
 using namespace std::placeholders;
 
 
-TcpConnection::TcpConnection(boost::asio::io_service& io_service, 
-                             int64_t serial, 
+TcpConnection::TcpConnection(boost::asio::io_service& io_service,
+                             int64_t serial,
                              ErrorCallback on_error,
                              ReadCallback on_read)
     : socket_(io_service),
@@ -68,8 +68,8 @@ void TcpConnection::HandleReadHead(const boost::system::error_code& err, size_t 
     }
 }
 
-void TcpConnection::HandleReadBody(const boost::system::error_code& err, 
-                                   size_t bytes, 
+void TcpConnection::HandleReadBody(const boost::system::error_code& err,
+                                   size_t bytes,
                                    BufferPtr buf)
 {
     if (err)
@@ -87,7 +87,7 @@ void TcpConnection::HandleReadBody(const boost::system::error_code& err,
         }
         else
         {
-            auto msg = stringPrintf("invalid body checksum, %d, expected: %d", 
+            auto msg = stringPrintf("invalid body checksum, %d, expected: %d",
                 checksum, head_.body_crc);
             on_error_(serial_, 0, msg);
         }
@@ -113,8 +113,8 @@ void TcpConnection::AsynWrite(const void* data, size_t size)
         std::bind(&TcpConnection::HandleWrite, this, _1, _2, buf));
 }
 
-void TcpConnection::HandleWrite(const boost::system::error_code& err, 
-                                size_t bytes, 
+void TcpConnection::HandleWrite(const boost::system::error_code& err,
+                                size_t bytes,
                                 BufferPtr ptr)
 {
     if (err)

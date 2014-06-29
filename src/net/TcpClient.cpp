@@ -1,4 +1,4 @@
-#include "TCPClient.h"
+#include "TcpClient.h"
 #include <functional>
 #include <zlib.h>
 #include "core/logging.h"
@@ -33,8 +33,8 @@ void TcpClient::AsynRead(ReadCallback callback)
     AsynReadHead();
 }
 
-void TcpClient::AsynConnect(const std::string& host, 
-                            int16_t port, 
+void TcpClient::AsynConnect(const std::string& host,
+                            int16_t port,
                             ConnectCallback callback)
 {
     assert(callback);
@@ -63,8 +63,8 @@ void TcpClient::AsynReadHead()
         std::bind(&TcpClient::HandleReadHead, this, _1, _2));
 }
 
-void TcpClient::HandleConnect(const boost::system::error_code& err, 
-                              const std::string& host, 
+void TcpClient::HandleConnect(const boost::system::error_code& err,
+                              const std::string& host,
                               int16_t port)
 {
     if (!err)
@@ -77,8 +77,8 @@ void TcpClient::HandleConnect(const boost::system::error_code& err,
     }
 }
 
-void TcpClient::HandleWrite(const boost::system::error_code& err, 
-                            size_t bytes, 
+void TcpClient::HandleWrite(const boost::system::error_code& err,
+                            size_t bytes,
                             BufferPtr buf)
 {
     if (err)
@@ -116,8 +116,8 @@ void TcpClient::HandleReadHead(const boost::system::error_code& err, size_t byte
     }
 }
 
-void TcpClient::HandleReadBody(const boost::system::error_code& err, 
-                               size_t bytes, 
+void TcpClient::HandleReadBody(const boost::system::error_code& err,
+                               size_t bytes,
                                BufferPtr buf)
 {
     if (err)
@@ -125,7 +125,7 @@ void TcpClient::HandleReadBody(const boost::system::error_code& err,
         on_error_(err.value(), err.message());
         return;
     }
-    
+
     if (bytes == head_.size)
     {
         auto checksum = crc32(0, (const Bytef*)buf->data(), buf->size());
