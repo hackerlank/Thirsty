@@ -404,3 +404,70 @@ std::string join(const Delim& delimiter,
     join(delimiter, values.begin(), values.end(), output);
     return output;
 }
+
+
+/*
+ * A pretty-printer for numbers that appends suffixes of units of the
+ * given type.  It prints 4 sig-figs of value with the most
+ * appropriate unit.
+ *
+ * If `addSpace' is true, we put a space between the units suffix and
+ * the value.
+ *
+ * Current types are:
+ *   PRETTY_TIME         - s, ms, us, ns, etc.
+ *   PRETTY_BYTES_METRIC - kB, MB, GB, etc (goes up by 10^3 = 1000 each time)
+ *   PRETTY_BYTES        - kB, MB, GB, etc (goes up by 2^10 = 1024 each time)
+ *   PRETTY_BYTES_IEC    - KiB, MiB, GiB, etc
+ *   PRETTY_UNITS_METRIC - k, M, G, etc (goes up by 10^3 = 1000 each time)
+ *   PRETTY_UNITS_BINARY - k, M, G, etc (goes up by 2^10 = 1024 each time)
+ *   PRETTY_UNITS_BINARY_IEC - Ki, Mi, Gi, etc
+ *   PRETTY_SI           - full SI metric prefixes from yocto to Yotta
+ *                         http://en.wikipedia.org/wiki/Metric_prefix
+ * @author Mark Rabkin <mrabkin@fb.com>
+ */
+enum PrettyType 
+{
+  PRETTY_TIME,
+
+  PRETTY_BYTES_METRIC,
+  PRETTY_BYTES_BINARY,
+  PRETTY_BYTES = PRETTY_BYTES_BINARY,
+  PRETTY_BYTES_BINARY_IEC,
+  PRETTY_BYTES_IEC = PRETTY_BYTES_BINARY_IEC,
+
+  PRETTY_UNITS_METRIC,
+  PRETTY_UNITS_BINARY,
+  PRETTY_UNITS_BINARY_IEC,
+
+  PRETTY_SI,
+  PRETTY_NUM_TYPES,
+};
+
+std::string prettyPrint(double val, PrettyType, bool addSpace = true);
+
+/**
+ * This utility converts StringPiece in pretty format (look above) to double,
+ * with progress information. Alters the  StringPiece parameter
+ * to get rid of the already-parsed characters.
+ * Expects string in form <floating point number> {space}* [<suffix>]
+ * If string is not in correct format, utility finds longest valid prefix and
+ * if there at least one, returns double value based on that prefix and
+ * modifies string to what is left after parsing. Throws and std::range_error
+ * exception if there is no correct parse.
+ * Examples(for PRETTY_UNITS_METRIC):
+ * '10M' => 10 000 000
+ * '10 M' => 10 000 000
+ * '10' => 10
+ * '10 Mx' => 10 000 000, prettyString == "x"
+ * 'abc' => throws std::range_error
+ */
+double prettyToDouble(StringPiece *const prettyString,
+                      const PrettyType type);
+
+/*
+ * Same as prettyToDouble(folly::StringPiece*, PrettyType), but
+ * expects whole string to be correctly parseable. Throws std::range_error
+ * otherwise
+ */
+double prettyToDouble(StringPiece prettyString, const PrettyType type);
