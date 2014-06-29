@@ -2,7 +2,8 @@
 -- Premake4 build script (http://industriousone.com/premake/download)
 --
 
-local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/incldue'
+-- windows only
+local BOOST_ROOT = os.getenv('BOOST_ROOT')
 
 --
 -- Thirsty
@@ -78,19 +79,27 @@ solution 'Thirsty'
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
         }
-        buildoptions{ '-std=c++11'}
+        buildoptions
+        { 
+            '-std=c++11',
+        }
         includedirs
         {
             'src',
             'dep/double-conversion/src',
             'dep/zlib/src',
-            BOOST_ROOT,
         }
         links
         {
+            'rt',
+            'bfd',
+            'pthread',
             'zlib',
             'double-conversion',
-        }        
+            'boost_system',
+            'boost_date_time',
+            'boost_chrono',
+        }
         end
 
     project 'zlib'
@@ -98,9 +107,6 @@ solution 'Thirsty'
         kind 'StaticLib'
         uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
         language 'C'
-        defines
-        {
-        }
         files
         {
             'dep/zlib/src/*.h',
@@ -111,9 +117,6 @@ solution 'Thirsty'
         location 'build'
         kind 'StaticLib'
         uuid 'AE6D2B6D-1CFB-48DE-A982-BAECACE31AE2'
-        defines
-        {
-        }
         files
         {
             'dep/double-conversion/src/*.cc',
@@ -142,7 +145,7 @@ solution 'UnitTest'
         defines { 'NDEBUG' }
         flags { 'Symbols', 'Optimize' }
         
-    project 'tests'
+    project 'unittest'
         location 'build/test'
         kind 'ConsoleApp'
         uuid 'AB7D1C15-7A44-41a7-8864-230D8E345608'
@@ -186,9 +189,9 @@ solution 'UnitTest'
         }      
         links
         {           
-            'libgtest',
+            'gtest',
             'double-conversion',
-            'zlib',
+            'zlib',          
         }        
         end
         
@@ -204,30 +207,35 @@ solution 'UnitTest'
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
         }
-        buildoptions{ '-std=c++11'}
+        buildoptions
+        { 
+            '-std=c++11',
+        }
         includedirs
         {
             'src',
             'dep/gtest/include',
             'dep/double-conversion/src',
             'dep/zlib/src',
-            BOOST_ROOT,
-        }      
+        }    
         links
-        {           
-            'libgtest',
-            'double-conversion',
+        {
+            'rt',
+            'bfd', 
+            'pthread',
             'zlib',
+            'gtest',
+            'double-conversion',
+            'boost_system',
+            'boost_date_time',
+            'boost_chrono',
         }        
         end
         
-    project 'libgtest'
+    project 'gtest'
         location 'build/test'
         kind 'StaticLib'
         uuid '31BC2F58-F374-4984-B490-F1F08ED02DD3'
-        defines
-        {
-        }
         files
         {
             'dep/gtest/src/gtest-all.cc',
@@ -242,9 +250,6 @@ solution 'UnitTest'
         location 'build/test'
         kind 'StaticLib'
         uuid 'AE6D2B6D-1CFB-48DE-A982-BAECACE31AE2'
-        defines
-        {
-        }
         files
         {
             'dep/double-conversion/src/*.cc',
@@ -260,9 +265,6 @@ solution 'UnitTest'
         kind 'StaticLib'
         uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
         language 'C'
-        defines
-        {
-        }
         files
         {
             'dep/zlib/src/*.h',

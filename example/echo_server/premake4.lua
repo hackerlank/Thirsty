@@ -2,7 +2,8 @@
 -- Premake4 build script (http://industriousone.com/premake/download)
 --
 
-local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/incldue'
+-- windows only
+local BOOST_ROOT = os.getenv('BOOST_ROOT')
 
 solution 'ServerExample'
     configurations {'Debug', 'Release'}
@@ -33,6 +34,41 @@ solution 'ServerExample'
         {
             '../../src/main.cpp',
         }        
+
+
+        if os.get() == 'windows' then
+        defines
+        {
+            '_WIN32_WINNT=0x0600',
+            '_CRT_SECURE_NO_WARNINGS',            
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
+        }
+        libdirs
+        {
+            BOOST_ROOT .. '/stage/lib',
+        }
+        includedirs
+        {
+            '../../src',
+            '../../dep/double-conversion/src',
+            '../../dep/zlib/src',
+            BOOST_ROOT,
+        }
+        links
+        {
+            'zlib',
+            'double-conversion',
+        }        
+        end
+        
+        if os.get() == 'linux' then
         defines
         {
             'BOOST_ASIO_SEPARATE_COMPILATION',
@@ -44,23 +80,28 @@ solution 'ServerExample'
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
         }
-
+        buildoptions
+        { 
+            '-std=c++11',
+        }
         includedirs
         {
-            '../../src/',
+            '../../src',
             '../../dep/double-conversion/src',
             '../../dep/zlib/src',
-            BOOST_ROOT,
-        }
-        libdirs
-        {
-            BOOST_ROOT .. '/stage/lib',
         }
         links
         {
+            'rt',
+            'pthread',
+            'bfd',        
             'zlib',
             'double-conversion',
+            'boost_system',
+            'boost_date_time',
+            'boost_chrono',
         }
+        end
 
     project 'zlib'
         location 'build'
@@ -72,8 +113,8 @@ solution 'ServerExample'
         }
         files
         {
-            '../dep/zlib/src/*.h',
-            '../dep/zlib/src/*.c',
+            '../../dep/zlib/src/*.h',
+            '../../dep/zlib/src/*.c',
         }
 
     project 'double-conversion'
@@ -85,12 +126,12 @@ solution 'ServerExample'
         }
         files
         {
-            '../dep/double-conversion/src/*.cc',
-            '../dep/double-conversion/src/*.h',
+            '../../dep/double-conversion/src/*.cc',
+            '../../dep/double-conversion/src/*.h',
         }
         includedirs
         {
-            '../dep/double-conversion/src',
+            '../../dep/double-conversion/src',
         }
         
     
@@ -126,6 +167,40 @@ solution 'ClientExample'
         {
             '../../src/main.cpp',
         }
+        
+        if os.get() == 'windows' then
+        defines
+        {
+            '_WIN32_WINNT=0x0600',
+            '_CRT_SECURE_NO_WARNINGS',            
+            'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_REGEX_NO_LIB',
+            'BOOST_ASIO_HAS_MOVE',
+            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
+            'BOOST_ASIO_HAS_STD_ARRAY',
+            'BOOST_ASIO_HAS_STD_ATOMIC',
+            'BOOST_ASIO_HAS_STD_SHARED_PTR',
+            'BOOST_ASIO_HAS_STD_CHRONO',
+        }
+        libdirs
+        {
+            BOOST_ROOT .. '/stage/lib',
+        }
+        includedirs
+        {
+            '../../src',
+            '../../dep/double-conversion/src',
+            '../../dep/zlib/src',
+            BOOST_ROOT,
+        }
+        links
+        {
+            'zlib',
+            'double-conversion',
+        }        
+        end
+        
+        if os.get() == 'linux' then
         defines
         {
             'BOOST_ASIO_SEPARATE_COMPILATION',
@@ -136,23 +211,33 @@ solution 'ClientExample'
             'BOOST_ASIO_HAS_STD_ATOMIC',
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
-        }        
+        }
+        buildoptions 
+        { 
+            '-std=c++11', 
+        }
         includedirs
         {
             '../../src',
             '../../dep/double-conversion/src',
             '../../dep/zlib/src',
-            BOOST_ROOT,
         }
         libdirs
         {
-            BOOST_ROOT .. '/stage/lib',
-        }        
+            'usr/local/lib',
+        }
         links
         {
-            'double-conversion',
+            'rt',
+            'pthread',
+            'bfd',
             'zlib',
+            'double-conversion',
+            'boost_system',
+            'boost_date_time',
+            'boost_chrono',
         }
+        end
 
     project 'double-conversion'
         location 'build'
