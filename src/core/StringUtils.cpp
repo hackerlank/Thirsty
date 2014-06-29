@@ -2,7 +2,7 @@
 // http://code.google.com/p/protobuf/
 //
 
-#include "StringPrintf.h"
+#include "StringUtils.h"
 #include <cstdarg>
 #include <algorithm>
 
