@@ -1,29 +1,65 @@
 #include "core/Random.h"
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <thread>
+#include <vector>
+#include "core/logging.h"
 
-TEST(Random, Uniform)
+using namespace std;
+
+TEST(Random, Simple) 
 {
-    Random64 rnd;
-    for (int i = 0; i < 100; i++)
+    uint32_t prev = 0, seed = 0;
+    Random::seed();
+    for (int i = 0; i < 1024; ++i) 
     {
-        EXPECT_LT(rnd.Uniform(100), 100);
+        EXPECT_NE(seed = Random::rand32(), prev);
+        prev = seed;
     }
 }
 
-TEST(Random, Next)
+TEST(Random, rand64)
 {
-    Random64 rnd;
-    for (int i = 0; i < 100; i++)
+    uint64_t prev = 0, seed = 0;
+    Random::seed();
+    for (int i = 0; i < 1024; ++i)
     {
-        auto n = rnd.Next();
+        EXPECT_NE(seed = Random::rand64(), prev);
+        prev = seed;
     }
 }
 
-TEST(Random, OneIn)
+TEST(Random, randDouble)
 {
-    Random64 rnd;
-    for (int i = 0; i < 100; i++)
+    double prev = 0, seed = 0;
+    Random::seed();
+    for (int i = 0; i < 1024; ++i)
     {
-        auto n = rnd.OneIn(i);
+        EXPECT_NE(seed = Random::randDouble01(), prev);
+        prev = seed;
+    }
+}
+
+TEST(Random, MultiThreaded) 
+{
+    const int n = 1024;
+    std::vector<uint32_t> seeds(n);
+    std::vector<std::thread> threads;
+    for (int i = 0; i < n; ++i) 
+    {
+        threads.push_back(std::thread([i, &seeds] 
+        {
+            Random::seed();
+            seeds[i] = Random::rand32();
+        }));
+    }
+    for (auto& t : threads) 
+    {
+        t.join();
+    }
+    std::sort(seeds.begin(), seeds.end());
+    for (int i = 0; i < n - 1; ++i) 
+    {
+        EXPECT_LT(seeds[i], seeds[i + 1]);
     }
 }
