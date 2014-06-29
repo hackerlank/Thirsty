@@ -2,7 +2,7 @@
 #include <functional>
 #include <zlib.h>
 #include "core/logging.h"
-#include "core/StringPrintf.h"
+#include "core/StringUtils.h"
 
 using namespace std;
 using namespace std::placeholders;

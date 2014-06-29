@@ -1,6 +1,6 @@
 #include "logging.h"
 #include "Platform.h"
-#include "StringPrintf.h"
+#include "StringUtils.h"
 
 using std::string;
 
