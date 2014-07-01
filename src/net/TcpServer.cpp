@@ -3,7 +3,7 @@
 #include <vector>
 #include <boost/date_time.hpp>
 #include "core/logging.h"
-#include "core/StringUtils.h"
+#include "core/Strings.h"
 
 
 using namespace std::placeholders;

@@ -1,6 +1,6 @@
 #include "logging.h"
 #include "Platform.h"
-#include "StringUtils.h"
+#include "Strings.h"
 
 using std::string;
 
@@ -10,14 +10,15 @@ namespace internal {
 void DefaultLogHandler(LogLevel level, 
                        const char* filename, 
                        int line,
-                       const string& message) {
-  static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
+                       const string& message) 
+{
+    static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
 
-  // We use fprintf() instead of cerr because we want this to work at static
-  // initialization time.
-  fprintf(stderr, "[%s %s:%d] %s\n",
-          level_names[level], filename, line, message.c_str());
-  fflush(stderr);  // Needed on MSVC.
+    // We use fprintf() instead of cerr because we want this to work at static
+    // initialization time.
+    fprintf(stderr, "[%s %s:%d] %s\n",
+        level_names[level], filename, line, message.c_str());
+    fflush(stderr);  // Needed on MSVC.
 }
 
 void NullLogHandler(LogLevel level, 
@@ -83,7 +84,8 @@ LogMessage::~LogMessage()
 void LogMessage::Finish() 
 {
     log_handler_(level_, filename_, line_, message_);
-    if (level_ == LOGLEVEL_FATAL) {
+    if (level_ == LOGLEVEL_FATAL) 
+    {
         string msg = stringPrintf("%s[%d]: %s", filename_, line_, message_.c_str());
         throw traceback::RuntimeError(msg);
     }
