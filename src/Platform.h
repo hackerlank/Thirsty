@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <boost/predef.h>
+
 // portable version check
 #ifndef __GNUC_PREREQ
 # if defined __GNUC__ && defined __GNUC_MINOR__
@@ -68,6 +70,22 @@
 # error cannot define platform specific thread local storage
 #endif
 
+// packing is very ugly in msvc
+#ifdef _MSC_VER
+# define FOLLY_PACK_ATTR /**/
+# define FOLLY_PACK_PUSH __pragma(pack(push, 1))
+# define FOLLY_PACK_POP __pragma(pack(pop))
+#elif defined(__clang__) || defined(__GNUC__)
+# define FOLLY_PACK_ATTR __attribute__((packed))
+# define FOLLY_PACK_PUSH /**/
+# define FOLLY_PACK_POP /**/
+#else
+# define FOLLY_PACK_ATTR /**/
+# define FOLLY_PACK_PUSH /**/
+# define FOLLY_PACK_POP /**/
+#endif
+
+
 // MSVC specific defines
 // mainly for posix compat
 #ifdef _MSC_VER
@@ -89,4 +107,14 @@ typedef SSIZE_T ssize_t;
 
 #define alignof     __alignof
 
-#endif
+// endian detection
+#define __ORDER_LITTLE_ENDIAN__     1234
+#define __ORDER_BIG_ENDIAN__        4321
+
+#if BOOST_ENDIAN_LITTLE_BYTE == 1
+#   define __BYTE_ORDER__  __ORDER_LITTLE_ENDIAN__
+#elif BOOST_ENDIAN_BIG_BYTE == 1
+#   define __BYTE_ORDER__  __ORDER_BIG_ENDIAN__
+#endif 
+
+#endif // _MSC_VER
