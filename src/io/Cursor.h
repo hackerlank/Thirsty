@@ -22,8 +22,10 @@
 #include <type_traits>
 #include <memory>
 #include "Platform.h"
+#include "core/Bits.h"
 #include "IOBuf.h"
 #include "IOBufQueue.h"
+
 
 
 /**
@@ -118,6 +120,17 @@ public:
       return val;
   }
 
+  template <class T>
+  T readBE() 
+  {
+      return Endian::big(read<T>());
+  }
+
+  template <class T>
+  T readLE() 
+  {
+      return Endian::little(read<T>());
+  }
 
   /**
    * Read a fixed-length string.
@@ -359,7 +372,7 @@ public:
   {
       if (!buf)
       {
-          buf = make_unique<IOBuf>();
+          buf = std::make_unique<IOBuf>();
       }
 
       return cloneAtMost(*buf, len);
@@ -494,6 +507,20 @@ public:
         const uint8_t* u8 = reinterpret_cast<const uint8_t*>(&value);
         Derived* d = static_cast<Derived*>(this);
         d->push(u8, sizeof(T));
+    }
+
+    template <class T>
+    void writeBE(T value) 
+    {
+        Derived* d = static_cast<Derived*>(this);
+        d->write(Endian::big(value));
+    }
+
+    template <class T>
+    void writeLE(T value) 
+    {
+        Derived* d = static_cast<Derived*>(this);
+        d->write(Endian::little(value));
     }
 
     void push(const uint8_t* buf, size_t len)
