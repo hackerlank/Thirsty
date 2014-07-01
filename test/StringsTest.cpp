@@ -1,11 +1,13 @@
-#include "core/StringUtils.h"
+#include "core/Strings.h"
+#include "core/Benchmark.h"
 #include <gtest/gtest.h>
 #include <cinttypes>
 #include <vector>
 
 using namespace std;
 
-TEST(StringUtils, StringPrintf)
+
+TEST(Strings, stringPrintf)
 {
     // basic
     EXPECT_EQ("abc", stringPrintf("%s", "abc"));
@@ -31,7 +33,7 @@ TEST(StringUtils, StringPrintf)
         stringPrintf("%.17lf", 7.7));
 }
 
-TEST(StringUtils, stringAppendf)
+TEST(Strings, stringAppendf)
 {
     string s;
     stringAppendf(&s, "a%s", "b");
@@ -41,7 +43,7 @@ TEST(StringUtils, stringAppendf)
     EXPECT_EQ(s, "abc 123");
 }
 
-TEST(StringUtils, StringPrintfVariousSizes)
+TEST(Strings, stringPrintfVariousSizes)
 {
     // Test a wide variety of output sizes
     for (int i = 0; i < 100; ++i)
@@ -58,7 +60,7 @@ TEST(StringUtils, StringPrintfVariousSizes)
 }
 
 
-TEST(StringUtils, oldStringPrintfTests)
+TEST(Strings, oldStringPrintfTests)
 {
     EXPECT_EQ(string("a/b/c/d"),
         stringPrintf("%s/%s/%s/%s", "a", "b", "c", "d"));
@@ -74,7 +76,7 @@ TEST(StringUtils, oldStringPrintfTests)
     }
 }
 
-TEST(StringUtils, oldStringAppendf)
+TEST(Strings, oldStringAppendf)
 {
     string s = "hello";
     stringAppendf(&s, "%s/%s/%s/%s", "a", "b", "c", "d");
@@ -370,14 +372,14 @@ void piecesTest()
     }
 }
 
-TEST(StringUtils, splitVector) 
+TEST(Strings, splitVector) 
 {
     splitTest<std::vector>();
     piecesTest<std::vector>();
 }
 
 
-TEST(StringUtils, splitFixed) 
+TEST(Strings, splitFixed) 
 {
     StringPiece a, b, c, d;
 
@@ -422,7 +424,7 @@ TEST(StringUtils, splitFixed)
 }
 
 
-TEST(StringUtils, SplitFixedConvert)
+TEST(Strings, SplitFixedConvert)
 {
     StringPiece a, d;
     int b;
@@ -451,7 +453,7 @@ TEST(StringUtils, SplitFixedConvert)
 }
 
 
-TEST(StringUtils, join) 
+TEST(Strings, join) 
 {
     string output;
 
@@ -604,7 +606,7 @@ PrettyTestCase prettyTestCases[] =
     { string("endoftest"), 0, PRETTY_NUM_TYPES }
 };
 
-TEST(StringUtils, PrettyPrint) 
+TEST(Strings, PrettyPrint) 
 {
     for (int i = 0; prettyTestCases[i].prettyType != PRETTY_NUM_TYPES; ++i)
     {
@@ -615,7 +617,7 @@ TEST(StringUtils, PrettyPrint)
 }
 
 
-TEST(StringUtils, PrettyToDouble)
+TEST(Strings, PrettyToDouble)
 {
     // check manually created tests
     for (int i = 0; prettyTestCases[i].prettyType != PRETTY_NUM_TYPES; ++i)
@@ -657,4 +659,108 @@ TEST(StringUtils, PrettyToDouble)
     StringPiece testString = "10Mx";
     EXPECT_DOUBLE_EQ(prettyToDouble(&testString, PRETTY_UNITS_METRIC), 10e6);
     EXPECT_EQ(testString, "x");
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+
+BENCHMARK(splitOnSingleChar, iters) 
+{
+    static const std::string line = "one:two:three:four";
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        std::vector<StringPiece> pieces;
+        split(':', line, pieces);
+    }
+}
+
+BENCHMARK(splitOnSingleCharFixed, iters) 
+{
+    static const std::string line = "one:two:three:four";
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        StringPiece a, b, c, d;
+        split(':', line, a, b, c, d);
+    }
+}
+
+BENCHMARK(splitOnSingleCharFixedAllowExtra, iters) 
+{
+    static const std::string line = "one:two:three:four";
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        StringPiece a, b, c, d;
+        split<false>(':', line, a, b, c, d);
+    }
+}
+
+BENCHMARK(splitStr, iters) 
+{
+    static const std::string line = "one-*-two-*-three-*-four";
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        std::vector<StringPiece> pieces;
+        split("-*-", line, pieces);
+    }
+}
+
+BENCHMARK(splitStrFixed, iters) 
+{
+    static const std::string line = "one-*-two-*-three-*-four";
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        StringPiece a, b, c, d;
+        split("-*-", line, a, b, c, d);
+    }
+}
+
+//BENCHMARK(boost_splitOnSingleChar, iters) 
+//{
+//    static const std::string line = "one:two:three:four";
+//    bool(*pred)(char) = [](char c) -> bool { return c == ':'; };
+//    for (int i = 0; i < iters << 4; ++i) 
+//    {
+//        std::vector<boost::iterator_range<std::string::const_iterator> > pieces;
+//        boost::split(pieces, line, pred);
+//    }
+//}
+
+BENCHMARK(joinCharStr, iters) 
+{
+    static const std::vector<std::string> input = 
+    {
+        "one", "two", "three", "four", "five", "six", "seven" 
+    };
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        std::string output;
+        join(':', input, output);
+    }
+}
+
+BENCHMARK(joinStrStr, iters) 
+{
+    static const std::vector<std::string> input = 
+    {
+        "one", "two", "three", "four", "five", "six", "seven" 
+    };
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        std::string output;
+        join(":", input, output);
+    }
+}
+
+BENCHMARK(joinInt, iters) 
+{
+    static const auto input = 
+    {
+        123, 456, 78910, 1112, 1314, 151, 61718 
+    };
+    for (int i = 0; i < iters << 4; ++i) 
+    {
+        std::string output;
+        join(":", input, output);
+    }
 }
