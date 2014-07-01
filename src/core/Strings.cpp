@@ -2,7 +2,7 @@
 // http://code.google.com/p/protobuf/
 //
 
-#include "StringUtils.h"
+#include "Strings.h"
 #include <cstdarg>
 #include <cctype>
 #include <algorithm>
@@ -24,7 +24,8 @@ inline void stringPrintfImpl(std::string& output, const char* format, va_list ap
 
     if (result < kSpaceLength)
     {
-        if (result >= 0) {
+        if (result >= 0) 
+        {
             // Normal case -- everything fit.
             output.append(space, result);
             return;
@@ -289,10 +290,10 @@ double prettyToDouble(StringPiece *const prettyString,
         value;
 }
 
-double prettyToDouble(StringPiece prettyString, const PrettyType type){
-  double result = prettyToDouble(&prettyString, type);
-  detail::enforceWhitespace(prettyString.data(), 
-                            prettyString.data() + prettyString.size());
-  return result;
+double prettyToDouble(StringPiece prettyString, const PrettyType type)
+{
+    double result = prettyToDouble(&prettyString, type);
+    detail::enforceWhitespace(prettyString.data(),
+        prettyString.data() + prettyString.size());
+    return result;
 }
-
