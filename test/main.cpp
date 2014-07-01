@@ -19,7 +19,12 @@ int main(int argc, char* argv[])
         testing::InitGoogleTest(&argc, argv);
         srand((unsigned)time(NULL));
         auto r = RUN_ALL_TESTS();
+
+        // run benchmarks in release mode
+#ifdef NDEBUG
+        cout << "patience, running benchmarks..." << endl;
         runBenchmarks();
+#endif
         return r;
     }
     catch (traceback::ErrorInfo& err)
