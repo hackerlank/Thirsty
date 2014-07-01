@@ -17,8 +17,7 @@
 // @author Mark Rabkin (mrabkin@fb.com)
 // @author Andrei Alexandrescu (andrei.alexandrescu@fb.com)
 
-#ifndef FOLLY_RANGE_H_
-#define FOLLY_RANGE_H_
+#pragma once
 
 #include <cassert>
 #include <cstring>
@@ -1014,5 +1013,3 @@ inline size_t qfind_first_of(const Range<const unsigned char*>& haystack,
         StringPiece(needles));
 }
 
-
-#endif // FOLLY_RANGE_H_

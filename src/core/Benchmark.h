@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef FOLLY_BENCHMARK_H_
-#define FOLLY_BENCHMARK_H_
+#pragma once
 
 #include <cstdint>
 #include <cassert>
@@ -26,6 +25,7 @@
 #include "Preprocessor.h"
 #include <boost/function_types/function_arity.hpp>
 #include <boost/chrono/chrono.hpp>
+
 
 /**
  * Runs all benchmarks defined. Usually put in main().
@@ -466,6 +466,3 @@ void doNotOptimizeAway(T&& datum)
   if (auto FB_ANONYMOUS_VARIABLE(BENCHMARK_SUSPEND) =   \
       BenchmarkSuspender()) {}                          \
   else
-
-
-#endif // FOLLY_BENCHMARK_H_

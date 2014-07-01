@@ -27,7 +27,7 @@
 #include <iostream>
 #include "Foreach.h"
 #include "Conv.h"
-#include "StringUtils.h"
+#include "Strings.h"
 
 
 using namespace std;

@@ -1,10 +1,6 @@
-/**
- *  @file   Platform.h
- *  @author ichenq@gmail.com
- *  @date   Jun 29, 2014
- *  @brief  platform independent macros
- *
- */
+//
+//
+//
 
 #pragma once
 
@@ -60,10 +56,10 @@
 #endif
 
 /* Platform specific TLS support
-* gcc implements __thread
-* msvc implements __declspec(thread)
-* the semantics are the same (but remember __thread is broken on apple)
-*/
+ * gcc implements __thread
+ * msvc implements __declspec(thread)
+ * the semantics are the same (but remember __thread is broken on apple)
+ */
 #if defined(_MSC_VER)
 # define FOLLY_TLS __declspec(thread)
 #elif defined(__GNUC__) || defined(__clang__)

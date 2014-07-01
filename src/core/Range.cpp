@@ -113,7 +113,8 @@ size_t qfind_first_byte_of_byteset(const StringPiece& haystack,
     }
     for (size_t index = 0; index < haystack.size(); ++index)
     {
-        if (s.contains(haystack[index])) {
+        if (s.contains(haystack[index])) 
+        {
             return index;
         }
     }
