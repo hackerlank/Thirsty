@@ -333,4 +333,42 @@ public:
 #undef FB_GEN2
 #undef FB_GEN1
 
- 
+
+template <class T, class Enable = void> struct Unaligned;
+
+/**
+ * Representation of an unaligned value of a POD type.
+ */
+FOLLY_PACK_PUSH
+template <class T>
+struct Unaligned<
+    T,
+    typename std::enable_if<std::is_pod<T>::value>::type> 
+{
+    Unaligned() = default;  // uninitialized
+    /* implicit */ Unaligned(T v) : value(v) { }
+    T value;
+} FOLLY_PACK_ATTR;
+FOLLY_PACK_POP
+
+/**
+ * Read an unaligned value of type T and return it.
+ */
+template <class T>
+inline T loadUnaligned(const void* p) 
+{
+    static_assert(sizeof(Unaligned<T>) == sizeof(T), "Invalid unaligned size");
+    static_assert(alignof(Unaligned<T>) == 1, "Invalid alignment");
+    return static_cast<const Unaligned<T>*>(p)->value;
+}
+
+/**
+ * Write an unaligned value of type T.
+ */
+template <class T>
+inline void storeUnaligned(void* p, T value) 
+{
+    static_assert(sizeof(Unaligned<T>) == sizeof(T), "Invalid unaligned size");
+    static_assert(alignof(Unaligned<T>) == 1, "Invalid alignment");
+    new (p)Unaligned<T>(value);
+}
