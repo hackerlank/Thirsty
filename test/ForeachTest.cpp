@@ -15,6 +15,7 @@
  */
 
 #include "core/Foreach.h"
+#include "core/Benchmark.h"
 #include <gtest/gtest.h>
 #include <map>
 #include <string>
@@ -179,4 +180,133 @@ TEST(Foreach, ForEachRangeR)
         sum += *i;
     }
     EXPECT_EQ(10, sum);
+}
+
+
+// Benchmarks:
+// 1. Benchmark iterating through the man with FOR_EACH, and also assign
+//    iter->first and iter->second to local vars inside the FOR_EACH loop.
+// 2. Benchmark iterating through the man with FOR_EACH, but use iter->first and
+//    iter->second as is, without assigning to local variables.
+// 3. Use FOR_EACH_KV loop to iterate through the map.
+
+static std::map<int, std::string> bmMap;  // For use in benchmarks below.
+
+void setupBenchmark(int iters) 
+{
+    bmMap.clear();
+    for (int i = 0; i < iters; ++i) 
+    {
+        bmMap[i] = "teststring";
+    }
+}
+
+BENCHMARK(ForEachKVNoMacroAssign, iters) 
+{
+    int sumKeys = 0;
+    std::string sumValues;
+
+    BENCHMARK_SUSPEND
+    {
+        setupBenchmark(iters);
+        int sumKeys = 0;
+        std::string sumValues = "";
+    }
+
+    FOR_EACH(iter, bmMap) 
+    {
+        const int k = iter->first;
+        const std::string v = iter->second;
+        sumKeys += k;
+        sumValues += v;
+    }
+}
+
+BENCHMARK(ForEachKVNoMacroNoAssign, iters) 
+{
+    int sumKeys = 0;
+    std::string sumValues;
+
+    BENCHMARK_SUSPEND
+    {
+        setupBenchmark(iters);
+    }
+
+    FOR_EACH(iter, bmMap) 
+    {
+        sumKeys += iter->first;
+        sumValues += iter->second;
+    }
+}
+
+BENCHMARK(ManualLoopNoAssign, iters) 
+{
+    BENCHMARK_SUSPEND
+    {
+        setupBenchmark(iters);
+    }
+    int sumKeys = 0;
+    std::string sumValues;
+
+    for (auto iter = bmMap.begin(); iter != bmMap.end(); ++iter) 
+    {
+        sumKeys += iter->first;
+        sumValues += iter->second;
+    }
+}
+
+BENCHMARK(ForEachKVMacro, iters) 
+{
+    BENCHMARK_SUSPEND 
+    {
+        setupBenchmark(iters);
+    }
+    int sumKeys = 0;
+    std::string sumValues;
+
+    FOR_EACH_KV(k, v, bmMap) 
+    {
+        sumKeys += k;
+        sumValues += v;
+    }
+}
+
+BENCHMARK(ForEachManual, iters) 
+{
+    int sum = 1;
+    for (auto i = 1; i < iters; ++i) 
+    {
+        sum *= i;
+    }
+    doNotOptimizeAway(sum);
+}
+
+BENCHMARK(ForEachRange, iters) 
+{
+    int sum = 1;
+    FOR_EACH_RANGE(i, 1, iters) 
+    {
+        sum *= i;
+    }
+    doNotOptimizeAway(sum);
+}
+
+BENCHMARK(ForEachDescendingManual, iters) 
+{
+    int sum = 1;
+    for (auto i = iters; i-- > 1;) 
+    {
+        sum *= i;
+    }
+    doNotOptimizeAway(sum);
+}
+
+BENCHMARK(ForEachRangeR, iters) 
+{
+    int sum = 1;
+    FOR_EACH_RANGE_R(i, 1, iters) 
+    {
+        sum *= i;
+    }
+    doNotOptimizeAway(sum);
 }

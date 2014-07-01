@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef FOLLY_BASE_FOREACH_H_
-#define FOLLY_BASE_FOREACH_H_
+#pragma once
+
+#include <boost/type_traits/has_less.hpp>
 
 /*
  * Iterim macros (until we have C++0x range-based for) that simplify
@@ -46,8 +47,6 @@
  * In optimized builds g++ eliminates the extra gymnastics entirely and
  * generates code 100% identical to the handwritten loop.
  */
-
-#include <boost/type_traits/remove_cv.hpp>
 
 /*
  * Shorthand for:
@@ -112,61 +111,16 @@
           for (auto &v = FOR_EACH_state3->second;               \
                !FOR_EACH_state1; ++FOR_EACH_state1)
 
-namespace folly { namespace detail {
-
-// Boost 1.48 lacks has_less, we emulate a subset of it here.
-template <typename T, typename U>
-class HasLess {
-  struct BiggerThanChar { char unused[2]; };
-  template <typename C, typename D> static char test(decltype(C() < D())*);
-  template <typename, typename> static BiggerThanChar test(...);
-public:
-  enum { value = sizeof(test<T, U>(0)) == 1 };
-};
-
-/**
- * notThereYet helps the FOR_EACH_RANGE macro by opportunistically
- * using "<" instead of "!=" whenever available when checking for loop
- * termination. This makes e.g. examples such as FOR_EACH_RANGE (i,
- * 10, 5) execute zero iterations instead of looping virtually
- * forever. At the same time, some iterator types define "!=" but not
- * "<". The notThereYet function will dispatch differently for those.
- *
- * Below is the correct implementation of notThereYet. It is disabled
- * because of a bug in Boost 1.46: The filesystem::path::iterator
- * defines operator< (via boost::iterator_facade), but that in turn
- * uses distance_to which is undefined for that particular
- * iterator. So HasLess (defined above) identifies
- * boost::filesystem::path as properly comparable with <, but in fact
- * attempting to do so will yield a compile-time error.
- *
- * The else branch (active) contains a conservative
- * implementation.
- */
-
-#if 0
-
-template <class T, class U>
-typename std::enable_if<HasLess<T, U>::value, bool>::type
-notThereYet(T& iter, const U& end) {
-  return iter < end;
-}
-
-template <class T, class U>
-typename std::enable_if<!HasLess<T, U>::value, bool>::type
-notThereYet(T& iter, const U& end) {
-  return iter != end;
-}
-
-#else
+namespace detail {
 
 template <class T, class U>
 typename std::enable_if<
   (std::is_arithmetic<T>::value && std::is_arithmetic<U>::value) ||
   (std::is_pointer<T>::value && std::is_pointer<U>::value),
   bool>::type
-notThereYet(T& iter, const U& end) {
-  return iter < end;
+notThereYet(T& iter, const U& end) 
+{
+    return iter < end;
 }
 
 template <class T, class U>
@@ -176,11 +130,11 @@ typename std::enable_if<
     (std::is_pointer<T>::value && std::is_pointer<U>::value)
   ),
   bool>::type
-notThereYet(T& iter, const U& end) {
-  return iter != end;
+notThereYet(T& iter, const U& end) 
+{
+    return iter != end;
 }
 
-#endif
 
 
 /**
@@ -188,20 +142,22 @@ notThereYet(T& iter, const U& end) {
  * FOR_EACH_RANGE_R macro.
  */
 template <class T, class U>
-typename std::enable_if<HasLess<U, T>::value, bool>::type
-downTo(T& iter, const U& begin) {
-  return begin < iter--;
+typename std::enable_if<boost::has_less<U, T>::value, bool>::type
+downTo(T& iter, const U& begin) 
+{
+    return begin < iter--;
 }
 
 template <class T, class U>
-typename std::enable_if<!HasLess<U, T>::value, bool>::type
-downTo(T& iter, const U& begin) {
-  if (iter == begin) return false;
-  --iter;
-  return true;
+typename std::enable_if<!boost::has_less<U, T>::value, bool>::type
+downTo(T& iter, const U& begin) 
+{
+    if (iter == begin) return false;
+    --iter;
+    return true;
 }
 
-} }
+} // namespace detail
 
 /*
  * Iteration with given limits. end is assumed to be reachable from
@@ -213,7 +169,7 @@ downTo(T& iter, const U& begin) {
  */
 #define FOR_EACH_RANGE(i, begin, end)           \
   for (auto i = (true ? (begin) : (end));       \
-       ::folly::detail::notThereYet(i, (end));  \
+       detail::notThereYet(i, (end));           \
        ++i)
 
 /*
@@ -226,6 +182,4 @@ downTo(T& iter, const U& begin) {
  *       to be "long". This is done by getting the type of (false ? begin : end)
  */
 #define FOR_EACH_RANGE_R(i, begin, end) \
-  for (auto i = (false ? (begin) : (end)); ::folly::detail::downTo(i, (begin));)
-
-#endif
+  for (auto i = (false ? (begin) : (end)); detail::downTo(i, (begin));)
