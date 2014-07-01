@@ -86,4 +86,7 @@ typedef SSIZE_T ssize_t;
 
 // compiler specific to compiler specific
 # define __PRETTY_FUNCTION__    __FUNCSIG__
+
+#define alignof     __alignof
+
 #endif
