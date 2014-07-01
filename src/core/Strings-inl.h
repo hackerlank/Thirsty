@@ -265,10 +265,10 @@ void internalJoinAppend(Delim delimiter,
         internalJoinAppend(delimFront(delimiter), begin, end, output);
         return;
     }
-    toAppend(*begin, &output);
+    toAppend(&output, *begin);
     while (++begin != end)
     {
-        toAppend(delimiter, *begin, &output);
+        toAppend(&output, delimiter, *begin);
     }
 }
 
