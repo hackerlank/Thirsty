@@ -36,10 +36,10 @@
 // but it's used by Spooky just for short messages.
 //
 void SpookyHashV2::Short(
-    const void *message,
-    size_t length,
-    uint64_t *hash1,
-    uint64_t *hash2)
+                        const void *message,
+                        size_t length,
+                        uint64_t *hash1,
+                        uint64_t *hash2)
 {
     uint64_t buf[2*sc_numVars];
     union
@@ -140,10 +140,10 @@ void SpookyHashV2::Short(
 
 // do the whole hash in one call
 void SpookyHashV2::Hash128(
-    const void *message,
-    size_t length,
-    uint64_t *hash1,
-    uint64_t *hash2)
+                        const void *message,
+                        size_t length,
+                        uint64_t *hash1,
+                        uint64_t *hash2)
 {
     if (length < sc_bufSize)
     {

@@ -20,8 +20,8 @@
 #define __STDC_FORMAT_MACROS 1
 #endif
 
-#include "SpookyHashV2.h"
-#include "Benchmark.h"
+#include "core/SpookyHashV2.h"
+#include "core/Benchmark.h"
 #include <cinttypes>
 #include <cstdio>
 #include <cstddef>
@@ -32,11 +32,16 @@
 
 static bool failed = false;
 
-static uint64_t GetTickCount() {
-  timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;  // milliseconds
+#ifdef _MSC_VER
+#include <windows.h>
+#else
+static uint64_t GetTickCount() 
+{
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;  // milliseconds
 }
+#endif
 
 class Random
 {
@@ -458,11 +463,10 @@ BENCHMARK(SpookyHashV2, n)
     TestResults();
     TestAlignment();
     TestPieces();
-    DoTimingBig(argc);
+    DoTimingBig(0xdeb);
     // tudorb@fb.com: Commented out slow tests
 #if 0
     DoTimingSmall(argc);
     TestDeltas(argc);
 #endif
-    return failed;
 }
