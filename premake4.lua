@@ -13,6 +13,7 @@ solution 'Thirsty'
     language 'C++'
     flags {'ExtraWarnings'}
     targetdir 'bin'
+    platforms {'x64'}
 
     configuration 'Debug'
         defines { 'DEBUG' }
@@ -136,6 +137,7 @@ solution 'UnitTest'
     language 'C++'
     flags {'ExtraWarnings'}
     targetdir 'bin'
+    platforms {'x64'}
     
     configuration 'Debug'
         defines { 'DEBUG' }
