@@ -97,7 +97,7 @@ typedef SSIZE_T ssize_t;
 
 // sprintf semantics are not exactly identical
 // but current usage is not a problem
-# define snprintf   _snprintf
+# define snprintf   sprintf_s
 
 // semantics here are identical
 # define strerror_r(errno,buf,len) strerror_s(buf,len,errno)
