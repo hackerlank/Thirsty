@@ -14,7 +14,6 @@
 
 #include <cstdint>
 #include <random>
-#include <boost/thread/tss.hpp>
 #include "Platform.h"
 
 
@@ -25,8 +24,8 @@
 class Random
 {
 public:
-    typedef boost::thread_specific_ptr<std::default_random_engine> tls_rng_ptr;
-
+    
+    // initialize PRNG pointer and seed
     static void seed(int32_t seed = 0);
 
     /**
@@ -82,5 +81,5 @@ public:
     static double randDouble(double min, double max);
 
 private:
-    static tls_rng_ptr   rng;
+    static FOLLY_TLS std::default_random_engine*  rng;
 };

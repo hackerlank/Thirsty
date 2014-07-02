@@ -1,7 +1,7 @@
 #include "Random.h"
 #include <cassert>
 
-Random::tls_rng_ptr  Random::rng;
+std::default_random_engine*  Random::rng;
 
 void Random::seed(int32_t seed_value)
 {
@@ -10,23 +10,25 @@ void Random::seed(int32_t seed_value)
         std::random_device device;
         seed_value = device();
     }
-    if (!rng.get())
+    if (rng == nullptr)
     {
-        rng.reset(new std::default_random_engine);
+        // notice: the memory `rng` pointed to never deleted!!!
+        // DONT create and destroy too many threads frequently
+        rng = new std::default_random_engine;
     }
     rng->seed(seed_value);
 }
 
 uint32_t Random::rand32()
 {
-    assert(rng.get());
+    assert(rng);
     uint32_t r = (*rng)();
     return r;
 }
 
 uint32_t Random::rand32(uint32_t max)
 {
-    assert(rng.get());
+    assert(rng);
     if (max == 0)
     {
         return 0;
@@ -36,7 +38,7 @@ uint32_t Random::rand32(uint32_t max)
 
 uint32_t Random::rand32(uint32_t min, uint32_t max)
 {
-    assert(rng.get());
+    assert(rng);
     if (min == max)
     {
         return 0;
@@ -46,7 +48,7 @@ uint32_t Random::rand32(uint32_t min, uint32_t max)
 
 uint64_t Random::rand64(uint64_t max)
 {
-    assert(rng.get());
+    assert(rng);
     if (max == 0)
     {
         return 0;
@@ -56,7 +58,7 @@ uint64_t Random::rand64(uint64_t max)
 
 uint64_t Random::rand64(uint64_t min, uint64_t max)
 {
-    assert(rng.get());
+    assert(rng);
     if (min == max)
     {
         return 0;
@@ -75,7 +77,7 @@ bool Random::oneIn(uint32_t n)
 
 double Random::randDouble(double min, double max)
 {
-    assert(rng.get());
+    assert(rng);
     if (std::fabs(max - min) < std::numeric_limits<double>::epsilon())
     {
         return 0;
