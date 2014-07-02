@@ -199,6 +199,7 @@ inline typename std::enable_if<
 popcount(T x) 
 {
 #ifdef _MSC_VER
+    static_assert(FOLLY_X64, "popcount64 only available on x64");
     return __popcnt64(x);
 #else
     return __builtin_popcountll(x);
