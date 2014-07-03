@@ -23,6 +23,18 @@
 # define FOLLY_X64  0
 #endif
 
+/* Define macro wrappers for C++11's "final" and "override" keywords, which
+* are supported in gcc 4.7 but not gcc 4.6. */
+#if !defined(FOLLY_FINAL) && !defined(FOLLY_OVERRIDE)
+# if defined(__clang__) || __GNUC_PREREQ(4, 7)
+#  define FOLLY_FINAL final
+#  define FOLLY_OVERRIDE override
+# else
+#  define FOLLY_FINAL /**/
+#  define FOLLY_OVERRIDE /**/
+# endif
+#endif
+
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define LIKELY(x)   (__builtin_expect((x), 1))
 #define UNLIKELY(x) (__builtin_expect((x), 0))
