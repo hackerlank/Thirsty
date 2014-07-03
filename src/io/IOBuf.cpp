@@ -204,7 +204,7 @@ void IOBuf::releaseStorage(HeapStorage* storage, uint16_t freeFlags)
         // This storage segment still contains portions that are in use.
         // Just clear the flags specified in freeFlags for now.
         auto ret = storage->prefix.flags.compare_exchange_weak(
-            flags, newFlags, std::memory_order_acq_rel);
+            flags, newFlags, std::memory_order_seq_cst);
         if (ret) 
         {
             // We successfully updated the flags.

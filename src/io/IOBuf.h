@@ -26,8 +26,9 @@
 #include <type_traits>
 #include <boost/iterator/iterator_facade.hpp>
 #include "Platform.h"
+#include "logging.h"
 #include "core/Range.h"
-#include "core/logging.h"
+
 
 
 /**

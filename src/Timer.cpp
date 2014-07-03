@@ -1,7 +1,7 @@
 #include "Timer.h"
 #include <cassert>
 #include <boost/date_time.hpp>
-#include "core/logging.h"
+#include "logging.h"
 
 using namespace std::placeholders;
 
