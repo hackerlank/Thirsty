@@ -958,7 +958,7 @@ size_t IOBufHash::operator()(const IOBuf& buf) const
 {
     SpookyHashV2 hasher;
     hasher.Init(0, 0);
-    Cursor cursor(&buf);
+    io::Cursor cursor(&buf);
     for (;;) 
     {
         auto p = cursor.peek();
@@ -978,8 +978,8 @@ size_t IOBufHash::operator()(const IOBuf& buf) const
 
 bool IOBufEqual::operator()(const IOBuf& a, const IOBuf& b) const 
 {
-    Cursor ca(&a);
-    Cursor cb(&b);
+    io::Cursor ca(&a);
+    io::Cursor cb(&b);
     for (;;) 
     {
         auto pa = ca.peek();
