@@ -83,3 +83,15 @@ public:
 private:
     static FOLLY_TLS std::default_random_engine*  rng;
 };
+
+/*
+ * Return a good seed for a random number generator.
+ * Note that this is a legacy function, as it returns a 32-bit value, which
+ * is too small to be useful as a "real" RNG seed. Use the functions in class
+ * Random instead.
+ */
+inline int32_t randomNumberSeed()
+{
+    Random::seed();
+    return Random::rand32();
+}
