@@ -2,7 +2,7 @@
 #include <functional>
 #include <vector>
 #include <boost/date_time.hpp>
-#include "core/logging.h"
+#include "logging.h"
 #include "core/Strings.h"
 
 

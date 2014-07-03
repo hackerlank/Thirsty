@@ -1,7 +1,7 @@
 #include "TcpClient.h"
 #include <functional>
 #include <zlib.h>
-#include "core/logging.h"
+#include "logging.h"
 #include "core/Strings.h"
 
 using namespace std;

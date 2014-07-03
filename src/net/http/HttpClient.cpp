@@ -1,7 +1,7 @@
 #include "HttpClient.h"
 #include <cassert>
 #include <functional>
-#include "core/logging.h"
+#include "logging.h"
 
 using namespace std::placeholders;
 using namespace boost::asio;

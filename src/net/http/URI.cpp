@@ -17,8 +17,9 @@
 #include "URI.h"
 #include <ctype.h>
 #include <regex>
+#include "logging.h"
 #include "core/Conv.h"
-#include "core/logging.h"
+
 
 using std::string;
 
