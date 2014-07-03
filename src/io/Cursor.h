@@ -27,7 +27,7 @@
 #include "IOBufQueue.h"
 
 
-
+namespace io {
 /**
  * Cursor class for fast iteration over IOBuf chains.
  *
@@ -870,3 +870,4 @@ private:
     size_t        growth_;
 };
 
+} // namespace io
