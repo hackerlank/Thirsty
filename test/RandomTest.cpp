@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <thread>
 #include <vector>
-#include "core/logging.h"
+#include "logging.h"
 
 using namespace std;
 

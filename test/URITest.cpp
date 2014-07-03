@@ -17,7 +17,7 @@
 #include "net/http/URI.h"
 #include <gtest/gtest.h>
 #include <boost/algorithm/string.hpp>
-#include "core/logging.h"
+#include "logging.h"
 
 
 using namespace std;

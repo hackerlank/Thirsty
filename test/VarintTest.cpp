@@ -21,7 +21,7 @@
 #include <initializer_list>
 #include <random>
 #include <vector>
-#include "core/logging.h"
+#include "logging.h"
 #include "core/Benchmark.h"
 #include "core/Random.h"
 

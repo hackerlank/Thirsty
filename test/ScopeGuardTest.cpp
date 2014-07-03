@@ -15,7 +15,7 @@
  */
 
 #include "core/ScopeGuard.h"
-#include "core/logging.h"
+#include "logging.h"
 #include <gtest/gtest.h>
 #include <functional>
 #include <stdexcept>
