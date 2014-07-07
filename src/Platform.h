@@ -23,8 +23,7 @@
 # define FOLLY_X64  0
 #endif
 
-/* Define macro wrappers for C++11's "final" and "override" keywords, which
-* are supported in gcc 4.7 but not gcc 4.6. */
+// Define macro wrappers for C++11's "final" and "override" keywords
 #if !defined(FOLLY_FINAL) && !defined(FOLLY_OVERRIDE)
 # if defined(__clang__) || __GNUC_PREREQ(4, 7)
 #  define FOLLY_FINAL final
