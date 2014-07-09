@@ -35,19 +35,17 @@
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 4
-#define LIKELY(x)   (__builtin_expect((x), 1))
-#define UNLIKELY(x) (__builtin_expect((x), 0))
+# define LIKELY(x)   (__builtin_expect((x), 1))
+# define UNLIKELY(x) (__builtin_expect((x), 0))
 #else
-#define LIKELY(x)   (x)
-#define UNLIKELY(x) (x)
+# define LIKELY(x)   (x)
+# define UNLIKELY(x) (x)
 #endif
 
 #ifdef _MSC_VER
-#define ALIGN(x)        __declspec(align(x))
-#elif defined(__GUNC__)
-#define ALIGN(x)        __attribute__((aligned(x)))
+# define ALIGN(x)        __declspec(align(x))
 #else
-#error "ALIGN() not supported on this platform"
+# define ALIGN(x)        __attribute__((aligned(x)))
 #endif
 
 // compiler specific attribute translation
@@ -56,7 +54,7 @@
 // NOTE: this will only do checking in msvc with versions that support /analyze
 #if _MSC_VER
 # ifdef _USE_ATTRIBUTES_FOR_SAL
-#    undef _USE_ATTRIBUTES_FOR_SAL
+#   undef _USE_ATTRIBUTES_FOR_SAL
 # endif
 # define _USE_ATTRIBUTES_FOR_SAL 1
 # include <sal.h>
@@ -96,6 +94,11 @@
 # define FOLLY_PACK_POP /**/
 #endif
 
+#ifndef _MSC_VER
+# define _NOEXCEPT         noexcept
+# define _NOEXCEPT_OP(x)   noexcept(x)
+#endif
+
 
 // MSVC specific defines
 // mainly for posix compat
@@ -126,6 +129,6 @@ typedef SSIZE_T ssize_t;
 #   define __BYTE_ORDER__  __ORDER_LITTLE_ENDIAN__
 #elif BOOST_ENDIAN_BIG_BYTE == 1
 #   define __BYTE_ORDER__  __ORDER_BIG_ENDIAN__
-#endif 
+#endif
 
 #endif // _MSC_VER
