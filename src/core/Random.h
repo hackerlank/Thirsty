@@ -24,7 +24,7 @@
 class Random
 {
 public:
-    
+
     // initialize PRNG pointer and seed
     static void seed(int32_t seed = 0);
 
@@ -46,7 +46,7 @@ public:
     /**
      * Returns a random uint64_t
      */
-    static uint64_t rand64() 
+    static uint64_t rand64()
     {
         return ((uint64_t)rand32() << 32) | rand32();
     }
@@ -69,29 +69,11 @@ public:
     /**
      * Returns a double in [0, 1)
      */
-    static double randDouble01() 
-    {
-        return std::generate_canonical<double, std::numeric_limits<double>::digits>
-            (*rng);
-    }
+    static double randDouble01();
 
     /**
      * Returns a double in [min, max), if min == max, returns 0.
      */
     static double randDouble(double min, double max);
-
-private:
-    static FOLLY_TLS std::default_random_engine*  rng;
 };
 
-/*
- * Return a good seed for a random number generator.
- * Note that this is a legacy function, as it returns a 32-bit value, which
- * is too small to be useful as a "real" RNG seed. Use the functions in class
- * Random instead.
- */
-inline int32_t randomNumberSeed()
-{
-    Random::seed();
-    return Random::rand32();
-}

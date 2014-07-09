@@ -1,69 +1,72 @@
 #include "Random.h"
 #include <cassert>
 
-std::default_random_engine*  Random::rng;
+using namespace std;
+
+
+static default_random_engine* get_tls_rng()
+{
+    static FOLLY_TLS default_random_engine*  rng;
+    if (rng == nullptr)
+    {
+        // notice: the memory `rng` pointed to never deleted.
+        // DONOT create and destroy too many threads frequently.
+        rng = new default_random_engine();
+    }
+    assert(rng);
+    return rng;
+}
 
 void Random::seed(int32_t seed_value)
 {
     if (seed_value == 0)
     {
-        std::random_device device;
+        random_device device;
         seed_value = device();
     }
-    if (rng == nullptr)
-    {
-        // notice: the memory `rng` pointed to never deleted!!!
-        // DONT create and destroy too many threads frequently
-        rng = new std::default_random_engine;
-    }
-    rng->seed(seed_value);
+    get_tls_rng()->seed(seed_value);
 }
 
 uint32_t Random::rand32()
 {
-    assert(rng);
-    uint32_t r = (*rng)();
+    uint32_t r = (*get_tls_rng())();
     return r;
 }
 
 uint32_t Random::rand32(uint32_t max)
 {
-    assert(rng);
     if (max == 0)
     {
         return 0;
     }
-    return std::uniform_int_distribution<uint32_t>(0, max - 1)(*rng);
+    return std::uniform_int_distribution<uint32_t>(0, max - 1)(*get_tls_rng());
 }
 
 uint32_t Random::rand32(uint32_t min, uint32_t max)
 {
-    assert(rng);
     if (min == max)
     {
         return 0;
     }
-    return std::uniform_int_distribution<uint32_t>(min, max - 1)(*rng);
+    return std::uniform_int_distribution<uint32_t>(min, max - 1)(*get_tls_rng());
 }
 
 uint64_t Random::rand64(uint64_t max)
 {
-    assert(rng);
     if (max == 0)
     {
         return 0;
     }
-    return std::uniform_int_distribution<uint64_t>(0, max - 1)(*rng);
+    return std::uniform_int_distribution<uint64_t>(0, max - 1)(*get_tls_rng());
 }
 
 uint64_t Random::rand64(uint64_t min, uint64_t max)
 {
-    assert(rng);
     if (min == max)
     {
         return 0;
     }
-    return std::uniform_int_distribution<uint64_t>(min, max - 1)(*rng);
+    return std::uniform_int_distribution<uint64_t>(min, max - 1)(*get_tls_rng());
 }
 
 bool Random::oneIn(uint32_t n)
@@ -75,12 +78,17 @@ bool Random::oneIn(uint32_t n)
     return rand32(n) == 0;
 }
 
+double Random::randDouble01()
+{
+    return std::generate_canonical<double, std::numeric_limits<double>::digits>
+        (*get_tls_rng());
+}
+
 double Random::randDouble(double min, double max)
 {
-    assert(rng);
     if (std::fabs(max - min) < std::numeric_limits<double>::epsilon())
     {
         return 0;
     }
-    return std::uniform_real_distribution<double>(min, max)(*rng);
+    return std::uniform_real_distribution<double>(min, max)(*get_tls_rng());
 }
