@@ -43,9 +43,9 @@
  *
  * @author Tudor Bosman (tudorb@fb.com)
  */
- 
+
  #pragma once
- 
+
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>
@@ -67,7 +67,7 @@ inline const typename std::enable_if<
     std::is_unsigned<T>::value &&
     sizeof(T) <= sizeof(uint32_t)),
 unsigned int>::type
-findFirstSet(T x) 
+findFirstSet(T x)
 {
 #ifdef _MSC_VER
     unsigned long index;
@@ -84,7 +84,7 @@ inline const typename std::enable_if<
     sizeof(T) > sizeof(uint32_t) &&
     sizeof(T) <= sizeof(uint64_t)),
 unsigned int > ::type
-findFirstSet(T x) 
+findFirstSet(T x)
 {
 #ifdef _MSC_VER
     unsigned long index;
@@ -98,7 +98,7 @@ template <class T>
 inline const typename std::enable_if<
     (std::is_integral<T>::value && std::is_signed<T>::value),
     unsigned int>::type
-findFirstSet(T x) 
+findFirstSet(T x)
 {
     // Note that conversion from a signed type to the corresponding unsigned
     // type is technically implementation-defined, but will likely work
@@ -114,7 +114,7 @@ inline const typename std::enable_if<
     std::is_unsigned<T>::value &&
     sizeof(T) <= sizeof(uint32_t)),
     unsigned int>::type
-findLastSet(T x) 
+findLastSet(T x)
 {
 #ifdef _MSC_VER
     unsigned long index;
@@ -131,7 +131,7 @@ inline const typename std::enable_if<
     sizeof(T) > sizeof(uint32_t) &&
     sizeof(T) <= sizeof(uint64_t)),
     unsigned int > ::type
-findLastSet(T x) 
+findLastSet(T x)
 {
 #ifdef _MSC_VER
     unsigned long index;
@@ -147,7 +147,7 @@ inline const typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_signed<T>::value),
     unsigned int>::type
-findLastSet(T x) 
+findLastSet(T x)
 {
     return findLastSet(static_cast<typename std::make_unsigned<T>::type>(x));
 }
@@ -156,7 +156,7 @@ template <class T>
 inline const typename std::enable_if<
     std::is_integral<T>::value && std::is_unsigned<T>::value,
     T>::type
-nextPowTwo(T v) 
+nextPowTwo(T v)
 {
     return v ? (1ul << findLastSet(v - 1)) : 1;
 }
@@ -165,7 +165,7 @@ template <class T>
 inline const typename std::enable_if<
     std::is_integral<T>::value && std::is_unsigned<T>::value,
     bool>::type
-isPowTwo(T v) 
+isPowTwo(T v)
 {
     return (v != 0) && !(v & (v - 1));
 }
@@ -179,7 +179,7 @@ inline typename std::enable_if<
     std::is_unsigned<T>::value &&
     sizeof(T) <= sizeof(uint32_t)),
     size_t>::type
-popcount(T x) 
+popcount(T x)
 {
 #ifdef _MSC_VER
     return __popcnt(x);
@@ -196,7 +196,7 @@ inline typename std::enable_if<
     sizeof(T) > sizeof(uint32_t) &&
     sizeof(T) <= sizeof(uint64_t)),
     size_t > ::type
-popcount(T x) 
+popcount(T x)
 {
 #ifdef _MSC_VER
     static_assert(FOLLY_X64, "popcount64 only available on x64");
@@ -213,7 +213,7 @@ popcount(T x)
 namespace detail {
 
 template <class T>
-struct EndianIntBase 
+struct EndianIntBase
 {
 public:
     static T swap(T x);
@@ -241,8 +241,8 @@ FB_GEN(int64_t, __builtin_bswap64)
 FB_GEN(uint64_t, __builtin_bswap64)
 FB_GEN(int32_t, __builtin_bswap32)
 FB_GEN(uint32_t, __builtin_bswap32)
-FB_GEN(int16_t, our_bswap16)
-FB_GEN(uint16_t, our_bswap16)
+FB_GEN(int16_t, bswap_16)
+FB_GEN(uint16_t, bswap_16)
 #endif
 
 #undef FB_GEN
@@ -251,7 +251,7 @@ FB_GEN(uint16_t, our_bswap16)
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 
 template <class T>
-struct EndianInt : public detail::EndianIntBase < T > 
+struct EndianInt : public detail::EndianIntBase < T >
 {
 public:
     static T big(T x) { return EndianInt::swap(x); }
@@ -261,7 +261,7 @@ public:
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 
 template <class T>
-struct EndianInt : public detail::EndianIntBase < T > 
+struct EndianInt : public detail::EndianIntBase < T >
 {
 public:
     static T big(T x) { return x; }
@@ -293,10 +293,10 @@ public:
   FB_GEN2(int##sz##_t, sz)
 
 
-class Endian 
+class Endian
 {
 public:
-    enum class Order : uint8_t 
+    enum class Order : uint8_t
     {
         LITTLE,
         BIG
@@ -311,15 +311,15 @@ public:
 # error Your machine uses a weird endianness!
 #endif  /* __BYTE_ORDER__ */
 
-    template <class T> static T swap(T x) 
+    template <class T> static T swap(T x)
     {
         return detail::EndianInt<T>::swap(x);
     }
-    template <class T> static T big(T x) 
+    template <class T> static T big(T x)
     {
         return detail::EndianInt<T>::big(x);
     }
-    template <class T> static T little(T x) 
+    template <class T> static T little(T x)
     {
         return detail::EndianInt<T>::little(x);
     }
@@ -344,7 +344,7 @@ FOLLY_PACK_PUSH
 template <class T>
 struct Unaligned<
     T,
-    typename std::enable_if<std::is_pod<T>::value>::type> 
+    typename std::enable_if<std::is_pod<T>::value>::type>
 {
     Unaligned() = default;  // uninitialized
     /* implicit */ Unaligned(T v) : value(v) { }
@@ -356,7 +356,7 @@ FOLLY_PACK_POP
  * Read an unaligned value of type T and return it.
  */
 template <class T>
-inline T loadUnaligned(const void* p) 
+inline T loadUnaligned(const void* p)
 {
     static_assert(sizeof(Unaligned<T>) == sizeof(T), "Invalid unaligned size");
     static_assert(alignof(Unaligned<T>) == 1, "Invalid alignment");
@@ -367,7 +367,7 @@ inline T loadUnaligned(const void* p)
  * Write an unaligned value of type T.
  */
 template <class T>
-inline void storeUnaligned(void* p, T value) 
+inline void storeUnaligned(void* p, T value)
 {
     static_assert(sizeof(Unaligned<T>) == sizeof(T), "Invalid unaligned size");
     static_assert(alignof(Unaligned<T>) == 1, "Invalid alignment");
