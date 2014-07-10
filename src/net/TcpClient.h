@@ -6,7 +6,8 @@
 #include <boost/asio.hpp>
 #include <boost/noncopyable.hpp>
 #include "core/Range.h"
-#include "Buffer.h"
+#include "Header.h"
+
 
 typedef std::function<void(int32_t, const std::string&)>    ErrorCallback;
 typedef std::function<void(const std::string&, int16_t)>    ConnectCallback;
@@ -47,7 +48,7 @@ private:
     // handle write event
     void    HandleWrite(const boost::system::error_code& err, 
                         size_t bytes, 
-                        BufferPtr buf);
+                        uint8_t* buf);
 
     // read head handler
     void    HandleReadHead(const boost::system::error_code& err, size_t bytes);
@@ -55,12 +56,13 @@ private:
     // read body handler
     void    HandleReadBody(const boost::system::error_code& err, 
                            size_t bytes,
-                           BufferPtr buf);
+                           uint8_t* buf);
 private:
     boost::asio::io_service&        io_service_;
     boost::asio::ip::tcp::socket    socket_;
 
     Header              head_;   // message header
+    StackBuffer         stack_buf_; // stacked buffer
 
     ConnectCallback     on_connect_;
     ReadCallback        on_read_;

@@ -20,13 +20,6 @@ class TcpConnection
       private boost::noncopyable
 {
 public:
-    enum 
-    {
-        STACK_BUF_SIZE = 64,
-    };
-    typedef std::array<uint8_t, STACK_BUF_SIZE> StackBuffer;
-
-public:
     // construct a connection with the given io_service.
     TcpConnection(boost::asio::io_service& io_service, 
                   int64_t serial, 
@@ -55,12 +48,12 @@ private:
 
     void HandleReadBody(const boost::system::error_code& err, 
                         size_t bytes, 
-                        void* ptr);
+                        uint8_t* buf);
 
     // handle completion of a write operation.
     void HandleWrite(const boost::system::error_code& err, 
                      size_t bytes, 
-                     void* ptr);
+                     uint8_t* buf);
 
 private:
     // socket for the connection.
