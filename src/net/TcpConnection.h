@@ -15,6 +15,16 @@ typedef std::function<void(int64_t, int32_t, const std::string&)>   ErrorCallbac
 typedef std::function<void(int64_t, ByteRange)>                     ReadCallback;
 
 
+// 传输统计统计数据
+struct TransferStats
+{
+    uint32_t    total_send_count = 0;
+    uint32_t    total_send_size = 0;
+    uint32_t    total_recv_count = 0;
+    uint32_t    total_recv_size = 0;
+};
+
+
 class TcpConnection
     : public std::enable_shared_from_this<TcpConnection>,
       private boost::noncopyable
@@ -75,6 +85,8 @@ private:
 
     // read data callback
     ReadCallback     on_read_;
+
+    TransferStats    stats_;
 };
 
 typedef std::shared_ptr<TcpConnection>  TcpConnectionPtr;

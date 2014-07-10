@@ -15,11 +15,18 @@ enum
     kConnectionDeadTime = 600,      // no more than 5 minutes
 };
 
+struct ServerOptions
+{
+    uint16_t  heart_beat_sec = 100;         // 心跳时间
+    uint16_t  max_connections = 5000;       // 最大连接数
+    uint16_t  max_send_size_per_sec = 1024; // 每秒最大发送
+    uint16_t  max_recv_size_per_sec = 1024; // 每秒最大接收
+};
 
 class TcpServer : private boost::noncopyable
 {
 public:
-    explicit TcpServer(boost::asio::io_service& io_service, size_t max_conn);
+    explicit TcpServer(boost::asio::io_service& io_service, const ServerOptions& options);
     ~TcpServer();
 
     void Start(const std::string& addr,
@@ -65,8 +72,8 @@ private:
     // read data callback
     ReadCallback    on_read_;
 
-    // max connection limit
-    const size_t    max_connections_ = 2000;
+    // server options
+    ServerOptions   options_;
 
     // heartbeat checking
     TimerPtr        heartbeat_timer_;
