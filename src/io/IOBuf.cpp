@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <cstddef>
 #include "Cursor.h"
+#include "core/Malloc.h"
 #include "core/SpookyHashV2.h"
 #include "core/Conv.h"
 #include "core/ScopeGuard.h"
@@ -60,39 +61,6 @@ void takeOwnershipError(bool freeOnError, void* buf,
     }
 }
 
-/**
- * For jemalloc's size classes, see
- * http://www.canonware.com/download/jemalloc/jemalloc-latest/doc/jemalloc.html
- */
-inline size_t goodMallocSize(size_t minSize) 
-{
-    if (minSize <= 64) 
-    {
-        // Choose smallest allocation to be 64 bytes - no tripping over
-        // cache line boundaries, and small string optimization takes care
-        // of short strings anyway.
-        return 64;
-    }
-    if (minSize <= 512) 
-    {
-        // Round up to the next multiple of 64; we don't want to trip over
-        // cache line boundaries.
-        return (minSize + 63) & ~size_t(63);
-    }
-    if (minSize <= 3840) 
-    {
-        // Round up to the next multiple of 256
-        return (minSize + 255) & ~size_t(255);
-    }
-    if (minSize <= 4072 * 1024) 
-    {
-        // Round up to the next multiple of 4KB
-        return (minSize + 4095) & ~size_t(4095);
-    }
-    // Holy Moly
-    // Round up to the next multiple of 4MB
-    return (minSize + 4194303) & ~size_t(4194303);
-}
 
 } // anonymouse namespace
 
