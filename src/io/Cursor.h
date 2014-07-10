@@ -372,7 +372,7 @@ public:
   {
       if (!buf)
       {
-          buf = std::make_unique<IOBuf>();
+          buf = make_unique<IOBuf>();
       }
 
       return cloneAtMost(*buf, len);

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <memory>
 #include <boost/predef.h>
 
 // portable version check
@@ -94,6 +95,16 @@
 # define FOLLY_PACK_POP /**/
 #endif
 
+// GCC 4.7 doesn't supply std::make_unique
+#ifdef __GUNC__
+template<typename T, typename ...Args>
+std::unique_ptr<T> make_unique(Args&& ...args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+#else
+using std::make_unique;
+#endif
 
 // MSVC specific defines
 // mainly for posix compat
