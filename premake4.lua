@@ -63,7 +63,6 @@ solution 'Thirsty'
         }
         links
         {
-            'zlib',
             'double-conversion',
         }        
         end
@@ -95,24 +94,12 @@ solution 'Thirsty'
             'rt',
             'bfd',
             'pthread',
-            'zlib',
             'double-conversion',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
         }
         end
-
-    project 'zlib'
-        location 'build'
-        kind 'StaticLib'
-        uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
-        language 'C'
-        files
-        {
-            'dep/zlib/src/*.h',
-            'dep/zlib/src/*.c',
-        }
 
     project 'double-conversion'
         location 'build'
@@ -192,8 +179,7 @@ solution 'UnitTest'
         links
         {           
             'gtest',
-            'double-conversion',
-            'zlib',          
+            'double-conversion',       
         }        
         end
         
@@ -225,7 +211,6 @@ solution 'UnitTest'
             'rt',
             'bfd', 
             'pthread',
-            'zlib',
             'gtest',
             'double-conversion',
             'boost_system',
@@ -261,15 +246,3 @@ solution 'UnitTest'
         {
             'dep/double-conversion/src',
         }
-        
-    project 'zlib'
-        location 'build/test'
-        kind 'StaticLib'
-        uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
-        language 'C'
-        files
-        {
-            'dep/zlib/src/*.h',
-            'dep/zlib/src/*.c',
-        }
-            

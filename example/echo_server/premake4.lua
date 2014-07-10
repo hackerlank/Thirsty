@@ -63,7 +63,6 @@ solution 'ServerExample'
         }
         links
         {
-            'zlib',
             'double-conversion',
         }        
         end
@@ -94,28 +93,13 @@ solution 'ServerExample'
         {
             'rt',
             'pthread',
-            'bfd',        
-            'zlib',
+            'bfd',
             'double-conversion',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
         }
         end
-
-    project 'zlib'
-        location 'build'
-        kind 'StaticLib'
-        uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
-        language 'C'
-        defines
-        {
-        }
-        files
-        {
-            '../../dep/zlib/src/*.h',
-            '../../dep/zlib/src/*.c',
-        }
 
     project 'double-conversion'
         location 'build'
@@ -195,7 +179,6 @@ solution 'ClientExample'
         }
         links
         {
-            'zlib',
             'double-conversion',
         }        
         end
@@ -231,7 +214,6 @@ solution 'ClientExample'
             'rt',
             'pthread',
             'bfd',
-            'zlib',
             'double-conversion',
             'boost_system',
             'boost_date_time',
@@ -256,17 +238,3 @@ solution 'ClientExample'
             '../../dep/double-conversion/src',
         }
         
-    project 'zlib'
-        location 'build'
-        kind 'StaticLib'
-        uuid '2E166B7C-8830-4FC9-8CFD-8163E5EB04A4'
-        language 'C'
-        defines
-        {
-        }
-        files
-        {
-            '../../dep/zlib/src/*.h',
-            '../../dep/zlib/src/*.c',
-        }
-            

@@ -3,6 +3,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include "Platform.h"
 #include "net/TcpClient.h"
 #include "core/Conv.h"
 #include "core/Range.h"
@@ -10,16 +11,14 @@
 using namespace std;
 
 
-void OnError(int32_t error, const string& msg)
-{
-    printf("Error: %d, %s.\n", error, msg.c_str());
-}
-
 TcpClientPtr CreateClient(boost::asio::io_service& io_service,
                           const std::string& host,
                           int16_t port)
 {
-    TcpClientPtr client = std::make_shared<TcpClient>(io_service, OnError);
+    TcpClientPtr client = make_shared<TcpClient>(io_service, [](int32_t error, const string& msg)
+    {
+        printf("Error: %d, %s.\n", error, msg.c_str());
+    });
     client->AsynConnect(host, port, [client](const string& host, int16_t port)
     {
         printf("connect to server(%s:%d) OK.\n", host.c_str(), port);
@@ -41,7 +40,7 @@ int main(int argc, char* argv[])
     {
         string host = "127.0.0.1";
         int16_t port = 32450;
-        int32_t num = 2000;
+        int32_t num = 1;
         if (argc >= 4)
         {
             host = argv[1];
