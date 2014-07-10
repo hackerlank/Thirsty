@@ -1,6 +1,8 @@
 #include "net/http/HttpClient.h"
 #include <gtest/gtest.h>
 
+using namespace std;
+
 TEST(HttpClient, SendRequest)
 {
     boost::asio::io_service io_service;

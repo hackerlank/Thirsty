@@ -90,7 +90,7 @@ RandomDataHolder::RandomDataHolder(size_t sizeLog2)
     const size_t numThreadsLog2 = 3;
     const size_t numThreads = size_t(1) << numThreadsLog2;
 
-    uint32_t seed = randomNumberSeed();
+    uint32_t seed = Random::rand32();
 
     std::vector<std::thread> threads;
     threads.reserve(numThreads);
