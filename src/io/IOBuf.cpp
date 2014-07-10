@@ -387,11 +387,11 @@ unique_ptr<IOBuf> IOBuf::wrapBuffer(const void* buf, uint64_t capacity)
     return make_unique<IOBuf>(WRAP_BUFFER, buf, capacity);
 }
 
-IOBuf::IOBuf() _NOEXCEPT
+IOBuf::IOBuf() noexcept
 {
 }
 
-IOBuf::IOBuf(IOBuf&& other) _NOEXCEPT
+IOBuf::IOBuf(IOBuf&& other) noexcept
 {
     *this = std::move(other);
 }
@@ -430,7 +430,7 @@ IOBuf::~IOBuf()
     decrementRefcount();
 }
 
-IOBuf& IOBuf::operator=(IOBuf&& other) _NOEXCEPT
+IOBuf& IOBuf::operator=(IOBuf&& other) noexcept
 {
     if (this == &other) 
     {

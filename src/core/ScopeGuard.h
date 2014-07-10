@@ -69,7 +69,7 @@
 class ScopeGuardImplBase
 {
 public:
-    void dismiss() _NOEXCEPT
+    void dismiss() noexcept
     {
         dismissed_ = true;
     }
@@ -104,7 +104,7 @@ public:
     {
     }
 
-    ~ScopeGuardImpl() _NOEXCEPT
+    ~ScopeGuardImpl() noexcept
     {
         if (!dismissed_)
         {
@@ -115,7 +115,7 @@ public:
 private:
     void* operator new(size_t) = delete;
 
-    void execute() _NOEXCEPT{ function_(); }
+    void execute() noexcept { function_(); }
 
     FunctionType function_;
 };
@@ -169,7 +169,7 @@ public:
     {
     }
 
-    ~ScopeGuardForNewException() _NOEXCEPT_OP(executeOnException)
+    ~ScopeGuardForNewException() /* noexcept(executeOnException) */
     {
         if (executeOnException == exceptionCounter_.isNewUncaughtException())
         {
@@ -234,13 +234,13 @@ ScopeGuardImpl<typename std::decay<FunctionType>::type>
 
 #define SCOPE_EXIT \
     auto FB_ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) \
-    = ::detail::ScopeGuardOnExit() + [&]() _NOEXCEPT
+    = ::detail::ScopeGuardOnExit() + [&]() noexcept
 
 #if defined(FOLLY_EXCEPTION_COUNT_USE_CXA_GET_GLOBALS) || \
     defined(FOLLY_EXCEPTION_COUNT_USE_GETPTD)
 #define SCOPE_FAIL \
     auto FB_ANONYMOUS_VARIABLE(SCOPE_FAIL_STATE) \
-    = ::detail::ScopeGuardOnFail() + [&]() _NOEXCEPT
+    = ::detail::ScopeGuardOnFail() + [&]() noexcept
 
 #define SCOPE_SUCCESS \
     auto FB_ANONYMOUS_VARIABLE(SCOPE_SUCCESS_STATE) \

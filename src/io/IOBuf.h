@@ -1064,7 +1064,7 @@ public:
      * space allocated for it.  This is generally useful only to later use move
      * assignment to fill out the IOBuf.
      */
-    IOBuf() _NOEXCEPT;
+    IOBuf() noexcept;
 
     /**
      * Move constructor and assignment operator.
@@ -1087,8 +1087,8 @@ public:
      * The main reason is because it is not clear these operations should copy
      * the entire chain or just the single IOBuf.)
      */
-    IOBuf(IOBuf&& other) _NOEXCEPT;
-    IOBuf& operator=(IOBuf&& other) _NOEXCEPT;
+    IOBuf(IOBuf&& other) noexcept;
+    IOBuf& operator=(IOBuf&& other) noexcept;
 
 private:
     enum FlagsEnum : uintptr_t

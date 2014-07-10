@@ -94,11 +94,6 @@
 # define FOLLY_PACK_POP /**/
 #endif
 
-#ifndef _MSC_VER
-# define _NOEXCEPT         noexcept
-# define _NOEXCEPT_OP(x)   noexcept(x)
-#endif
-
 
 // MSVC specific defines
 // mainly for posix compat
@@ -130,5 +125,8 @@ typedef SSIZE_T ssize_t;
 #elif BOOST_ENDIAN_BIG_BYTE == 1
 #   define __BYTE_ORDER__  __ORDER_BIG_ENDIAN__
 #endif
+
+// noexcept operator was not supported in MSVC 2013
+#define noexcept       _NOEXCEPT
 
 #endif // _MSC_VER

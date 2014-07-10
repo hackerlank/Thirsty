@@ -60,13 +60,13 @@ public:
         : exceptionCount_(other.exceptionCount_)
     {}
 
-    bool isNewUncaughtException() _NOEXCEPT
+    bool isNewUncaughtException() noexcept
     {
         return getUncaughtExceptionCount() > exceptionCount_;
     }
 
 private:
-    int getUncaughtExceptionCount() _NOEXCEPT;
+    int getUncaughtExceptionCount() noexcept;
 
     int exceptionCount_;
 };
@@ -77,7 +77,7 @@ private:
  * This function is based on Evgeny Panasyuk's implementation from here:
  * http://fburl.com/15190026
  */
-inline int UncaughtExceptionCounter::getUncaughtExceptionCount() _NOEXCEPT
+inline int UncaughtExceptionCounter::getUncaughtExceptionCount() noexcept
 {
 #if defined(FOLLY_EXCEPTION_COUNT_USE_CXA_GET_GLOBALS)
     // __cxa_get_globals returns a __cxa_eh_globals* (defined in unwind-cxx.h).
