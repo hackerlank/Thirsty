@@ -9,6 +9,7 @@ solution 'ServerExample'
     configurations {'Debug', 'Release'}
     language 'C++'
     flags {'ExtraWarnings'}
+    platforms {'x64'}
     targetdir 'bin'
 
     configuration 'Debug'
@@ -28,6 +29,7 @@ solution 'ServerExample'
             'echo_server.cpp',
             '../../src/**.h',
             '../../src/**.cpp',
+            '../../src/**.cc',
             '../../src/**.c',
         }
         excludes
@@ -57,13 +59,10 @@ solution 'ServerExample'
         includedirs
         {
             '../../src',
-            '../../dep/double-conversion/src',
-            '../../dep/zlib/src',
             BOOST_ROOT,
         }
         links
         {
-            'double-conversion',
         }        
         end
         
@@ -86,37 +85,17 @@ solution 'ServerExample'
         includedirs
         {
             '../../src',
-            '../../dep/double-conversion/src',
-            '../../dep/zlib/src',
         }
         links
         {
             'rt',
             'pthread',
             'bfd',
-            'double-conversion',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
         }
         end
-
-    project 'double-conversion'
-        location 'build'
-        kind 'StaticLib'
-        uuid 'AE6D2B6D-1CFB-48DE-A982-BAECACE31AE2'
-        defines
-        {
-        }
-        files
-        {
-            '../../dep/double-conversion/src/*.cc',
-            '../../dep/double-conversion/src/*.h',
-        }
-        includedirs
-        {
-            '../../dep/double-conversion/src',
-        }
         
     
 --
@@ -145,7 +124,8 @@ solution 'ClientExample'
             'echo_client.cpp',
             '../../src/**.h',
             '../../src/**.cpp',  
-            '../../src/**.c',            
+            '../../src/**.cc',
+            '../../src/**.c',
         }
         excludes
         {
@@ -173,13 +153,10 @@ solution 'ClientExample'
         includedirs
         {
             '../../src',
-            '../../dep/double-conversion/src',
-            '../../dep/zlib/src',
             BOOST_ROOT,
         }
         links
         {
-            'double-conversion',
         }        
         end
         
@@ -202,8 +179,6 @@ solution 'ClientExample'
         includedirs
         {
             '../../src',
-            '../../dep/double-conversion/src',
-            '../../dep/zlib/src',
         }
         libdirs
         {
@@ -214,27 +189,9 @@ solution 'ClientExample'
             'rt',
             'pthread',
             'bfd',
-            'double-conversion',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
         }
         end
-
-    project 'double-conversion'
-        location 'build'
-        kind 'StaticLib'
-        uuid 'AE6D2B6D-1CFB-48DE-A982-BAECACE31AE2'
-        defines
-        {
-        }
-        files
-        {
-            '../../dep/double-conversion/src/*.cc',
-            '../../dep/double-conversion/src/*.h',
-        }
-        includedirs
-        {
-            '../../dep/double-conversion/src',
-        }
         

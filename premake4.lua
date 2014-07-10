@@ -33,6 +33,7 @@ solution 'Thirsty'
             'src/**.h',
             'src/**.hpp',
             'src/**.cpp',
+            'src/**.cc',
             'src/**.c',
         }
         
@@ -57,13 +58,10 @@ solution 'Thirsty'
         includedirs
         {
             'src',
-            'dep/double-conversion/src',
-            'dep/zlib/src',
             BOOST_ROOT,
         }
         links
         {
-            'double-conversion',
         }        
         end
         
@@ -86,34 +84,17 @@ solution 'Thirsty'
         includedirs
         {
             'src',
-            'dep/double-conversion/src',
-            'dep/zlib/src',
         }
         links
         {
             'rt',
             'bfd',
             'pthread',
-            'double-conversion',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
         }
         end
-
-    project 'double-conversion'
-        location 'build'
-        kind 'StaticLib'
-        uuid 'AE6D2B6D-1CFB-48DE-A982-BAECACE31AE2'
-        files
-        {
-            'dep/double-conversion/src/*.cc',
-            'dep/double-conversion/src/*.h',
-        }
-        includedirs
-        {
-            'dep/double-conversion/src',
-        }
         
     
 --
@@ -144,6 +125,7 @@ solution 'UnitTest'
             'test/*.cpp',
             'src/**.h',
             'src/**.cpp',
+            'src/**.cc',
             'src/**.c',
         }
         excludes
@@ -172,14 +154,11 @@ solution 'UnitTest'
         {
             'src',
             'dep/gtest/include',
-            'dep/double-conversion/src',
-            'dep/zlib/src',
             BOOST_ROOT,
         }      
         links
         {           
             'gtest',
-            'double-conversion',       
         }        
         end
         
@@ -203,8 +182,6 @@ solution 'UnitTest'
         {
             'src',
             'dep/gtest/include',
-            'dep/double-conversion/src',
-            'dep/zlib/src',
         }    
         links
         {
@@ -212,7 +189,6 @@ solution 'UnitTest'
             'bfd', 
             'pthread',
             'gtest',
-            'double-conversion',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
@@ -231,18 +207,4 @@ solution 'UnitTest'
         {
             'dep/gtest',
             'dep/gtest/include',
-        }
-
-    project 'double-conversion'
-        location 'build/test'
-        kind 'StaticLib'
-        uuid 'AE6D2B6D-1CFB-48DE-A982-BAECACE31AE2'
-        files
-        {
-            'dep/double-conversion/src/*.cc',
-            'dep/double-conversion/src/*.h',
-        }
-        includedirs
-        {
-            'dep/double-conversion/src',
         }
