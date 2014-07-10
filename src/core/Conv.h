@@ -32,7 +32,7 @@
 #include "logging.h"
 #include "Range.h"
 #include <boost/implicit_cast.hpp>
-#include <double-conversion.h> // V8 JavaScript implementation
+#include "double-conversion/double-conversion.h" // V8 JavaScript implementation
 
 #define FOLLY_RANGE_CHECK(condition, message)                           \
     ((condition) ? (void)0 : throw traceback::RangeError(               \
