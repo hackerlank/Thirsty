@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <ctime>
+#include <memory>
+#include <array>
 #include <functional>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
+#include "Header.h"
 #include "core/Range.h"
-#include "Buffer.h"
 
 
 typedef std::function<void(int64_t, int32_t, const std::string&)>   ErrorCallback;
@@ -18,6 +19,13 @@ class TcpConnection
     : public std::enable_shared_from_this<TcpConnection>,
       private boost::noncopyable
 {
+public:
+    enum 
+    {
+        STACK_BUF_SIZE = 64,
+    };
+    typedef std::array<uint8_t, STACK_BUF_SIZE> StackBuffer;
+
 public:
     // construct a connection with the given io_service.
     TcpConnection(boost::asio::io_service& io_service, 
@@ -44,10 +52,15 @@ public:
 private:
     // handle completion of a read operation.
     void HandleReadHead(const boost::system::error_code& err, size_t bytes);
-    void HandleReadBody(const boost::system::error_code& err, size_t bytes, BufferPtr ptr);
+
+    void HandleReadBody(const boost::system::error_code& err, 
+                        size_t bytes, 
+                        void* ptr);
 
     // handle completion of a write operation.
-    void HandleWrite(const boost::system::error_code& err, size_t bytes, BufferPtr ptr);
+    void HandleWrite(const boost::system::error_code& err, 
+                     size_t bytes, 
+                     void* ptr);
 
 private:
     // socket for the connection.
@@ -57,6 +70,7 @@ private:
 
     // recv header
     Header          head_;
+    StackBuffer     stack_buf_;
 
     // serial number of this connection
     int64_t         serial_ = 0;
