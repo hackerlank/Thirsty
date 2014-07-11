@@ -17,10 +17,8 @@
 #pragma once
 
 #include <cstdint>
+#include "Platform.h"
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
 
 /**
  * Identification of an Intel CPU.

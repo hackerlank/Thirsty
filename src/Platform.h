@@ -110,6 +110,8 @@ using std::make_unique;
 // mainly for posix compat
 #ifdef _MSC_VER
 
+#include <intrin.h>
+
 // this definition is in a really silly place with a silly name
 // and ifdefing it every time we want it is painful
 #include <basetsd.h>
