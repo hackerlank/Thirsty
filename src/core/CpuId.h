@@ -32,17 +32,20 @@ class CpuId
 public:
     CpuId()
     {
-        // On non-Intel, none of these features exist; at least not in the same form
-        // as they do on Intel
-        c_ = 0;
-        d_ = 0;
-#if defined(_MSC_VER)
+#if FOLLY_X64 || defined(__i386__)        
+#ifdef _MSC_VER
         int cpu_info[4] = {};
         __cpuid(cpu_info, 1);
         c_ = cpu_info[2];
         d_ = cpu_info[3];
-#elif defined(__GNUC__)
+#else
         __asm__("cpuid" : "=c"(c_), "=d"(d_) : "a"(1) : "ebx");
+#endif
+#else
+        // On non-Intel, none of these features exist; at least not in the same form
+        // as they do on Intel
+        c_ = 0;
+        d_ = 0;        
 #endif
     }
 
