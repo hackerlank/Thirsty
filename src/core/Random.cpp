@@ -1,16 +1,16 @@
 #include "Random.h"
 #include <cassert>
+#include <random>
 
 using namespace std;
 
-
 static default_random_engine* get_tls_rng()
 {
-    static FOLLY_TLS default_random_engine*  rng;
+    static FOLLY_TLS default_random_engine*  rng; // thread local storage
     if (rng == nullptr)
     {
-        // notice: the memory `rng` pointed to never deleted.
-        // DONOT create and destroy too many threads frequently.
+        // make sense that `rng` is never deleted before process exit.
+        // DO NOT create and destroy too many threads frequently.
         rng = new default_random_engine();
     }
     assert(rng);

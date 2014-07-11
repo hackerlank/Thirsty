@@ -2,24 +2,18 @@
  * @file    Random.h
  * @author  chenqiang01@7aurora.com
  * @date    Dec 23, 2013
- * @brief   基于std::mt19937的随机数生成器
+ * @brief   std::mt19937 based random number generator
  *
- *          随机数生成器:
- *              std::linear_congruential_engine    线性同余法
- *              std::mersenne_twister_engine       梅森旋转法
- *              std::substract_with_carry_engine   滞后Fibonacci
  */
 
 #pragma once
 
 #include <cstdint>
-#include <random>
 #include "Platform.h"
 
 
 /**
- * A PRNG with one instance per thread. This PRNG uses a mersenne twister random
- * number generator.
+ * A thread-safe PRNG, uses a mersenne twister random number generator.
  */
 class Random
 {
