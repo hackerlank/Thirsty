@@ -187,8 +187,8 @@ private:
 };
 
 /**
-    * Internal use for the macro SCOPE_FAIL below
-    */
+ * Internal use for the macro SCOPE_FAIL below
+ */
 enum class ScopeGuardOnFail {};
 
 template <typename FunctionType>

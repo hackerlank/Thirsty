@@ -208,8 +208,8 @@ popcount(T x)
 
 
 /**
-* Endianness detection and manipulation primitives.
-*/
+ * Endianness detection and manipulation primitives.
+ */
 namespace detail {
 
 template <class T>

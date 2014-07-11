@@ -19,9 +19,9 @@
 #include <exception>
 
 /**
-* For jemalloc's size classes, see
-* http://www.canonware.com/download/jemalloc/jemalloc-latest/doc/jemalloc.html
-*/
+ * For jemalloc's size classes, see
+ * http://www.canonware.com/download/jemalloc/jemalloc-latest/doc/jemalloc.html
+ */
 inline size_t goodMallocSize(size_t minSize)
 {
     if (minSize <= 64)
@@ -53,9 +53,9 @@ inline size_t goodMallocSize(size_t minSize)
 }
 
 /**
-* Trivial wrappers around malloc, calloc, realloc that check for allocation
-* failure and throw std::bad_alloc in that case.
-*/
+ * Trivial wrappers around malloc, calloc, realloc that check for allocation
+ * failure and throw std::bad_alloc in that case.
+ */
 inline void* checkedMalloc(size_t size) 
 {
     void* p = malloc(size);
