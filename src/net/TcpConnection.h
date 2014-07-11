@@ -7,15 +7,18 @@
 #include <functional>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
-#include "Header.h"
+#include "Packet.h"
 #include "core/Range.h"
 
 
-typedef std::function<void(int64_t, int32_t, const std::string&)>   ErrorCallback;
-typedef std::function<void(int64_t, ByteRange)>                     ReadCallback;
+// error callback
+typedef std::function<void(const boost::system::error_code)> ErrorCallback;
+
+// read callback
+typedef std::function<void(int64_t, ByteRange)>     ReadCallback;
 
 
-// 传输统计统计数据
+// transferred data stats
 struct TransferStats
 {
     uint32_t    total_send_count = 0;
@@ -56,14 +59,17 @@ private:
     // handle completion of a read operation.
     void HandleReadHead(const boost::system::error_code& err, size_t bytes);
 
-    void HandleReadBody(const boost::system::error_code& err, 
-                        size_t bytes, 
-                        uint8_t* buf);
+    void HandleReadContent(const boost::system::error_code& err,
+                           size_t bytes, 
+                           uint8_t* buf);
 
     // handle completion of a write operation.
     void HandleWrite(const boost::system::error_code& err, 
                      size_t bytes, 
                      uint8_t* buf);
+
+    bool CheckHeader(boost::system::error_code& err, size_t bytes);
+    bool CheckContent(boost::system::error_code& err, const uint8_t* buf, size_t bytes);
 
 private:
     // socket for the connection.

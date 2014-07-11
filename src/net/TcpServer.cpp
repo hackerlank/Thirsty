@@ -35,13 +35,6 @@ void TcpServer::Start(const std::string& addr,
     acceptor_.listen();
 
     StartAccept();
-
-    if (!heartbeat_timer_)
-    {
-        heartbeat_timer_ = std::make_shared<Timer>(io_service_, kHeartBeatCheckTime,
-            std::bind(&TcpServer::DropDeadConnections, this));
-    }
-    heartbeat_timer_->Schedule();
 }
 
 void TcpServer::Stop()
@@ -88,7 +81,7 @@ void TcpServer::StartAccept()
 {
     auto serial = current_serial_++;
     TcpConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, serial,
-        std::bind(&TcpServer::OnConnectionError, this, _1, _2, _3), on_read_);
+        std::bind(&TcpServer::HandleError, this, _1, serial), on_read_);
     acceptor_.async_accept(conn->GetSocket(), std::bind(&TcpServer::HandleAccept, this, _1, conn));
 }
 
@@ -104,7 +97,7 @@ void TcpServer::HandleAccept(const boost::system::error_code& err, TcpConnection
         }
         else
         {
-            LOG(ERROR) << "max connection limit: " << options_.max_connections;
+            LOG(ERROR) << "max connection count limit: " << options_.max_connections;
         }
     }
     if (acceptor_.is_open())
@@ -113,10 +106,10 @@ void TcpServer::HandleAccept(const boost::system::error_code& err, TcpConnection
     }
 }
 
-void TcpServer::OnConnectionError(int64_t serial, int error, const std::string& msg)
+void TcpServer::HandleError(const boost::system::error_code& ec, int64_t serial)
 {
     CloseSession(serial);
-    LOG(ERROR) << "serial " << serial << " closed, " << error << ": " << msg;
+    LOG(ERROR) << serial << ", " << ec.value() << ": " << ec.message();
 }
 
 void TcpServer::DropDeadConnections()
@@ -128,7 +121,7 @@ void TcpServer::DropDeadConnections()
     {
         auto& conn = item.second;
         auto elapsed = now - conn->GetLastRecvTime();
-        if (elapsed >= kConnectionDeadTime)
+        if (elapsed >= options_.heart_beat_sec)
         {
             dead_connections.emplace_back(item.first);
         }

@@ -9,19 +9,22 @@
 #include "Timer.h"
 #include "core/Range.h"
 
-enum
-{
-    kHeartBeatCheckTime = 180,      // check every 3 minutes
-    kConnectionDeadTime = 600,      // no more than 5 minutes
-};
 
 struct ServerOptions
 {
-    uint16_t  heart_beat_sec = 100;         // 心跳时间
-    uint16_t  max_connections = 5000;       // 最大连接数
-    uint16_t  max_send_size_per_sec = 1024; // 每秒最大发送
-    uint16_t  max_recv_size_per_sec = 1024; // 每秒最大接收
+    // heartbeat seconds
+    uint16_t  heart_beat_sec = 100;
+
+    // max connection allowed
+    uint16_t  max_connections = 5000;
+
+    // max send size per second for every connection
+    uint16_t  max_send_size_per_sec = 1024;
+
+    // max recv size per second for every connection
+    uint16_t  max_recv_size_per_sec = 1024;
 };
+
 
 class TcpServer : private boost::noncopyable
 {
@@ -53,7 +56,7 @@ public:
 private:
     void StartAccept();
     void HandleAccept(const boost::system::error_code& err, TcpConnectionPtr ptr);
-    void OnConnectionError(int64_t serial, int error, const std::string& msg);
+    void HandleError(const boost::system::error_code& err, int64_t serial);
     void DropDeadConnections();
 
 private:

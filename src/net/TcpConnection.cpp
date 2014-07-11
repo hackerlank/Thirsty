@@ -40,70 +40,35 @@ void TcpConnection::AsynRead()
         std::bind(&TcpConnection::HandleReadHead, this, _1, _2));
 }
 
-void TcpConnection::HandleReadHead(const boost::system::error_code& err, size_t bytes)
+void TcpConnection::HandleReadHead(const boost::system::error_code& ec, size_t bytes)
 {
-    if (!err)
+    boost::system::error_code err = ec;
+    if (!err && CheckHeader(err, bytes))
     {
-        if (bytes == sizeof(head_) && head_.size <= MAX_BODY_LEN)
-        {
-            auto body_size = head_.size;
-            auto checksum = crc32c((const uint8_t*)&body_size, sizeof(body_size));
-            if (checksum == head_.size_crc && body_size > 0)
-            {
-                uint8_t* buf = (body_size <= stack_buf_.size() ? stack_buf_.data() 
-                    : (uint8_t*)checkedMalloc(goodMallocSize(body_size)));
-                boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
-                    std::bind(&TcpConnection::HandleReadBody, this, _1, _2, buf));
-            }
-            else
-            {
-                auto msg = stringPrintf("invalid header checksum, size: %d, checksum: %d",
-                    head_.size, head_.size_crc);
-                on_error_(serial_, 0, msg);
-            }
-        }
-        else
-        {
-            auto msg = stringPrintf("invalid header, bytes: %d, body size: %d", bytes, head_.size);
-            on_error_(serial_, 0, msg);
-        }
+        uint8_t* buf = (head_.size <= stack_buf_.size() ? stack_buf_.data()
+            : (uint8_t*)checkedMalloc(goodMallocSize(head_.size)));
+        boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
+            std::bind(&TcpConnection::HandleReadContent, this, _1, _2, buf));
     }
     else
     {
-        on_error_(serial_, err.value(), err.message());
+        on_error_(err);
     }
 }
 
-void TcpConnection::HandleReadBody(const boost::system::error_code& err,
-                                   size_t bytes,
-                                   uint8_t* buf)
+void TcpConnection::HandleReadContent(const boost::system::error_code& ec,
+                                      size_t bytes,
+                                      uint8_t* buf)
 {
-    if (!err)
+    boost::system::error_code err = ec;
+    if (!err && CheckContent(err, buf, bytes))
     {
-        if (bytes == head_.size)
-        {
-            auto checksum = crc32c((const uint8_t*)buf, bytes);
-            if (checksum == head_.body_crc)
-            {
-                on_read_(serial_, ByteRange((const uint8_t*)buf, bytes));
-                AsynRead();
-            }
-            else
-            {
-                auto msg = stringPrintf("invalid body checksum, %d, expected: %d",
-                    checksum, head_.body_crc);
-                on_error_(serial_, 0, msg);
-            }
-        }
-        else
-        {
-            auto msg = stringPrintf("invalid body size: %d, expected: %d", bytes, head_.size);
-            on_error_(serial_, 0, msg);
-        }
+        on_read_(serial_, ByteRange((const uint8_t*)buf, bytes));
+        AsynRead();
     }
     else
     {
-        on_error_(serial_, err.value(), err.message());
+        on_error_(err);
     }
     if (bytes > stack_buf_.size())
     {
@@ -114,18 +79,18 @@ void TcpConnection::HandleReadBody(const boost::system::error_code& err,
 
 void TcpConnection::AsynWrite(const void* data, size_t size)
 {
-    // to-do
-    // support sending size more than MAX_BODY_LEN 
-    assert(data && size && size <= MAX_BODY_LEN);
-    Header head = { size, 0, 0 };
-    head.size_crc = crc32c((const uint8_t*)&head.size, sizeof(head.size));
-    head.body_crc = crc32c((const uint8_t*)data, size);
-    size_t buf_size = size + sizeof(head);
-    uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
-    memcpy(buf, &head, sizeof(head));
-    memcpy(buf + sizeof(head), data, size);
-    boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
-        std::bind(&TcpConnection::HandleWrite, this, _1, _2, buf));
+    if (data && size > 0 && size <= MAX_CONTENT_LEN)
+    {
+        Header head = { size, 0, 0 };
+        head.size_checksum = crc32c((const uint8_t*)&head.size, sizeof(head.size));
+        head.content_checksum = crc32c((const uint8_t*)data, size);
+        size_t buf_size = size + sizeof(head);
+        uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
+        memcpy(buf, &head, sizeof(head));
+        memcpy(buf + sizeof(head), data, size);
+        boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
+            std::bind(&TcpConnection::HandleWrite, this, _1, _2, buf));
+    }    
 }
 
 void TcpConnection::HandleWrite(const boost::system::error_code& err,
@@ -134,8 +99,52 @@ void TcpConnection::HandleWrite(const boost::system::error_code& err,
 {
     if (err)
     {
-        on_error_(serial_, err.value(), err.message());
+        on_error_(err);
     }
     free(buf);
 }
 
+bool TcpConnection::CheckHeader(boost::system::error_code& err, size_t bytes)
+{
+    err = boost::asio::error::invalid_argument;
+    if (bytes == sizeof(head_))
+    {
+        auto checksum = crc32c((const uint8_t*)&head_.size, sizeof(head_.size));
+        if (checksum == head_.size_checksum)
+        {
+            if (head_.size > 0 && head_.size <= MAX_CONTENT_LEN)
+            {
+                return true;
+            }
+            else
+            {
+                LOG(ERROR) << serial_ << ", invalid content size: " << head_.size;
+            }
+        }
+        else
+        {
+            LOG(ERROR) << serial_ << ", invalid header checksum: " << checksum 
+                << ", " << head_.size_checksum;
+        }
+    }
+    return false;
+}
+
+bool TcpConnection::CheckContent(boost::system::error_code& err, const uint8_t* buf, size_t bytes)
+{
+    err = boost::asio::error::invalid_argument;
+    if (bytes == head_.size)
+    {
+        auto checksum = crc32c((const uint8_t*)buf, bytes);
+        if (checksum == head_.content_checksum)
+        {
+            return true;
+        }
+        else
+        {
+            LOG(ERROR) << serial_ << ", invalid content checksum: " << checksum 
+                << ", " << head_.content_checksum;
+        }
+    }
+    return false;
+}

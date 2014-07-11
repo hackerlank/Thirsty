@@ -47,16 +47,18 @@ void TcpClient::AsynConnect(const std::string& host,
 
 void TcpClient::AsynWrite(const void* data, size_t bytes)
 {
-    assert(data && bytes);
-    Header head = { bytes, 0, 0 };
-    size_t buf_size = bytes + sizeof(head);
-    head.size_crc = crc32c((const uint8_t*)&head.size, sizeof(head.size));
-    head.body_crc = crc32c((const uint8_t*)data, bytes);
-    uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
-    memcpy(buf, &head, sizeof(head));
-    memcpy(buf + sizeof(head), data, bytes);
-    boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
-        std::bind(&TcpClient::HandleWrite, this, _1, _2, buf));
+    if (data && bytes && bytes <= MAX_CONTENT_LEN)
+    {
+        Header head = { bytes, 0, 0 };
+        size_t buf_size = bytes + sizeof(head);
+        head.size_checksum = crc32c((const uint8_t*)&head.size, sizeof(head.size));
+        head.content_checksum = crc32c((const uint8_t*)data, bytes);
+        uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
+        memcpy(buf, &head, sizeof(head));
+        memcpy(buf + sizeof(head), data, bytes);
+        boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
+            std::bind(&TcpClient::HandleWrite, this, _1, _2, buf));
+    }
 }
 
 void TcpClient::AsynReadHead()
@@ -76,7 +78,7 @@ void TcpClient::HandleConnect(const boost::system::error_code& err,
     }
     else
     {
-        on_error_(err.value(), err.message());
+        on_error_(err);
     }
 }
 
@@ -86,77 +88,84 @@ void TcpClient::HandleWrite(const boost::system::error_code& err,
 {
     if (err)
     {
-        on_error_(err.value(), err.message());
+        on_error_(err);
     }
     free(buf);
 }
 
-void TcpClient::HandleReadHead(const boost::system::error_code& err, size_t bytes)
+void TcpClient::HandleReadHead(const boost::system::error_code& ec, size_t bytes)
 {
-    if (!err)
+    boost::system::error_code err = ec;
+    if (!err && CheckHeader(err, bytes))
     {
-        if (bytes == sizeof(head_) && head_.size <= MAX_BODY_LEN)
-        {
-            auto body_size = head_.size;
-            auto checksum = crc32c((const uint8_t*)&body_size, sizeof(body_size));
-            if (checksum == head_.size_crc)
-            {
-                uint8_t* buf = (body_size <= stack_buf_.size() ? stack_buf_.data()
-                    : (uint8_t*)checkedMalloc(goodMallocSize(body_size)));
-                boost::asio::async_read(socket_, boost::asio::buffer(buf, body_size),
-                    std::bind(&TcpClient::HandleReadBody, this, _1, _2, buf));
-            }
-            else
-            {
-                auto msg = stringPrintf("invalid header checksum: %d, expected: %d", checksum, head_.body_crc);
-                on_error_(0, msg);
-            }
-        }
-        else
-        {
-            auto msg = stringPrintf("invalid header size, bytes: %d, body: %d", bytes, head_.size);
-            on_error_(0, msg);
-        }
+        uint8_t* buf = (head_.size <= stack_buf_.size() ? stack_buf_.data()
+            : (uint8_t*)checkedMalloc(goodMallocSize(head_.size)));
+        boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
+            std::bind(&TcpClient::HandleReadContent, this, _1, _2, buf));
     }
     else
     {
-        on_error_(err.value(), err.message());
+        on_error_(err);
     }
 }
 
-void TcpClient::HandleReadBody(const boost::system::error_code& err,
-                               size_t bytes,
-                               uint8_t* buf)
+void TcpClient::HandleReadContent(const boost::system::error_code& ec, size_t bytes, uint8_t* buf)
 {
-    if (err)
+    boost::system::error_code err = ec;
+    if (!err && CheckContent(err, buf, bytes))
     {
-        if (bytes == head_.size)
-        {
-            auto checksum = crc32c((const uint8_t*)buf, bytes);
-            if (checksum == head_.body_crc)
-            {
-                on_read_(ByteRange(buf, bytes));
-                AsynReadHead();
-            }
-            else
-            {
-                auto msg = stringPrintf("invalid body checksum: %d, expected: %d", checksum, head_.body_crc);
-                on_error_(0, msg);
-            }
-        }
-        else
-        {
-            auto msg = stringPrintf("invalid body size: %d, expected: %d", bytes, head_.size);
-            on_error_(0, msg);
-        }
+        on_read_( ByteRange((const uint8_t*)buf, bytes));
+        AsynReadHead();
     }
     else
     {
-        on_error_(err.value(), err.message());
+        on_error_(err);
     }
-
     if (bytes > stack_buf_.size())
     {
         free(buf);
     }
+}
+
+bool TcpClient::CheckHeader(boost::system::error_code& err, size_t bytes)
+{
+    err = boost::asio::error::invalid_argument;
+    if (bytes == sizeof(head_))
+    {
+        auto checksum = crc32c((const uint8_t*)&head_.size, sizeof(head_.size));
+        if (checksum == head_.size_checksum)
+        {
+            if (head_.size > 0 && head_.size <= MAX_CONTENT_LEN)
+            {
+                return true;
+            }
+            else
+            {
+                LOG(ERROR) << "invalid content size: " << head_.size;
+            }
+        }
+        else
+        {
+            LOG(ERROR) << "invalid header checksum: " << checksum << ", " << head_.size_checksum;
+        }
+    }
+    return false;
+}
+
+bool TcpClient::CheckContent(boost::system::error_code& err, const uint8_t* buf, size_t bytes)
+{
+    err = boost::asio::error::invalid_argument;
+    if (bytes == head_.size)
+    {
+        auto checksum = crc32c((const uint8_t*)buf, bytes);
+        if (checksum == head_.content_checksum)
+        {
+            return true;
+        }
+        else
+        {
+            LOG(ERROR) << "invalid content checksum: " << checksum << ", " << head_.content_checksum;
+        }
+    }
+    return false;
 }
