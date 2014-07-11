@@ -53,7 +53,7 @@ solution 'Thirsty'
         }
         libdirs
         {
-            BOOST_ROOT .. '/stage/lib',
+            BOOST_ROOT .. '/stage/lib-x64',
         }
         includedirs
         {
@@ -148,7 +148,7 @@ solution 'UnitTest'
         }
         libdirs
         {
-            BOOST_ROOT .. '/stage/lib',
+            BOOST_ROOT .. '/stage/lib-x64',
         }
         includedirs
         {
@@ -158,7 +158,7 @@ solution 'UnitTest'
         }      
         links
         {           
-            'gtest',
+            'libgtest',
         }        
         end
         
@@ -188,14 +188,14 @@ solution 'UnitTest'
             'rt',
             'bfd', 
             'pthread',
-            'gtest',
+            'libgtest',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
         }        
         end
         
-    project 'gtest'
+    project 'libgtest'
         location 'build/test'
         kind 'StaticLib'
         uuid '31BC2F58-F374-4984-B490-F1F08ED02DD3'
