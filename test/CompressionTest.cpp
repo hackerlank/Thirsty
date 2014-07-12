@@ -104,7 +104,7 @@ RandomDataHolder::RandomDataHolder(size_t sizeLog2)
             size_t start = size_t(t) << countLog2;
             for (size_t i = 0; i < countLog2; ++i) 
             {
-                this->data_[start + i] = rng();
+                this->data_[start + i] = (rng() & 0xFF);
             }
         });
     }

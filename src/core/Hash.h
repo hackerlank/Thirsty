@@ -140,7 +140,7 @@ inline uint32_t twang_32from64(uint64_t key)
     key = key ^ (key >> 11);
     key = key + (key << 6);
     key = key ^ (key >> 22);
-    return (uint32_t)key;
+    return (key & 0xFFFFFFFF);
 }
 
 /*
