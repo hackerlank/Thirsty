@@ -177,10 +177,8 @@ public:
         std::string::size_type startFrom,
         std::string::size_type size)
     {
-        if (UNLIKELY(startFrom > str.size()))
-        {
-            throw traceback::OutOfRange("index out of range");
-        }
+        CHECK(UNLIKELY(startFrom > str.size())) << "index out of range: "
+            << startFrom << ", " << str.size();
         b_ = str.data() + startFrom;
         if (str.size() - startFrom < size)
         {
@@ -391,19 +389,15 @@ public:
 
     void advance(size_type n)
     {
-        if (UNLIKELY(n > size())) 
-        {
-            throw traceback::OutOfRange("index out of range");
-        }
+        CHECK(UNLIKELY(n <= size())) << "index out of range: "
+            << n << ", " << size();
         b_ += n;
     }
 
     void subtract(size_type n)
     {
-        if (UNLIKELY(n > size()))
-        {
-            throw traceback::OutOfRange("index out of range");
-        }
+        CHECK(UNLIKELY(n <= size())) << "index out of range: "
+            << n << ", " << size();
         e_ -= n;
     }
 
@@ -422,10 +416,8 @@ public:
     Range subpiece(size_type first,
         size_type length = std::string::npos) const
     {
-        if (UNLIKELY(first > size()))
-        {
-            throw traceback::OutOfRange("index out of range");
-        }
+        CHECK(UNLIKELY(first > size())) << "index out of range: "
+            << first << ", " << size();
         return Range(b_ + first,
             std::min<std::string::size_type>(length, size() - first));
     }

@@ -2,7 +2,6 @@
 #include <time.h>
 #include <iostream>
 #include <gtest/gtest.h>
-#include "logging.h"
 #include "core/Benchmark.h"
 
 #ifdef _WIN32
@@ -27,12 +26,7 @@ int main(int argc, char* argv[])
 #endif
         return r;
     }
-    catch (traceback::ErrorInfo& err)
-    {
-        cout << err.diagnostic() << endl;
-        return 1;
-    }
-    catch(exception& ex)
+    catch(const std::exception& ex)
     {
         cout << ex.what() << endl;
     }

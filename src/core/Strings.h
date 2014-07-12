@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <type_traits>
 #include "Platform.h"
 #include "Range.h"

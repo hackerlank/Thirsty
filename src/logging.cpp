@@ -1,6 +1,7 @@
 #include "logging.h"
 #include "Platform.h"
 #include "core/Strings.h"
+#include "StackTrace.h"
 
 using std::string;
 
@@ -86,8 +87,9 @@ void LogMessage::Finish()
     log_handler_(level_, filename_, line_, message_);
     if (level_ == LOGLEVEL_FATAL) 
     {
-        string msg = stringPrintf("%s[%d]: %s", filename_, line_, message_.c_str());
-        throw traceback::RuntimeError(msg);
+        string msg = stringPrintf("%s[%d]: %s\nstack traceback:\n%s\n", 
+            filename_, line_, message_.c_str(), getStackTrace());
+        throw std::runtime_error(msg);
     }
 }
 

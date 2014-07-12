@@ -34,10 +34,9 @@
 #include <boost/implicit_cast.hpp>
 #include "double-conversion/double-conversion.h" // V8 JavaScript implementation
 
-#define FOLLY_RANGE_CHECK(condition, message)                           \
-    ((condition) ? (void)0 : throw traceback::RangeError(               \
-    (__FILE__ "(" + std::to_string((long long int) __LINE__) + "): "    \
-    + (message)).c_str()))
+#define FOLLY_RANGE_CHECK(condition, message)  CHECK(condition) << message
+    
+    
 
 
 /*******************************************************************************

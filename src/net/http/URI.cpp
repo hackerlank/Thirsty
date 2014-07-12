@@ -54,7 +54,7 @@ Uri::Uri(StringPiece str) : port_(0)
     std::cmatch match;
     if (!std::regex_match(str.begin(), str.end(), match, uriRegex))
     {
-        throw traceback::InvalidArgument(to<std::string>("invalid URI ", str));
+        throw std::invalid_argument(to<std::string>("invalid URI ", str));
     }
 
     scheme_ = submatch(match, 1);
@@ -85,7 +85,7 @@ Uri::Uri(StringPiece str) : port_(0)
             authorityMatch,
             authorityRegex))
         {
-            throw traceback::InvalidArgument(
+            throw std::invalid_argument(
                 to<std::string>("invalid URI authority ",
                 StringPiece(authority.first, authority.second)));
         }

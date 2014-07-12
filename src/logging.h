@@ -36,7 +36,6 @@
 #include <cstdint>
 #include <string>
 #include <exception>
-#include "traceback.h"
 
 enum LogLevel 
 {
