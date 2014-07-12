@@ -38,7 +38,7 @@ std::string  getStackTrace(int maxDepth)
         }
         else
         {
-            sprintf_s(text, 256, "unknown: %s() at 0x%p.\n", symbol->Name, symbol->Address);
+            sprintf_s(text, 256, "unknown file: %s() at 0x%p.\n", symbol->Name, symbol->Address);
         }
         result += text;
     }

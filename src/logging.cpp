@@ -87,8 +87,9 @@ void LogMessage::Finish()
     log_handler_(level_, filename_, line_, message_);
     if (level_ == LOGLEVEL_FATAL) 
     {
+        string stack = getStackTrace();
         string msg = stringPrintf("%s[%d]: %s\nstack traceback:\n%s\n", 
-            filename_, line_, message_.c_str(), getStackTrace());
+            filename_, line_, message_.c_str(), stack.c_str());
         throw std::runtime_error(msg);
     }
 }
