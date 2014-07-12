@@ -46,10 +46,10 @@
 
  #pragma once
 
+#include "Platform.h"
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>
-#include "Platform.h"
 
 #ifdef _MSC_VER
 #include <intrin.h>

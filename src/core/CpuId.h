@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include <cstdint>
 #include "Platform.h"
+#include <cstdint>
+
 
 
 /**

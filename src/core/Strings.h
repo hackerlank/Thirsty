@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Platform.h"
 #include <string>
 #include <vector>
 #include <type_traits>
-#include "Platform.h"
 #include "Range.h"
 #include "Conv.h"
 

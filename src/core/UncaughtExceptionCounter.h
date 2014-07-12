@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <exception>
 #include "Platform.h"
+#include <exception>
 
 #if defined(__GNUG__) || defined(__CLANG__)
 #define FOLLY_EXCEPTION_COUNT_USE_CXA_GET_GLOBALS

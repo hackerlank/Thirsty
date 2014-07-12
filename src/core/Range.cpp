@@ -19,7 +19,6 @@
 
 #include "Range.h"
 #include <iostream>
-#include "Platform.h"
 
 
 /**

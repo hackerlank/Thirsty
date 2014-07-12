@@ -23,12 +23,12 @@
 
 #pragma once
 
+#include "Platform.h"
 #include <cstdint>
 #include <cassert>
 #include <string>
 #include <stdexcept>
 #include <type_traits>
-#include "Platform.h"
 #include "logging.h"
 #include "Range.h"
 #include <boost/implicit_cast.hpp>

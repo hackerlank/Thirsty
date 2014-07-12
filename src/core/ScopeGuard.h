@@ -16,10 +16,10 @@
 
 #pragma once
 
+#include "Platform.h"
 #include <cstddef>
 #include <functional>
 #include <new>
-#include "Platform.h"
 #include "Preprocessor.h"
 #include "UncaughtExceptionCounter.h"
 

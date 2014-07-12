@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include <assert.h>
+#include "Platform.h"
+#include <cassert>
 #include <stdexcept>
 #include <string.h>
 #include <type_traits>
 #include <memory>
-#include "Platform.h"
 #include "core/Bits.h"
 #include "IOBuf.h"
 #include "IOBufQueue.h"

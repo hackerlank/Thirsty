@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "Platform.h"
 #include <cassert>
 #include <cstring>
 #include <iosfwd>
@@ -27,7 +28,6 @@
 #include <type_traits>
 #include <algorithm>
 #include <boost/operators.hpp>
-#include "Platform.h"
 #include "logging.h"
 
 template <class T> class Range;
@@ -165,10 +165,8 @@ public:
     // Works only for Range<const char*>
     Range(const std::string& str, std::string::size_type startFrom)
     {
-        if UNLIKELY((startFrom > str.size()))
-        {
-            throw traceback::OutOfRange("index out of range");
-        }
+        CHECK UNLIKELY((startFrom > str.size())) << "index out of range: "
+            << startFrom << ", " << str.size();
         b_ = str.data() + startFrom;
         e_ = str.data() + str.size();
     }
@@ -193,10 +191,8 @@ public:
         size_t startFrom,
         size_t size)
     {
-        if (UNLIKELY(startFrom > str.size()))
-        {
-            throw traceback::OutOfRange("index out of range");
-        }
+        CHECK(UNLIKELY(startFrom > str.size())) << "index out of range: "
+            << startFrom << ", " << str.size();
         b_ = str.b_ + startFrom;
         if (str.size() - startFrom < size)
         {
@@ -361,16 +357,15 @@ public:
         return b_[i];
     }
 
-    value_type& at(size_t i) {
-        if (i >= size()) 
-            throw traceback::OutOfRange("index out of range");
+    value_type& at(size_t i) 
+    {
+        CHECK(i >= size()) << "index out of range: " << i << ", " << size();
         return b_[i];
     }
 
     const value_type& at(size_t i) const
     {
-        if (i >= size()) 
-            throw traceback::OutOfRange("index out of range");
+        CHECK(i >= size()) << "index out of range: " << i << ", " << size();
         return b_[i];
     }
 

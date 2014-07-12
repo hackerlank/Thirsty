@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "Platform.h"
 #include <atomic>
 #include <cassert>
 #include <cinttypes>
@@ -25,7 +26,6 @@
 #include <limits>
 #include <type_traits>
 #include <boost/iterator/iterator_facade.hpp>
-#include "Platform.h"
 #include "logging.h"
 #include "core/Range.h"
 
