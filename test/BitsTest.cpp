@@ -106,14 +106,16 @@ TEST(Bits, FindLastSet)
   EXPECT_EQ(1ul << 31, nextPowTwoFunc((1ul << 31) - 1));          \
 }
 
+
+
 TEST(Bits, nextPowTwoClz)
 {
     testPowTwo(nextPowTwo);
 }
 
-BENCHMARK(nextPowTwoClz)
+BENCHMARK(nextPowTwoClz, iters)
 {
-    for (unsigned long i = 0; i < 1000U; ++i)
+    for (unsigned long i = 0; i < iters; ++i)
     {
         auto x = nextPowTwo(i);
         doNotOptimizeAway(x);
@@ -144,10 +146,10 @@ TEST(Bits, isPowTwo)
 }
 
 BENCHMARK_DRAW_LINE();
-BENCHMARK(isPowTwo)
+BENCHMARK(isPowTwo, iters)
 {
     bool b;
-    for (unsigned long i = 0; i < 1000U; ++i)
+    for (unsigned long i = 0; i < iters; ++i)
     {
         b = isPowTwo(i);
         doNotOptimizeAway(b);
@@ -161,13 +163,3 @@ TEST(Bits, popcount)
     EXPECT_EQ(32, popcount(uint32_t(-1)));
     EXPECT_EQ(64, popcount(uint64_t(-1)));
 }
-
-
-/*
-Benchmarks run on dual Xeon X5650's @ 2.67GHz w/hyperthreading enabled
-  (12 physical cores, 12 MB cache, 72 GB RAM)
-
-Benchmark                               Iters   Total t    t/iter iter/sec
-------------------------------------------------------------------------------
-*       nextPowTwoClz                 1000000  1.659 ms  1.659 ns  574.8 M
-*/
