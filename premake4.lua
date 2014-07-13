@@ -34,14 +34,15 @@ solution 'Thirsty'
         }
 		
 	configuration "gmake"
-		buildoptions { '-std=c++11 -rdynamic -Werror=cast-qual' }
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic -Werror=cast-qual' }
 
     project 'Thirsty'
         location 'build'
         kind 'ConsoleApp'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
         defines
-        {       
+        {
+            '__STDC_LIMIT_MACROS',
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
@@ -110,10 +111,10 @@ solution 'UnitTest'
         }
 		
 	configuration "gmake"
-		buildoptions { '-std=c++11 -rdynamic -Werror=cast-qual' }
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic -Werror=cast-qual' }
         
     project 'unittest'
-        location 'build'
+        location 'build/test'
         kind 'ConsoleApp'
         uuid '31BC2F58-F374-4984-B490-F1F08ED02DD3'
         defines
@@ -146,7 +147,7 @@ solution 'UnitTest'
         }
         links
         {
-            'libThirsty',
+            'thirsty',
         }
         if os.get() == 'linux' then
         links
@@ -159,12 +160,13 @@ solution 'UnitTest'
         }
         end
         
-    project 'libThirsty'
-        location 'build'
+    project 'thirsty'
+        location 'build/test'
         kind 'StaticLib'
         uuid 'AB7D1C15-7A44-41a7-8864-230D8E345608'
         defines
         {
+            '__STDC_LIMIT_MACROS',
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
