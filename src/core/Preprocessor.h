@@ -27,6 +27,8 @@
  * FB_ONE_OR_NONE(hello) expands to nothing. This macro is used to
  * insert or eliminate text based on the presence of another argument.
  */
+#ifdef __GNUC__
+
 #define FB_ONE_OR_NONE(a, ...) FB_THIRD(a, ## __VA_ARGS__, a)
 #define FB_THIRD(a, b, ...) __VA_ARGS__
 
@@ -44,6 +46,8 @@
 #define FB_ARG_2_OR_1(...) FB_ARG_2_OR_1_IMPL(__VA_ARGS__, __VA_ARGS__)
 // Support macro for the above
 #define FB_ARG_2_OR_1_IMPL(a, b, ...) b
+
+#endif
 
 /**
  * Helper macro that provides a way to pass argument with commas in it to
