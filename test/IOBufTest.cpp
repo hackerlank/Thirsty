@@ -821,7 +821,7 @@ TEST(IOBuf, takeOwnershipUniquePtr)
 
 TEST(IOBuf, Alignment) 
 {
-    size_t alignment = alignof(std::max_align_t);
+    size_t alignment = alignof(MaxAlign);
     std::vector<size_t> sizes{ 0, 1, 64, 256, 1024, 1 << 10 };
     for (size_t size : sizes)
     {
@@ -864,7 +864,7 @@ class MoveToFbStringTest
 protected:
     void SetUp()
     {
-        std::tr1::tie(elementSize_, elementCount_, shared_, type_) = GetParam();
+        std::tie(elementSize_, elementCount_, shared_, type_) = GetParam();
         buf_ = makeBuf();
         for (int i = 0; i < elementCount_ - 1; ++i)
         {
