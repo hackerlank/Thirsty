@@ -156,7 +156,7 @@ void addBenchmark(const char* file, const char* name, Lambda&& lambda)
     {
         unsigned int niter = 0;
         while (times-- > 0) {
-            niter += lambda();
+            niter += lambda(times);
         }
         return niter;
     });
@@ -195,10 +195,10 @@ void doNotOptimizeAway(T&& datum)
  * friends below.
  */
 #define BENCHMARK_IMPL(funName, stringName, paramType, paramName)       \
-  static void funName();                                                \
+  static void funName(paramType);                                       \
   static bool FB_ANONYMOUS_VARIABLE(follyBenchmarkUnused) = (           \
       addBenchmark(__FILE__, stringName,                                \
-      [](paramType paramName) -> unsigned { funName();                  \
+      [](paramType paramName) -> unsigned { funName(paramName);         \
         return 1; }), true);                                            \
   static void funName(paramType paramName)
 
@@ -222,25 +222,27 @@ void doNotOptimizeAway(T&& datum)
  * a symbolic counter. The counter dictates how many internal iteration 
  * the benchmark does. Example:
  *
- * BENCHMARK(vectorPushBack) 
- * {
+ * BENCHMARK(insertVectorBegin, n) {
  *   vector<int> v;
- *   v.push_back(42);
+ *   FOR_EACH_RANGE (i, 0, n) {
+ *     v.insert(v.begin(), 42);
+ *   }
  * }
  */
-#define BENCHMARK(name)         \
+#define BENCHMARK(name, n)      \
       BENCHMARK_IMPL(           \
         name,                   \
         FB_STRINGIZE(name),     \
-        __VA_ARGS__,            \
-        __VA_ARGS__)
+        unsigned,               \
+        n)
 
 /**
  * Draws a line of dashes.
  */
 #define BENCHMARK_DRAW_LINE()                                       \
   static bool FB_ANONYMOUS_VARIABLE(follyBenchmarkUnused) = (       \
-    addBenchmark(__FILE__, "-", []() -> unsigned { return 0; }),    \
+    addBenchmark(__FILE__, "-",                                     \
+        [](unsigned) -> unsigned { return 0; }),                    \
     true);
 
 /**

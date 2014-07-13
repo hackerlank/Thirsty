@@ -77,7 +77,7 @@ uint64_t getNowTickCount()
 
 
 // Add the global baseline
-BENCHMARK(globalBenchmarkBaseline)
+BENCHMARK(globalBenchmarkBaseline, n)
 {
 #ifdef _MSC_VER
     _ReadWriteBarrier();
