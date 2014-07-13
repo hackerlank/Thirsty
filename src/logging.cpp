@@ -1,5 +1,6 @@
 #include "logging.h"
 #include "Platform.h"
+#include <inttypes.h>
 #include "core/Strings.h"
 #include "StackTrace.h"
 
@@ -68,8 +69,8 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
 DECLARE_STREAM_OPERATOR(char         , "%c" )
 DECLARE_STREAM_OPERATOR(int32_t      , "%d" )
 DECLARE_STREAM_OPERATOR(uint32_t     , "%u" )
-DECLARE_STREAM_OPERATOR(int64_t      , "%I64d")
-DECLARE_STREAM_OPERATOR(uint64_t     , "%U64d")
+DECLARE_STREAM_OPERATOR(int64_t      , "%"PRIi64)
+DECLARE_STREAM_OPERATOR(uint64_t     , "%"PRIu64)
 DECLARE_STREAM_OPERATOR(double       , "%g" )
 #undef DECLARE_STREAM_OPERATOR
 
