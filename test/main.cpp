@@ -3,6 +3,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include "core/Benchmark.h"
+#include "logging.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -16,13 +17,17 @@ int main(int argc, char* argv[])
     try
     {
         testing::InitGoogleTest(&argc, argv);
-        srand((unsigned)time(NULL));
-        auto r = RUN_ALL_TESTS();
 
-        // run benchmarks in release mode
+        srand((unsigned)time(NULL));
+        SetLogHandler(NULL);
+
+        int r = RUN_ALL_TESTS();
+
+        // run benchmarks
 #ifdef NDEBUG
-        cout << "patience, running benchmarks..." << endl;
+        cout << "\nPATIENCE, BENCHMARKS IN PROGRESS." << endl;
         runBenchmarks();
+        cout << "MEASUREMENTS DONE." << endl;
 #endif
         return r;
     }
