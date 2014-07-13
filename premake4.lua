@@ -34,7 +34,7 @@ solution 'Thirsty'
         }
 		
 	configuration "gmake"
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic -Werror=cast-qual' }
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
 
     project 'Thirsty'
         location 'build'
@@ -111,7 +111,7 @@ solution 'UnitTest'
         }
 		
 	configuration "gmake"
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic -Werror=cast-qual' }
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
         
     project 'unittest'
         location 'build/test'
