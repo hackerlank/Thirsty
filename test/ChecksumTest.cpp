@@ -97,12 +97,12 @@ void testCRC32CContinuation(
 
 TEST(Checksum, crc32c_software)
 {
-    //testCRC32C(detail::crc32c_sw);
+    testCRC32C(detail::crc32c_sw);
 }
 
 TEST(Checksum, crc32c_continuation_software)
 {
-    //testCRC32CContinuation(detail::crc32c_sw);
+    testCRC32CContinuation(detail::crc32c_sw);
 }
 
 
