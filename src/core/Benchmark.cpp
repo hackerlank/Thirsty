@@ -77,14 +77,14 @@ uint64_t getNowTickCount()
 
 
 // Add the global baseline
-//BENCHMARK(globalBenchmarkBaseline) 
-//{
-//#ifdef _MSC_VER
-//  _ReadWriteBarrier();
-//#else
-//  asm volatile("");
-//#endif
-//}
+BENCHMARK(globalBenchmarkBaseline)
+{
+#ifdef _MSC_VER
+    _ReadWriteBarrier();
+#else
+    asm volatile("");
+#endif
+}
 
 void detail::addBenchmarkImpl(const char* file, 
                               const char* name,
