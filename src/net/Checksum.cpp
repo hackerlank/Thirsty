@@ -24,7 +24,20 @@
 
 namespace detail {
 
-#if FOLLY_X64 && __GNUC_PREREQ(4, 7)
+#if FOLLY_X64 
+
+#ifdef _MSC_VER
+
+#include <nmmintrin.h>
+#define __builtin_ia32_crc32qi  _mm_crc32_u8
+#define __builtin_ia32_crc32hi  _mm_crc32_u16
+#define __builtin_ia32_crc32si  _mm_crc32_u32
+#define __builtin_ia32_crc32di  _mm_crc32_u64
+
+#elif __GNUC_PREREQ(4, 7)
+#else
+#error "no hardware-accelerated CRC-32C"
+#endif
 
 // Fast SIMD implementation of CRC-32C for x86 with SSE 4.2
 uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum)    

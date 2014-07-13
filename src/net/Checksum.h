@@ -30,3 +30,13 @@
  *       than a traditional CRC-32.
  */
 uint32_t crc32c(const uint8_t* data, size_t nbytes, uint32_t startingChecksum = ~0U);
+
+namespace detail {
+
+bool crc32c_hw_supported();
+
+uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum = ~0U);
+
+uint32_t crc32c_sw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum = ~0U);
+
+} // namespace detail
