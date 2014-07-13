@@ -52,7 +52,7 @@ std::string  getStackTrace(int maxDepth)
 #include <stdio.h>
 
 // compile with -rdynamic
-std::string GetStackTrace(int maxDepth)
+std::string getStackTrace(int maxDepth)
 {
     std::string result;
     static const int kStackLength = 64;
