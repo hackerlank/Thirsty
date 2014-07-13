@@ -175,7 +175,7 @@ public:
         std::string::size_type startFrom,
         std::string::size_type size)
     {
-        CHECK(UNLIKELY(startFrom > str.size())) << "index out of range: "
+        CHECK(UNLIKELY(startFrom <= str.size())) << "index out of range: "
             << startFrom << ", " << str.size();
         b_ = str.data() + startFrom;
         if (str.size() - startFrom < size)
@@ -191,7 +191,7 @@ public:
         size_t startFrom,
         size_t size)
     {
-        CHECK(UNLIKELY(startFrom > str.size())) << "index out of range: "
+        CHECK(UNLIKELY(startFrom <= str.size())) << "index out of range: "
             << startFrom << ", " << str.size();
         b_ = str.b_ + startFrom;
         if (str.size() - startFrom < size)
@@ -411,7 +411,7 @@ public:
     Range subpiece(size_type first,
         size_type length = std::string::npos) const
     {
-        CHECK(UNLIKELY(first > size())) << "index out of range: "
+        CHECK(UNLIKELY(first <= size())) << "index out of range: "
             << first << ", " << size();
         return Range(b_ + first,
             std::min<std::string::size_type>(length, size() - first));
