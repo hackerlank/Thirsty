@@ -83,7 +83,7 @@ typename std::enable_if<
   std::is_same<typename std::iterator_traits<Iter>::iterator_category,
                std::random_access_iterator_tag>::value,
   typename std::iterator_traits<Iter>::reference>::type
-value_before(Iter i) 
+value_before(Iter i)
 {
     return i[-1];
 }
@@ -96,7 +96,7 @@ typename std::enable_if<
   !std::is_same<typename std::iterator_traits<Iter>::iterator_category,
                 std::random_access_iterator_tag>::value,
   typename std::iterator_traits<Iter>::reference>::type
-value_before(Iter i) 
+value_before(Iter i)
 {
     return *--i;
 }
@@ -131,14 +131,14 @@ public:
     static const size_type npos;
 
     // Works for all iterators
-    Range() 
+    Range()
         : b_(), e_()
     {
     }
 
 public:
     // Works for all iterators
-    Range(Iter start, Iter end) 
+    Range(Iter start, Iter end)
         : b_(start), e_(end)
     {
     }
@@ -165,7 +165,7 @@ public:
     // Works only for Range<const char*>
     Range(const std::string& str, std::string::size_type startFrom)
     {
-        CHECK UNLIKELY((startFrom > str.size())) << "index out of range: "
+        CHECK(UNLIKELY(startFrom <= str.size())) << "index out of range: "
             << startFrom << ", " << str.size();
         b_ = str.data() + startFrom;
         e_ = str.data() + str.size();
@@ -357,7 +357,7 @@ public:
         return b_[i];
     }
 
-    value_type& at(size_t i) 
+    value_type& at(size_t i)
     {
         CHECK(i >= size()) << "index out of range: " << i << ", " << size();
         return b_[i];
@@ -676,7 +676,7 @@ template <class Iter>
 const typename Range<Iter>::size_type Range<Iter>::npos = std::string::npos;
 
 template <class T>
-void swap(Range<T>& lhs, Range<T>& rhs) 
+void swap(Range<T>& lhs, Range<T>& rhs)
 {
   lhs.swap(rhs);
 }
@@ -685,7 +685,7 @@ void swap(Range<T>& lhs, Range<T>& rhs)
  * Create a range from two iterators, with type deduction.
  */
 template <class Iter>
-Range<Iter> range(Iter first, Iter last) 
+Range<Iter> range(Iter first, Iter last)
 {
   return Range<Iter>(first, last);
 }
@@ -697,13 +697,13 @@ Range<Iter> range(Iter first, Iter last)
 template <class Collection,
           class T = typename std::remove_pointer<
               decltype(std::declval<Collection>().data())>::type>
-Range<T*> range(Collection&& v) 
+Range<T*> range(Collection&& v)
 {
   return Range<T*>(v.data(), v.data() + v.size());
 }
 
 template <class T, size_t n>
-Range<T*> range(T (&array)[n]) 
+Range<T*> range(T (&array)[n])
 {
   return Range<T*>(array, array + n);
 }
@@ -720,13 +720,13 @@ std::ostream& operator<<(std::ostream& os, const StringPiece& piece);
  */
 
 template <class T>
-inline bool operator==(const Range<T>& lhs, const Range<T>& rhs) 
+inline bool operator==(const Range<T>& lhs, const Range<T>& rhs)
 {
   return lhs.size() == rhs.size() && lhs.compare(rhs) == 0;
 }
 
 template <class T>
-inline bool operator<(const Range<T>& lhs, const Range<T>& rhs) 
+inline bool operator<(const Range<T>& lhs, const Range<T>& rhs)
 {
   return lhs.compare(rhs) < 0;
 }
@@ -738,9 +738,9 @@ inline bool operator<(const Range<T>& lhs, const Range<T>& rhs)
 namespace detail {
 
 template <class A, class B>
-struct ComparableAsStringPiece 
+struct ComparableAsStringPiece
 {
-  enum 
+  enum
   {
     value =
     (std::is_convertible<A, StringPiece>::value
@@ -759,7 +759,7 @@ struct ComparableAsStringPiece
 template <class T, class U>
 typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
-operator==(const T& lhs, const U& rhs) 
+operator==(const T& lhs, const U& rhs)
 {
   return StringPiece(lhs) == StringPiece(rhs);
 }
@@ -770,7 +770,7 @@ operator==(const T& lhs, const U& rhs)
 template <class T, class U>
 typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
-operator<(const T& lhs, const U& rhs) 
+operator<(const T& lhs, const U& rhs)
 {
   return StringPiece(lhs) < StringPiece(rhs);
 }
@@ -781,7 +781,7 @@ operator<(const T& lhs, const U& rhs)
 template <class T, class U>
 typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
-operator>(const T& lhs, const U& rhs) 
+operator>(const T& lhs, const U& rhs)
 {
   return StringPiece(lhs) > StringPiece(rhs);
 }
@@ -792,7 +792,7 @@ operator>(const T& lhs, const U& rhs)
 template <class T, class U>
 typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
-operator<=(const T& lhs, const U& rhs) 
+operator<=(const T& lhs, const U& rhs)
 {
   return StringPiece(lhs) <= StringPiece(rhs);
 }
@@ -803,14 +803,14 @@ operator<=(const T& lhs, const U& rhs)
 template <class T, class U>
 typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
-operator>=(const T& lhs, const U& rhs) 
+operator>=(const T& lhs, const U& rhs)
 {
   return StringPiece(lhs) >= StringPiece(rhs);
 }
 
-struct StringPieceHash 
+struct StringPieceHash
 {
-  std::size_t operator()(const StringPiece& str) const 
+  std::size_t operator()(const StringPiece& str) const
   {
     return static_cast<std::size_t>(str.hash());
   }
@@ -822,12 +822,12 @@ struct StringPieceHash
 template <class T, class Comp>
 size_t qfind(const Range<T>& haystack,
              const Range<T>& needle,
-             Comp eq) 
+             Comp eq)
 {
   // Don't use std::search, use a Boyer-Moore-like trick by comparing
   // the last characters first
   auto const nsize = needle.size();
-  if (haystack.size() < nsize) 
+  if (haystack.size() < nsize)
   {
     return std::string::npos;
   }
@@ -843,12 +843,12 @@ size_t qfind(const Range<T>& haystack,
   auto i = haystack.begin();
   auto iEnd = haystack.end() - nsize_1;
 
-  while (i < iEnd) 
+  while (i < iEnd)
   {
     // Boyer-Moore: match the last element in the needle
-    while (!eq(i[nsize_1], lastNeedle)) 
+    while (!eq(i[nsize_1], lastNeedle))
     {
-      if (++i == iEnd) 
+      if (++i == iEnd)
       {
         // not found
         return std::string::npos;
@@ -856,17 +856,17 @@ size_t qfind(const Range<T>& haystack,
     }
     // Here we know that the last char matches
     // Continue in pedestrian mode
-    for (size_t j = 0; ; ) 
+    for (size_t j = 0; ; )
     {
       assert(j < nsize);
-      if (!eq(i[j], needle[j])) 
+      if (!eq(i[j], needle[j]))
       {
         // Not found, we can skip
         // Compute the skip value lazily
-        if (skip == 0) 
+        if (skip == 0)
         {
           skip = 1;
-          while (skip <= nsize_1 && !eq(needle[nsize_1 - skip], lastNeedle)) 
+          while (skip <= nsize_1 && !eq(needle[nsize_1 - skip], lastNeedle))
           {
             ++skip;
           }
@@ -875,7 +875,7 @@ size_t qfind(const Range<T>& haystack,
         break;
       }
       // Check if done searching
-      if (++j == nsize) 
+      if (++j == nsize)
       {
         // Yay
         return i - haystack.begin();
@@ -891,7 +891,7 @@ size_t qfind_first_byte_of_nosse(const StringPiece& haystack,
                                  const StringPiece& needles);
 
 inline size_t qfind_first_byte_of(const StringPiece& haystack,
-                                  const StringPiece& needles) 
+                                  const StringPiece& needles)
 {
     return qfind_first_byte_of_nosse(haystack, needles);
 }
@@ -921,9 +921,9 @@ struct AsciiCaseSensitive
  * The difference between the lower/upper case characters are the 6-th bit.
  * We also check they are alpha chars, in case of xor = 32.
  */
-struct AsciiCaseInsensitive 
+struct AsciiCaseInsensitive
 {
-  bool operator()(char lhs, char rhs) const 
+  bool operator()(char lhs, char rhs) const
   {
     char k = lhs ^ rhs;
     if (k == 0) return true;
