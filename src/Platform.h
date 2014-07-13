@@ -45,8 +45,10 @@
 
 #ifdef _MSC_VER
 # define ALIGN(x)        __declspec(align(x))
-#else
+typedef std::max_align_t MaxAlign
+#elif defined(__GNUC__)
 # define ALIGN(x)        __attribute__((aligned(x)))
+struct MaxAlign { char c; } __attribute__((aligned));
 #endif
 
 // compiler specific attribute translation
@@ -96,7 +98,7 @@
 #endif
 
 // GCC 4.7 doesn't supply std::make_unique
-#ifdef __GUNC__
+#ifdef __GNUC__
 template<typename T, typename ...Args>
 std::unique_ptr<T> make_unique(Args&& ...args)
 {
