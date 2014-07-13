@@ -1,6 +1,5 @@
 #include "logging.h"
 #include "Platform.h"
-#include <inttypes.h>
 #include "core/Strings.h"
 #include "StackTrace.h"
 
@@ -9,10 +8,10 @@ using std::string;
 
 namespace internal {
 
-void DefaultLogHandler(LogLevel level, 
-                       const char* filename, 
+void DefaultLogHandler(LogLevel level,
+                       const char* filename,
                        int line,
-                       const string& message) 
+                       const string& message)
 {
     static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
 
@@ -23,10 +22,10 @@ void DefaultLogHandler(LogLevel level,
     fflush(stderr);  // Needed on MSVC.
 }
 
-void NullLogHandler(LogLevel level, 
-                    const char* filename, 
+void NullLogHandler(LogLevel level,
+                    const char* filename,
                     int line,
-                    const string& message) 
+                    const string& message)
 {
   // Nothing.
 }
@@ -35,13 +34,13 @@ static LogHandler* log_handler_ = &DefaultLogHandler;
 
 
 
-LogMessage& LogMessage::operator<<(const string& value) 
+LogMessage& LogMessage::operator<<(const string& value)
 {
     message_ += value;
     return *this;
 }
 
-LogMessage& LogMessage::operator<<(const char* value) 
+LogMessage& LogMessage::operator<<(const char* value)
 {
     message_ += value;
     return *this;
@@ -69,33 +68,33 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
 DECLARE_STREAM_OPERATOR(char         , "%c" )
 DECLARE_STREAM_OPERATOR(int32_t      , "%d" )
 DECLARE_STREAM_OPERATOR(uint32_t     , "%u" )
-DECLARE_STREAM_OPERATOR(int64_t      , "%"PRIi64)
-DECLARE_STREAM_OPERATOR(uint64_t     , "%"PRIu64)
+DECLARE_STREAM_OPERATOR(int64_t      , "%lli")
+DECLARE_STREAM_OPERATOR(uint64_t     , "%llu")
 DECLARE_STREAM_OPERATOR(double       , "%g" )
 #undef DECLARE_STREAM_OPERATOR
 
 LogMessage::LogMessage(LogLevel level, const char* filename, int line)
-  : level_(level), filename_(filename), line_(line) 
+  : level_(level), filename_(filename), line_(line)
 {
 }
 
-LogMessage::~LogMessage() 
+LogMessage::~LogMessage()
 {
 }
 
-void LogMessage::Finish() 
+void LogMessage::Finish()
 {
     log_handler_(level_, filename_, line_, message_);
-    if (level_ == LOGLEVEL_FATAL) 
+    if (level_ == LOGLEVEL_FATAL)
     {
         string stack = getStackTrace();
-        string msg = stringPrintf("%s[%d]: %s\nstack traceback:\n%s\n", 
+        string msg = stringPrintf("%s[%d]: %s\nstack traceback:\n%s\n",
             filename_, line_, message_.c_str(), stack.c_str());
         throw std::runtime_error(msg);
     }
 }
 
-void LogFinisher::operator=(LogMessage& other) 
+void LogFinisher::operator=(LogMessage& other)
 {
     other << "\n";
     other.Finish();
@@ -103,18 +102,18 @@ void LogFinisher::operator=(LogMessage& other)
 
 } // namespace internal
 
-LogHandler* SetLogHandler(LogHandler* new_func) 
+LogHandler* SetLogHandler(LogHandler* new_func)
 {
     LogHandler* old = internal::log_handler_;
-    if (old == &internal::NullLogHandler) 
+    if (old == &internal::NullLogHandler)
     {
         old = NULL;
     }
-    if (new_func == NULL) 
+    if (new_func == NULL)
     {
         internal::log_handler_ = &internal::NullLogHandler;
-    } 
-    else 
+    }
+    else
     {
         internal::log_handler_ = new_func;
     }
