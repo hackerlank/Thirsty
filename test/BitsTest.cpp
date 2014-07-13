@@ -111,11 +111,11 @@ TEST(Bits, nextPowTwoClz)
     testPowTwo(nextPowTwo);
 }
 
-BENCHMARK(nextPowTwoClz, iters)
+BENCHMARK(nextPowTwoClz)
 {
-    for (unsigned long i = 0; i < iters; ++i)
+    for (unsigned long i = 0; i < 1000U; ++i)
     {
-        auto x = nextPowTwo(iters);
+        auto x = nextPowTwo(i);
         doNotOptimizeAway(x);
     }
 }
@@ -144,10 +144,10 @@ TEST(Bits, isPowTwo)
 }
 
 BENCHMARK_DRAW_LINE();
-BENCHMARK(isPowTwo, iters)
+BENCHMARK(isPowTwo)
 {
     bool b;
-    for (unsigned long i = 0; i < iters; ++i)
+    for (unsigned long i = 0; i < 1000U; ++i)
     {
         b = isPowTwo(i);
         doNotOptimizeAway(b);
