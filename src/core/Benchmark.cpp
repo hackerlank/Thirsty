@@ -86,11 +86,10 @@ BENCHMARK(globalBenchmarkBaseline, n)
 #endif
 }
 
-void detail::addBenchmarkImpl(const char* file, 
+void detail::addBenchmarkImpl(const char* file,
                               const char* name,
-                              BenchmarkFun fun) 
+                              BenchmarkFun fun)
 {
-    _ReadWriteBarrier();
     auto item = make_tuple(file, name, fun);
     benchmarks.push_back(item);
 }
@@ -99,7 +98,7 @@ void detail::addBenchmarkImpl(const char* file,
 /**
  * Given a bunch of benchmark samples, estimate the actual run time.
  */
-static double estimateTime(double * begin, double * end) 
+static double estimateTime(double * begin, double * end)
 {
     assert(begin < end);
 
@@ -110,8 +109,8 @@ static double estimateTime(double * begin, double * end)
 }
 
 
-static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun, 
-    const double globalBaseline, int32_t min_iters, int32_t min_usec, 
+static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
+    const double globalBaseline, int32_t min_iters, int32_t min_usec,
     int32_t max_secs)
 {
     static const auto minNanoseconds = min_usec * 1000UL;
@@ -133,7 +132,7 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
         for (unsigned int n = min_iters; n < (1UL << 30); n *= 2)
         {
             auto const nsecsAndIter = fun(n); // run `n` times of benchmark case
-            if (nsecsAndIter.first < minNanoseconds) 
+            if (nsecsAndIter.first < minNanoseconds)
             {
                 continue;
             }
