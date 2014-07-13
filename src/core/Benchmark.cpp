@@ -18,41 +18,79 @@
 
 #include "Benchmark.h"
 #include <cmath>
+#include <ctime>
 #include <limits>
-#include <utility>
 #include <vector>
 #include <tuple>
 #include <memory>
+#include <regex>
 #include <algorithm>
 #include <iostream>
 #include "Foreach.h"
 #include "Conv.h"
 #include "Strings.h"
-
+#include "logging.h"
 
 using namespace std;
 
-
 BenchmarkSuspender::NanosecondsSpent BenchmarkSuspender::nsSpent;
+
+namespace {
 
 typedef function<detail::TimeIterPair(unsigned int)> BenchmarkFun;
 typedef tuple<const char*, const char*, BenchmarkFun> BenchmarkItem;
+
 static vector<BenchmarkItem> benchmarks;
 
-// Add the global baseline
-BENCHMARK(globalBenchmarkBaseline, n) 
-{
-#ifdef _MSC_VER
-  _ReadWriteBarrier();
-#else
-  asm volatile("");
-#endif
 }
+
+#if defined(_MSC_VER)
+#include <windows.h>
+inline uint64_t getPerformanceFreqency()
+{
+    static LARGE_INTEGER freq;
+    if (freq.QuadPart == 0)
+    {
+        CHECK(QueryPerformanceFrequency(&freq));
+    }
+    return freq.QuadPart;
+}
+
+uint64_t getNowTickCount()
+{
+    LARGE_INTEGER now;
+    CHECK(QueryPerformanceCounter(&now));
+    return (now.QuadPart * 1000000000UL) / getPerformanceFreqency();
+}
+
+#elif defined(__GNUC__)
+
+uint64_t getNowTickCount()
+{
+    timespec ts;
+    CHECK(clock_gettime(CLOCK_REALTIME, &ts) == 0);
+    return (ts.tv_sec * 1000000000UL) + ts.tv_nsec;
+}
+
+#endif
+
+
+
+// Add the global baseline
+//BENCHMARK(globalBenchmarkBaseline) 
+//{
+//#ifdef _MSC_VER
+//  _ReadWriteBarrier();
+//#else
+//  asm volatile("");
+//#endif
+//}
 
 void detail::addBenchmarkImpl(const char* file, 
                               const char* name,
                               BenchmarkFun fun) 
 {
+    _ReadWriteBarrier();
     auto item = make_tuple(file, name, fun);
     benchmarks.push_back(item);
 }
@@ -72,30 +110,29 @@ static double estimateTime(double * begin, double * end)
 }
 
 
-static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
-                                            const double globalBaseline) 
+static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun, 
+    const double globalBaseline, int32_t min_iters, int32_t min_usec, 
+    int32_t max_secs)
 {
-    // Minimum # of microseconds we'll accept for each benchmark.
-    static const auto minNanoseconds = 100 * 1000UL;
+    static const auto minNanoseconds = min_usec * 1000UL;
 
     // We do measurements in several epochs and take the minimum, to
     // account for jitter.
     static const unsigned int epochs = 1000;
 
-    // Maximum # of seconds we'll spend on each benchmark.
-    const uint64_t timeBudgetInNs = 1 * 1000000000;
-
     // We establish a total time budget as we don't want a measurement
     // to take too long. This will curtail the number of actual epochs.
-    high_resolution_time_point global = bc::high_resolution_clock::now();
+    const uint64_t timeBudgetInNs = max_secs * 1000000000;
+    uint64_t global = getNowTickCount();
+
     double epochResults[epochs] = { 0 };
     size_t actualEpochs = 0;
 
     for (; actualEpochs < epochs; ++actualEpochs)
     {
-        for (unsigned int n = 1000; n < (1UL << 30); n *= 2)
+        for (unsigned int n = min_iters; n < (1UL << 30); n *= 2)
         {
-            auto const nsecsAndIter = fun(n);
+            auto const nsecsAndIter = fun(n); // run `n` times of benchmark case
             if (nsecsAndIter.first < minNanoseconds) 
             {
                 continue;
@@ -107,9 +144,7 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
             // Done with the current epoch, we got a meaningful timing.
             break;
         }
-        high_resolution_time_point now = bc::high_resolution_clock::now();
-        auto duration = bc::duration_cast<bc::nanoseconds>(now - global);
-        if (duration.count() >= timeBudgetInNs) 
+        if (getNowTickCount() - global >= timeBudgetInNs)
         {
             // No more time budget available.
             ++actualEpochs;
@@ -121,62 +156,103 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
     return max(0.0, estimateTime(epochResults, epochResults + actualEpochs));
 }
 
+static void printBenchmarkResultsAsTable(
+    const vector<tuple<const char*, const char*, double> >& data);
 
-struct ScaleInfo 
+void runBenchmarks(const std::string& regexp, int32_t min_iters,
+                   int32_t min_usec, int32_t max_secs)
+{
+    CHECK(!benchmarks.empty());
+    vector<tuple<const char*, const char*, double>> results;
+    results.reserve(benchmarks.size() - 1);
+
+    unique_ptr<regex> bmRegex;
+    if (!regexp.empty())
+    {
+        bmRegex.reset(new regex(regexp));
+    }
+
+    // PLEASE KEEP QUIET. MEASUREMENTS IN PROGRESS.
+
+    auto const globalBaseline = runBenchmarkGetNSPerIteration(
+        get<2>(benchmarks.front()), 0, min_iters, min_usec, max_secs);
+    for (auto i = 1; i < benchmarks.size(); i++)
+    {
+        double elapsed = 0.0;
+        if (strcmp(get<1>(benchmarks[i]), "-") != 0) // skip separators
+        {
+            if (bmRegex && regex_search(get<1>(benchmarks[i]), *bmRegex))
+            {
+                continue;
+            }
+            elapsed = runBenchmarkGetNSPerIteration(get<2>(benchmarks[i]),
+                globalBaseline, min_iters, min_usec, max_secs);
+        }
+        results.emplace_back(get<0>(benchmarks[i]),
+            get<1>(benchmarks[i]), elapsed);
+    }
+
+    // PLEASE MAKE NOISE. MEASUREMENTS DONE.
+
+    printBenchmarkResultsAsTable(results);
+}
+
+
+struct ScaleInfo
 {
     double boundary;
     const char* suffix;
 };
 
-static const ScaleInfo kTimeSuffixes[] 
+static const ScaleInfo kTimeSuffixes[]
 {
-        { 365.25 * 24 * 3600, "years" },
-        { 24 * 3600, "days" },
-        { 3600, "hr" },
-        { 60, "min" },
-        { 1, "s" },
-        { 1E-3, "ms" },
-        { 1E-6, "us" },
-        { 1E-9, "ns" },
-        { 1E-12, "ps" },
-        { 1E-15, "fs" },
-        { 0, nullptr },
+    { 365.25 * 24 * 3600, "years" },
+    { 24 * 3600, "days" },
+    { 3600, "hr" },
+    { 60, "min" },
+    { 1, "s" },
+    { 1E-3, "ms" },
+    { 1E-6, "us" },
+    { 1E-9, "ns" },
+    { 1E-12, "ps" },
+    { 1E-15, "fs" },
+    { 0, nullptr },
 };
 
-static const ScaleInfo kMetricSuffixes[] 
+static const ScaleInfo kMetricSuffixes[]
 {
-        { 1E24, "Y" },  // yotta
-        { 1E21, "Z" },  // zetta
-        { 1E18, "X" },  // "exa" written with suffix 'X' so as to not create
-        //   confusion with scientific notation
-        { 1E15, "P" },  // peta
-        { 1E12, "T" },  // terra
-        { 1E9, "G" },   // giga
-        { 1E6, "M" },   // mega
-        { 1E3, "K" },   // kilo
-        { 1, "" },
-        { 1E-3, "m" },  // milli
-        { 1E-6, "u" },  // micro
-        { 1E-9, "n" },  // nano
-        { 1E-12, "p" }, // pico
-        { 1E-15, "f" }, // femto
-        { 1E-18, "a" }, // atto
-        { 1E-21, "z" }, // zepto
-        { 1E-24, "y" }, // yocto
-        { 0, nullptr },
+    { 1E24, "Y" },  // yotta
+    { 1E21, "Z" },  // zetta
+    { 1E18, "X" },  // "exa" written with suffix 'X' so as to not create
+    //   confusion with scientific notation
+    { 1E15, "P" },  // peta
+    { 1E12, "T" },  // terra
+    { 1E9, "G" },   // giga
+    { 1E6, "M" },   // mega
+    { 1E3, "K" },   // kilo
+    { 1, "" },
+    { 1E-3, "m" },  // milli
+    { 1E-6, "u" },  // micro
+    { 1E-9, "n" },  // nano
+    { 1E-12, "p" }, // pico
+    { 1E-15, "f" }, // femto
+    { 1E-18, "a" }, // atto
+    { 1E-21, "z" }, // zepto
+    { 1E-24, "y" }, // yocto
+    { 0, nullptr },
 };
 
 static string humanReadable(double n, unsigned int decimals, const ScaleInfo* scales)
-    
+
 {
-    if (std::isinf(n) || std::isnan(n)) 
+    if (std::isinf(n) || std::isnan(n))
     {
         return to<string>(n);
     }
 
     const double absValue = fabs(n);
     const ScaleInfo* scale = scales;
-    while (absValue < scale[0].boundary && scale[1].suffix != nullptr) 
+    while (absValue < scale[0].boundary && scale[1].suffix != nullptr)
     {
         ++scale;
     }
@@ -185,17 +261,17 @@ static string humanReadable(double n, unsigned int decimals, const ScaleInfo* sc
     return stringPrintf("%.*f%s", decimals, scaledValue, scale->suffix);
 }
 
-static string readableTime(double n, unsigned int decimals) 
+static string readableTime(double n, unsigned int decimals)
 {
     return humanReadable(n, decimals, kTimeSuffixes);
 }
 
-static string metricReadable(double n, unsigned int decimals) 
+static string metricReadable(double n, unsigned int decimals)
 {
     return humanReadable(n, decimals, kMetricSuffixes);
 }
 
-static void printBenchmarkResultsAsTable(
+void printBenchmarkResultsAsTable(
     const vector<tuple<const char*, const char*, double> >& data)
 {
     // Width available
@@ -203,19 +279,19 @@ static void printBenchmarkResultsAsTable(
 
     // Compute the longest benchmark name
     size_t longestName = 0;
-    FOR_EACH_RANGE(i, 1, benchmarks.size()) 
+    FOR_EACH_RANGE(i, 1, benchmarks.size())
     {
         longestName = max(longestName, strlen(get<1>(benchmarks[i])));
     }
 
     // Print a horizontal rule
-    auto separator = [&](char pad) 
+    auto separator = [&](char pad)
     {
         puts(string(columns, pad).c_str());
     };
 
     // Print header for a file
-    auto header = [&](const char* file) 
+    auto header = [&](const char* file)
     {
         separator('=');
         printf("%-*srelative  time/iter  iters/s\n",
@@ -226,10 +302,10 @@ static void printBenchmarkResultsAsTable(
     double baselineNsPerIter = numeric_limits<double>::max();
     const char* lastFile = "";
 
-    for (auto& datum : data) 
+    for (auto& datum : data)
     {
         auto file = get<0>(datum);
-        if (strcmp(file, lastFile)) 
+        if (strcmp(file, lastFile))
         {
             // New file starting
             header(file);
@@ -237,18 +313,18 @@ static void printBenchmarkResultsAsTable(
         }
 
         string s = get<1>(datum);
-        if (s == "-") 
+        if (s == "-")
         {
             separator('-');
             continue;
         }
         bool useBaseline /* = void */;
-        if (s[0] == '%') 
+        if (s[0] == '%')
         {
             s.erase(0, 1);
             useBaseline = true;
         }
-        else 
+        else
         {
             baselineNsPerIter = get<2>(datum);
             useBaseline = false;
@@ -257,7 +333,7 @@ static void printBenchmarkResultsAsTable(
         auto nsPerIter = get<2>(datum);
         auto secPerIter = nsPerIter / 1E9;
         auto itersPerSec = 1 / secPerIter;
-        if (!useBaseline) 
+        if (!useBaseline)
         {
             // Print without baseline
             printf("%*s           %9s  %7s\n",
@@ -265,7 +341,7 @@ static void printBenchmarkResultsAsTable(
                 readableTime(secPerIter, 2).c_str(),
                 metricReadable(itersPerSec, 2).c_str());
         }
-        else 
+        else
         {
             // Print with baseline
             auto rel = baselineNsPerIter / nsPerIter * 100.0;
@@ -278,30 +354,3 @@ static void printBenchmarkResultsAsTable(
     }
     separator('=');
 }
-
-
-void runBenchmarks() 
-{
-    CHECK(!benchmarks.empty());
-    vector<tuple<const char*, const char*, double>> results;
-    results.reserve(benchmarks.size() - 1);
-    // PLEASE KEEP QUIET. MEASUREMENTS IN PROGRESS.
-
-    auto const globalBaseline = runBenchmarkGetNSPerIteration(
-        get<2>(benchmarks.front()), 0);
-    FOR_EACH_RANGE(i, 1, benchmarks.size()) 
-    {
-        double elapsed = 0.0;
-        if (strcmp(get<1>(benchmarks[i]), "-") != 0)  // skip separators
-        {
-            elapsed = runBenchmarkGetNSPerIteration(get<2>(benchmarks[i]),
-                globalBaseline);
-        }
-        results.emplace_back(get<0>(benchmarks[i]),
-            get<1>(benchmarks[i]), elapsed);
-    }
-
-    // PLEASE MAKE NOISE. MEASUREMENTS DONE.
-    printBenchmarkResultsAsTable(results);
-}
-

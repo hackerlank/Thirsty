@@ -17,21 +17,22 @@
 #pragma once
 
 #include <cstdint>
-#include <cassert>
-#include <ctime>
-#include <limits>
+#include <string>
+#include <utility>
 #include <functional>
-#include "logging.h"
 #include "Preprocessor.h"
-#include <boost/function_types/function_arity.hpp>
-#include <boost/chrono/chrono.hpp>
-
 
 /**
  * Runs all benchmarks defined. Usually put in main().
+ * `regexp`     Only benchmarks whose names match this regex will be run
+ * `min_iters`  Minimum # of iterations we'll try for each benchmark
+ * `min_usec`   Minimum # of microseconds we'll accept for each benchmark
+ * `max_secs`   Maximum # of seconds we'll spend on each benchmark
  */
-void runBenchmarks();
-
+void runBenchmarks(const std::string& regexp = "",
+                   int32_t min_iters = 1,
+                   int32_t min_usec = 100,
+                   int32_t max_secs = 1);
 
 
 namespace detail {
@@ -48,16 +49,17 @@ void addBenchmarkImpl(const char* file,
 
 } // namespace detail
 
-namespace bc = boost::chrono;
-typedef bc::time_point<bc::high_resolution_clock> high_resolution_time_point;
+
+// Get current tick count(in nanoseconds), for time measurements
+uint64_t getNowTickCount();
+
 
 /**
  * Supporting type for BENCHMARK_SUSPEND defined below.
  */
 struct BenchmarkSuspender
 {
-    BenchmarkSuspender()
-        : start_(bc::high_resolution_clock::now())
+    BenchmarkSuspender() : start_(getNowTickCount())
     {
     }
 
@@ -65,14 +67,14 @@ struct BenchmarkSuspender
     BenchmarkSuspender(BenchmarkSuspender&& rhs)
         : start_(rhs.start_)
     {
-        rhs.start_ = high_resolution_time_point();
+        rhs.start_ = getNowTickCount();
     }
 
     BenchmarkSuspender& operator=(const BenchmarkSuspender &) = delete;
     BenchmarkSuspender& operator=(BenchmarkSuspender && rhs)
     {
         start_ = rhs.start_;
-        rhs.start_ = high_resolution_time_point();
+        rhs.start_ = getNowTickCount();
         return *this;
     }
 
@@ -84,12 +86,12 @@ struct BenchmarkSuspender
     void dismiss()
     {
         tally();
-        start_ = high_resolution_time_point();
+        start_ = getNowTickCount();
     }
 
     void rehire()
     {
-        start_ = bc::high_resolution_clock::now();
+        start_ = getNowTickCount();
     }
 
     /**
@@ -111,14 +113,13 @@ struct BenchmarkSuspender
 private:
     void tally()
     {
-        auto end = bc::high_resolution_clock::now();
-        nsSpent += bc::duration_cast<bc::nanoseconds>(end - start_).count();
+        auto end = getNowTickCount();
+        nsSpent += (end - start_);
         start_ = end;
     }
 
-    high_resolution_time_point    start_;
+    uint64_t    start_;
 };
-
 
 /**
  * Adds a benchmark. Usually not called directly but instead through
@@ -128,11 +129,7 @@ private:
  * function).
  */
 template <typename Lambda>
-typename std::enable_if<
-    boost::function_types::function_arity<decltype(&Lambda::operator())>::value
-    == 2
->::type
-addBenchmark(const char* file, const char* name, Lambda&& lambda)
+void addBenchmarkWithTimes(const char* file, const char* name, Lambda&& lambda)
 {
     auto execute = [=](unsigned int times)
     {
@@ -140,33 +137,22 @@ addBenchmark(const char* file, const char* name, Lambda&& lambda)
         unsigned int niter;
 
         // CORE MEASUREMENT STARTS
-        auto const start = bc::high_resolution_clock::now();
+        auto const start = getNowTickCount();
         niter = lambda(times);
-        auto const end = bc::high_resolution_clock::now();
+        auto const end = getNowTickCount();
         // CORE MEASUREMENT ENDS
 
-        auto duration = bc::duration_cast<bc::nanoseconds>(end - start);
-        return detail::TimeIterPair(duration.count() - BenchmarkSuspender::nsSpent, niter);
+        return detail::TimeIterPair(end - start - BenchmarkSuspender::nsSpent, niter);
     };
 
     detail::addBenchmarkImpl(file, name,
         std::function<detail::TimeIterPair(unsigned int)>(execute));
 }
 
-/**
- * Adds a benchmark. Usually not called directly but instead through
- * the macro BENCHMARK defined below. The lambda function involved
- * must take zero parameters, and the benchmark calls it repeatedly
- * (iteration occurs outside the function).
- */
 template <typename Lambda>
-typename std::enable_if<
-    boost::function_types::function_arity<decltype(&Lambda::operator())>::value
-    == 1
->::type
-addBenchmark(const char* file, const char* name, Lambda&& lambda)
+void addBenchmark(const char* file, const char* name, Lambda&& lambda) 
 {
-    addBenchmark(file, name, [=](unsigned int times)
+    addBenchmarkWithTimes(file, name, [=](unsigned int times) 
     {
         unsigned int niter = 0;
         while (times-- > 0) {
@@ -175,7 +161,6 @@ addBenchmark(const char* file, const char* name, Lambda&& lambda)
         return niter;
     });
 }
-
 
 /**
  * Call doNotOptimizeAway(var) against variables that you use for
@@ -209,13 +194,12 @@ void doNotOptimizeAway(T&& datum)
  * Introduces a benchmark function. Used internally, see BENCHMARK and
  * friends below.
  */
-#define BENCHMARK_IMPL(funName, stringName, rv, paramType, paramName)   \
-  static void funName(paramType);                                       \
+#define BENCHMARK_IMPL(funName, stringName, paramType, paramName)       \
+  static void funName();                                                \
   static bool FB_ANONYMOUS_VARIABLE(follyBenchmarkUnused) = (           \
       addBenchmark(__FILE__, stringName,                                \
-      [](paramType paramName) -> unsigned { funName(paramName);         \
-                                            return rv; }),              \
-    true);                                                              \
+      [](paramType paramName) -> unsigned { funName();                  \
+        return 1; }), true);                                            \
   static void funName(paramType paramName)
 
 /**
@@ -232,213 +216,24 @@ void doNotOptimizeAway(T&& datum)
   static unsigned funName(paramType paramName)
 
 /**
- * Introduces a benchmark function. Use with either one one or two
- * arguments. The first is the name of the benchmark. Use something
- * descriptive, such as insertVectorBegin. The second argument may be
- * missing, or could be a symbolic counter. The counter dictates how
- * many internal iteration the benchmark does. Example:
+ * Introduces a benchmark function. Use with two arguments. The first 
+ * is the name of the benchmark. Use something descriptive, such as 
+ * insertVectorBegin. The second argument may be missing, or could be 
+ * a symbolic counter. The counter dictates how many internal iteration 
+ * the benchmark does. Example:
  *
- * BENCHMARK(vectorPushBack) {
+ * BENCHMARK(vectorPushBack) 
+ * {
  *   vector<int> v;
  *   v.push_back(42);
  * }
- *
- * BENCHMARK(insertVectorBegin, n) {
- *   vector<int> v;
- *   FOR_EACH_RANGE (i, 0, n) {
- *     v.insert(v.begin(), 42);
- *   }
- * }
  */
-#define BENCHMARK(name, ...)                                    \
-  BENCHMARK_IMPL(                                               \
-    name,                                                       \
-    FB_STRINGIZE(name),                                         \
-    FB_ARG_2_OR_1(1, ## __VA_ARGS__),                           \
-    FB_ONE_OR_NONE(unsigned, ## __VA_ARGS__),                   \
-    __VA_ARGS__)
-
-/**
- * Like BENCHMARK above, but allows the user to return the actual
- * number of iterations executed in the function body. This can be
- * useful if the benchmark function doesn't know upfront how many
- * iterations it's going to run or if it runs through a certain
- * number of test cases, e.g.:
- *
- * BENCHMARK_MULTI(benchmarkSomething) {
- *   std::vector<int> testCases { 0, 1, 1, 2, 3, 5 };
- *   for (int c : testCases) {
- *     doSomething(c);
- *   }
- *   return testCases.size();
- * }
- */
-#define BENCHMARK_MULTI(name, ...)                              \
-  BENCHMARK_MULTI_IMPL(                                         \
-    name,                                                       \
-    FB_STRINGIZE(name),                                         \
-    FB_ONE_OR_NONE(unsigned, ## __VA_ARGS__),                   \
-    __VA_ARGS__)
-
-/**
- * Defines a benchmark that passes a parameter to another one. This is
- * common for benchmarks that need a "problem size" in addition to
- * "number of iterations". Consider:
- *
- * void pushBack(uint n, size_t initialSize) {
- *   vector<int> v;
- *   BENCHMARK_SUSPEND {
- *     v.resize(initialSize);
- *   }
- *   FOR_EACH_RANGE (i, 0, n) {
- *    v.push_back(i);
- *   }
- * }
- * BENCHMARK_PARAM(pushBack, 0)
- * BENCHMARK_PARAM(pushBack, 1000)
- * BENCHMARK_PARAM(pushBack, 1000000)
- *
- * The benchmark above estimates the speed of push_back at different
- * initial sizes of the vector. The framework will pass 0, 1000, and
- * 1000000 for initialSize, and the iteration count for n.
- */
-#define BENCHMARK_PARAM(name, param)                                    \
-  BENCHMARK_NAMED_PARAM(name, param, param)
-
-/**
- * Same as BENCHMARK_PARAM, but allows to return the actual number of
- * iterations that have been run.
- */
-#define BENCHMARK_PARAM_MULTI(name, param)                              \
-  BENCHMARK_NAMED_PARAM_MULTI(name, param, param)
-
-/*
- * Like BENCHMARK_PARAM(), but allows a custom name to be specified for each
- * parameter, rather than using the parameter value.
- *
- * Useful when the parameter value is not a valid token for string pasting,
- * of when you want to specify multiple parameter arguments.
- *
- * For example:
- *
- * void addValue(uint n, int64_t bucketSize, int64_t min, int64_t max) {
- *   Histogram<int64_t> hist(bucketSize, min, max);
- *   int64_t num = min;
- *   FOR_EACH_RANGE (i, 0, n) {
- *     hist.addValue(num);
- *     ++num;
- *     if (num > max) { num = min; }
- *   }
- * }
- *
- * BENCHMARK_NAMED_PARAM(addValue, 0_to_100, 1, 0, 100)
- * BENCHMARK_NAMED_PARAM(addValue, 0_to_1000, 10, 0, 1000)
- * BENCHMARK_NAMED_PARAM(addValue, 5k_to_20k, 250, 5000, 20000)
- */
-#define BENCHMARK_NAMED_PARAM(name, param_name, ...)                    \
-  BENCHMARK_IMPL(                                                       \
-      FB_CONCATENATE(name, FB_CONCATENATE(_, param_name)),              \
-      FB_STRINGIZE(name) "(" FB_STRINGIZE(param_name) ")",              \
-      iters,                                                            \
-      unsigned,                                                         \
-      iters) {                                                          \
-    name(iters, ## __VA_ARGS__);                                        \
-  }
-
-/**
- * Same as BENCHMARK_NAMED_PARAM, but allows to return the actual number
- * of iterations that have been run.
- */
-#define BENCHMARK_NAMED_PARAM_MULTI(name, param_name, ...)              \
-  BENCHMARK_MULTI_IMPL(                                                 \
-      FB_CONCATENATE(name, FB_CONCATENATE(_, param_name)),              \
-      FB_STRINGIZE(name) "(" FB_STRINGIZE(param_name) ")",              \
-      unsigned,                                                         \
-      iters) {                                                          \
-    return name(iters, ## __VA_ARGS__);                                 \
-  }
-
-/**
- * Just like BENCHMARK, but prints the time relative to a
- * baseline. The baseline is the most recent BENCHMARK() seen in
- * lexical order. Example:
- *
- * // This is the baseline
- * BENCHMARK(insertVectorBegin, n) {
- *   vector<int> v;
- *   FOR_EACH_RANGE (i, 0, n) {
- *     v.insert(v.begin(), 42);
- *   }
- * }
- *
- * BENCHMARK_RELATIVE(insertListBegin, n) {
- *   list<int> s;
- *   FOR_EACH_RANGE (i, 0, n) {
- *     s.insert(s.begin(), 42);
- *   }
- * }
- *
- * Any number of relative benchmark can be associated with a
- * baseline. Another BENCHMARK() occurrence effectively establishes a
- * new baseline.
- */
-#define BENCHMARK_RELATIVE(name, ...)                           \
-  BENCHMARK_IMPL(                                               \
-    name,                                                       \
-    "%" FB_STRINGIZE(name),                                     \
-    FB_ARG_2_OR_1(1, ## __VA_ARGS__),                           \
-    FB_ONE_OR_NONE(unsigned, ## __VA_ARGS__),                   \
-    __VA_ARGS__)
-
-/**
- * Same as BENCHMARK_RELATIVE, but allows to return the actual number
- * of iterations that have been run.
- */
-#define BENCHMARK_RELATIVE_MULTI(name, ...)                     \
-  BENCHMARK_MULTI_IMPL(                                         \
-    name,                                                       \
-    "%" FB_STRINGIZE(name),                                     \
-    FB_ONE_OR_NONE(unsigned, ## __VA_ARGS__),                   \
-    __VA_ARGS__)
-
-/**
- * A combination of BENCHMARK_RELATIVE and BENCHMARK_PARAM.
- */
-#define BENCHMARK_RELATIVE_PARAM(name, param)                           \
-  BENCHMARK_RELATIVE_NAMED_PARAM(name, param, param)
-
-/**
- * Same as BENCHMARK_RELATIVE_PARAM, but allows to return the actual
- * number of iterations that have been run.
- */
-#define BENCHMARK_RELATIVE_PARAM_MULTI(name, param)                     \
-  BENCHMARK_RELATIVE_NAMED_PARAM_MULTI(name, param, param)
-
-/**
- * A combination of BENCHMARK_RELATIVE and BENCHMARK_NAMED_PARAM.
- */
-#define BENCHMARK_RELATIVE_NAMED_PARAM(name, param_name, ...)           \
-  BENCHMARK_IMPL(                                                       \
-      FB_CONCATENATE(name, FB_CONCATENATE(_, param_name)),              \
-      "%" FB_STRINGIZE(name) "(" FB_STRINGIZE(param_name) ")",          \
-      iters,                                                            \
-      unsigned,                                                         \
-      iters) {                                                          \
-    name(iters, ## __VA_ARGS__);                                        \
-  }
-
-/**
- * Same as BENCHMARK_RELATIVE_NAMED_PARAM, but allows to return the
- * actual number of iterations that have been run.
- */
-#define BENCHMARK_RELATIVE_NAMED_PARAM_MULTI(name, param_name, ...)     \
-  BENCHMARK_MULTI_IMPL(                                                 \
-      FB_CONCATENATE(name, FB_CONCATENATE(_, param_name)),              \
-      "%" FB_STRINGIZE(name) "(" FB_STRINGIZE(param_name) ")",          \
-      unsigned,                                                         \
-      iters) {                                                          \
-    return name(iters, ## __VA_ARGS__);                                 \
-  }
+#define BENCHMARK(name)         \
+      BENCHMARK_IMPL(           \
+        name,                   \
+        FB_STRINGIZE(name),     \
+        __VA_ARGS__,            \
+        __VA_ARGS__)
 
 /**
  * Draws a line of dashes.
