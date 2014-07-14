@@ -6,7 +6,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
 #include "TcpConnection.h"
-#include "Timer.h"
 #include "core/Range.h"
 
 
@@ -18,11 +17,11 @@ struct ServerOptions
     // max connection allowed
     uint16_t  max_connections = 5000;
 
-    // max send size per second for every connection
-    uint16_t  max_send_size_per_sec = 1024;
+    // max recv packet per second for every connection
+    uint16_t  max_recv_num_per_sec = 1000;
 
     // max recv size per second for every connection
-    uint16_t  max_recv_size_per_sec = 1024;
+    uint32_t  max_recv_size_per_sec = MAX_CONTENT_LEN * 60;
 };
 
 
