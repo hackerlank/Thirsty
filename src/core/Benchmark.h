@@ -21,6 +21,7 @@
 #include <utility>
 #include <functional>
 #include "Preprocessor.h"
+#include "Utils.h"
 
 /**
  * Runs all benchmarks defined. Usually put in main().
@@ -48,10 +49,6 @@ void addBenchmarkImpl(const char* file,
                       std::function<TimeIterPair(unsigned int)>);
 
 } // namespace detail
-
-
-// Get current tick count(in nanoseconds), for time measurements
-uint64_t getNowTickCount();
 
 
 /**
