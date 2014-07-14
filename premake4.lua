@@ -30,11 +30,13 @@ solution 'Thirsty'
             'WIN32_LEAN_AND_MEAN',
             '_WIN32_WINNT=0x0600',
             '_CRT_SECURE_NO_WARNINGS',
+            '_SCL_SECURE_NO_WARNINGS',
             'NOMINMAX',
         }
 		
 	configuration "gmake"
 		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }
 
     project 'Thirsty'
         location 'build'
@@ -42,7 +44,6 @@ solution 'Thirsty'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
         defines
         {
-            '__STDC_LIMIT_MACROS',
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
@@ -107,11 +108,13 @@ solution 'UnitTest'
             'WIN32_LEAN_AND_MEAN',
             '_WIN32_WINNT=0x0600',
             '_CRT_SECURE_NO_WARNINGS',
+            '_SCL_SECURE_NO_WARNINGS',
             'NOMINMAX',
         }
 		
 	configuration "gmake"
 		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }
         
     project 'unittest'
         location 'build/test'
@@ -166,7 +169,6 @@ solution 'UnitTest'
         uuid 'AB7D1C15-7A44-41a7-8864-230D8E345608'
         defines
         {
-            '__STDC_LIMIT_MACROS',
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
