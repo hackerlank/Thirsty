@@ -78,9 +78,6 @@ private:
     // server options
     ServerOptions   options_;
 
-    // heartbeat checking
-    TimerPtr        heartbeat_timer_;
-
 };
 
 typedef std::shared_ptr<TcpServer>    TcpServerPtr;

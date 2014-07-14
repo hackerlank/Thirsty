@@ -2,8 +2,9 @@
 #include <functional>
 #include <vector>
 #include <boost/date_time.hpp>
-#include "logging.h"
 #include "core/Strings.h"
+#include "Utils.h"
+#include "logging.h"
 
 
 using namespace std::placeholders;
@@ -116,20 +117,20 @@ void TcpServer::DropDeadConnections()
 {
     std::vector<int64_t> dead_connections;
     dead_connections.reserve(32);
-    time_t now = time(NULL);
+    uint64_t now = getNowTickCount();
     for (auto& item : connections_)
     {
         auto& conn = item.second;
         auto elapsed = now - conn->GetLastRecvTime();
-        if (elapsed >= options_.heart_beat_sec)
+        if (elapsed >= options_.heart_beat_sec * 1000000000UL)
         {
             dead_connections.emplace_back(item.first);
         }
     }
+
+    boost::system::error_code ec;
     for (auto serial : dead_connections)
     {
-        CloseSession(serial);
+        HandleError(ec, serial);
     }
-
-    heartbeat_timer_->Schedule();
 }

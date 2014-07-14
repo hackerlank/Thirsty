@@ -4,6 +4,7 @@
 #include "core/Strings.h"
 #include "logging.h"
 #include "Checksum.h"
+#include "Utils.h"
 
 
 using namespace std;
@@ -35,7 +36,7 @@ void TcpConnection::Close()
 
 void TcpConnection::AsynRead()
 {
-    last_recv_time_ = time(NULL);
+    last_recv_time_ = getNowTickCount();
     boost::asio::async_read(socket_, boost::asio::buffer(&head_, sizeof(head_)),
         std::bind(&TcpConnection::HandleReadHead, this, _1, _2));
 }
@@ -45,10 +46,17 @@ void TcpConnection::HandleReadHead(const boost::system::error_code& ec, size_t b
     boost::system::error_code err = ec;
     if (!err && CheckHeader(err, bytes))
     {
-        uint8_t* buf = (head_.size <= stack_buf_.size() ? stack_buf_.data()
-            : (uint8_t*)checkedMalloc(goodMallocSize(head_.size)));
-        boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
-            std::bind(&TcpConnection::HandleReadContent, this, _1, _2, buf));
+        if (head_.size > 0)
+        {
+            uint8_t* buf = (head_.size <= stack_buf_.size() ? stack_buf_.data()
+                : (uint8_t*)checkedMalloc(goodMallocSize(head_.size)));
+            boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
+                std::bind(&TcpConnection::HandleReadContent, this, _1, _2, buf));
+        }
+        else // empty content packet for heartbeating
+        {
+            AsynRead();
+        }
     }
     else
     {
@@ -112,7 +120,7 @@ bool TcpConnection::CheckHeader(boost::system::error_code& err, size_t bytes)
         auto checksum = crc32c((const uint8_t*)&head_.size, sizeof(head_.size));
         if (checksum == head_.size_checksum)
         {
-            if (head_.size > 0 && head_.size <= MAX_CONTENT_LEN)
+            if (head_.size >= 0 && head_.size <= MAX_CONTENT_LEN)
             {
                 return true;
             }

@@ -53,7 +53,7 @@ public:
     boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
 
     int64_t     GetSerial() const { return serial_; }
-    time_t      GetLastRecvTime() const { return last_recv_time_; }
+    uint64_t    GetLastRecvTime() const { return last_recv_time_; }
 
 private:
     // handle completion of a read operation.
@@ -84,7 +84,7 @@ private:
     // serial number of this connection
     int64_t         serial_ = 0;
 
-    time_t          last_recv_time_ = 0;
+    uint64_t        last_recv_time_ = 0;
 
     // error callback
     ErrorCallback    on_error_;
