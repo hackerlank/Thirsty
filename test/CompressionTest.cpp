@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include "logging.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include "core/Hash.h"
 #include "core/Random.h"
 #include "io/IOBufQueue.h"

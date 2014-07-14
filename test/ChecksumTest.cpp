@@ -15,7 +15,7 @@
  */
 
 #include "net/Checksum.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include "core/Hash.h"
 #include <gtest/gtest.h>
 #include "logging.h"

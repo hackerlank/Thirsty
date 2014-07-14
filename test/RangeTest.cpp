@@ -18,7 +18,7 @@
 // @author Andrei Alexandrescu (andrei.alexandrescu@fb.com)
 
 #include "core/Range.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include "core/Foreach.h"
 #include <gtest/gtest.h>
 #include <array>
