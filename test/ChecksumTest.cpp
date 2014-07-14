@@ -68,6 +68,22 @@ ExpectedResult expectedResults[] =
     { 1, BUFFER_SIZE / 2, 3854797577 },
 };
 
+bool initCrcBuffer()
+{
+    // Populate a buffer with a deterministic pattern
+    // on which to compute checksums
+    const uint8_t* src = buffer;
+    uint64_t* dst = (uint64_t*)buffer;
+    const uint64_t* end = (const uint64_t*)(buffer + BUFFER_SIZE);
+    *dst++ = 0;
+    while (dst < end) 
+    {
+        *dst++ = hash::fnv64_buf((const char*)src, sizeof(uint64_t));
+        src += sizeof(uint64_t);
+    }
+    return true;
+}
+
 void testCRC32C(
     std::function<uint32_t(const uint8_t*, size_t, uint32_t)> impl) 
 {
@@ -97,6 +113,7 @@ void testCRC32CContinuation(
 
 TEST(Checksum, crc32c_software)
 {
+    static bool init = initCrcBuffer();
     testCRC32C(detail::crc32c_sw);
 }
 

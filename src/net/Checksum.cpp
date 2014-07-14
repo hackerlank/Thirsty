@@ -29,12 +29,18 @@ namespace detail {
 #ifdef _MSC_VER
 
 #include <nmmintrin.h>
-#define __builtin_ia32_crc32qi  _mm_crc32_u8
-#define __builtin_ia32_crc32hi  _mm_crc32_u16
-#define __builtin_ia32_crc32si  _mm_crc32_u32
-#define __builtin_ia32_crc32di  _mm_crc32_u64
+#define crc32c_u8       _mm_crc32_u8
+#define crc32c_u16      _mm_crc32_u16
+#define crc32c_u32      _mm_crc32_u32
+#define crc32c_u64      _mm_crc32_u64
 
 #elif __GNUC_PREREQ(4, 7)
+
+#define crc32c_u8       __builtin_ia32_crc32qi
+#define crc32c_u16      __builtin_ia32_crc32hi
+#define crc32c_u32      __builtin_ia32_crc32si
+#define crc32c_u64      __builtin_ia32_crc32di
+
 #else
 #error "no hardware-accelerated CRC-32C"
 #endif
@@ -54,7 +60,7 @@ uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum
         size_t limit = std::min(nbytes, sizeof(uint64_t)-mask);
         while (offset < limit)
         {
-            sum = (uint32_t)__builtin_ia32_crc32qi(sum, data[offset]);
+            sum = (uint32_t)crc32c_u8(sum, data[offset]);
             offset++;
         }
     }
@@ -63,14 +69,14 @@ uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum
     while (offset + sizeof(uint64_t) <= nbytes)
     {
         const uint64_t* src = (const uint64_t*)(data + offset);
-        sum = __builtin_ia32_crc32di(sum, *src);
+        sum = crc32c_u64(sum, *src);
         offset += sizeof(uint64_t);
     }
 
     // Process any bytes remaining after the last aligned 8-byte block.
     while (offset < nbytes)
     {
-        sum = (uint32_t)__builtin_ia32_crc32qi(sum, data[offset]);
+        sum = (uint32_t)crc32c_u8(sum, data[offset]);
         offset++;
     }
     return sum;
