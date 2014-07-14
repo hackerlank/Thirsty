@@ -26,9 +26,9 @@
 #include <regex>
 #include <algorithm>
 #include <iostream>
-#include "Foreach.h"
-#include "Conv.h"
-#include "Strings.h"
+#include "core/Foreach.h"
+#include "core/Conv.h"
+#include "core/Strings.h"
 #include "logging.h"
 
 
