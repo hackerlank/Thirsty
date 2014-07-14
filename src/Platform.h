@@ -5,7 +5,7 @@
 #pragma once
 
 #include <memory>
-#include <boost/predef.h>
+#include <boost/predef/other/endian.h>
 
 // portable version check
 #ifndef __GNUC_PREREQ
@@ -45,7 +45,7 @@
 
 #ifdef _MSC_VER
 # define ALIGN(x)        __declspec(align(x))
-typedef std::max_align_t MaxAlign
+typedef std::max_align_t MaxAlign;
 #elif defined(__GNUC__)
 # define ALIGN(x)        __attribute__((aligned(x)))
 struct MaxAlign { char c; } __attribute__((aligned));
