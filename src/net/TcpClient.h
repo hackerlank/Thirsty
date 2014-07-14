@@ -7,6 +7,7 @@
 #include <boost/noncopyable.hpp>
 #include "core/Range.h"
 #include "Packet.h"
+#include "Timer.h"
 
 
 typedef std::function<void(const boost::system::error_code&)>   ErrorCallback;
@@ -19,7 +20,9 @@ class TcpClient
       private boost::noncopyable
 {
 public:
-    TcpClient(boost::asio::io_service& io_service, ErrorCallback callback);
+    TcpClient(boost::asio::io_service& io_service, 
+              uint32_t heartbeat_sec, 
+              ErrorCallback callback);
     ~TcpClient();
 
     void    AsynRead(ReadCallback callback);
@@ -34,9 +37,11 @@ public:
     boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
 
 private:
-
     // post a read request
     void    AsynReadHead();
+
+    // send a heartbeat packet
+    void    AsynWriteHeartbeat();
 
     // handle connect event
     void    HandleConnect(const boost::system::error_code& err, 
@@ -68,6 +73,9 @@ private:
     ConnectCallback     on_connect_;
     ReadCallback        on_read_;
     ErrorCallback       on_error_;
+
+    uint32_t            heartbeat_sec_ = 60;
+    TimerPtr            heartbeat_timer_;
 };
 
 typedef std::shared_ptr<TcpClient>  TcpClientPtr;

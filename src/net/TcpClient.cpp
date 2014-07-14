@@ -9,10 +9,13 @@ using namespace std;
 using namespace std::placeholders;
 
 
-TcpClient::TcpClient(boost::asio::io_service& io_service, ErrorCallback callback)
+TcpClient::TcpClient(boost::asio::io_service& io_service, 
+                     uint32_t heartbeat_sec,
+                     ErrorCallback callback)
     : io_service_(io_service),
       socket_(io_service),
-      on_error_(callback)
+      on_error_(callback),
+      heartbeat_sec_(heartbeat_sec)
 {
     assert(callback);
 }
@@ -32,6 +35,17 @@ void TcpClient::AsynRead(ReadCallback callback)
     assert(callback);
     on_read_ = callback;
     AsynReadHead();
+
+    if (!heartbeat_timer_)
+    {
+        heartbeat_timer_ = std::make_shared<Timer>(io_service_, heartbeat_sec_, 
+            [this]()
+        {
+            this->AsynWriteHeartbeat();
+            this->heartbeat_timer_->Schedule();
+        });
+        heartbeat_timer_->Schedule();
+    }
 }
 
 void TcpClient::AsynConnect(const std::string& host,
@@ -59,6 +73,13 @@ void TcpClient::AsynWrite(const void* data, size_t bytes)
         boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
             std::bind(&TcpClient::HandleWrite, this, _1, _2, buf));
     }
+}
+
+void TcpClient::AsynWriteHeartbeat()
+{
+    Header head = { 0, 0xB798B438, 0 };
+    boost::asio::async_write(socket_, boost::asio::buffer(&head, sizeof(head)),
+        std::bind(&TcpClient::HandleWrite, this, _1, _2, nullptr));
 }
 
 void TcpClient::AsynReadHead()
