@@ -35,6 +35,7 @@ solution 'Thirsty'
 		
 	configuration "gmake"
 		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }
 
     project 'Thirsty'
         location 'build'
@@ -42,7 +43,6 @@ solution 'Thirsty'
         uuid '8701594A-72B8-4a6a-AEF3-6B41BBC33E65'
         defines
         {
-            '__STDC_LIMIT_MACROS',
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
