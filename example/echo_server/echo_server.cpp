@@ -31,12 +31,13 @@ int main(int argc, char* argv[])
         }
 
         boost::asio::io_service io_service;
-        TcpServerPtr echo_server = make_shared<TcpServer>(io_service, 2000);
+        ServerOptions opt;
+        TcpServerPtr echo_server = make_shared<TcpServer>(io_service, opt);
         echo_server->Start(host, port, [&](int64_t serial, ByteRange data)
         {
             time_t now = time(NULL);
             const char* date = ctime(&now);
-            printf("recv %d bytes from serial %lld at %s.\n", data.size(), serial, date);
+            printf("recv %d bytes from serial %lld at %s", data.size(), serial, date);
             echo_server->SendTo(serial, data);
         });
         printf("server started at %s:%d.\n", host.c_str(), port);
