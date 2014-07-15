@@ -18,16 +18,6 @@ typedef std::function<void(const boost::system::error_code)> ErrorCallback;
 typedef std::function<void(int64_t, ByteRange)>     ReadCallback;
 
 
-// transferred data stats
-struct TransferStats
-{
-    uint32_t    total_send_count = 0;
-    uint32_t    total_send_size = 0;
-    uint32_t    total_recv_count = 0;
-    uint32_t    total_recv_size = 0;
-};
-
-
 class TcpConnection
     : public std::enable_shared_from_this<TcpConnection>,
       private boost::noncopyable
@@ -35,7 +25,7 @@ class TcpConnection
 public:
     // construct a connection with the given io_service.
     TcpConnection(boost::asio::io_service& io_service, 
-                  int64_t serial, 
+                  Serial serial,
                   ErrorCallback on_error,
                   ReadCallback on_read);
     ~TcpConnection();
@@ -44,7 +34,7 @@ public:
     void AsynRead();
 
     // Send messages
-    void AsynWrite(const void* data, size_t size);
+    void AsynWrite(const void* data, uint32_t size);
 
     // stop this connection
     void Close();
@@ -52,8 +42,10 @@ public:
     // get the socket associated with the connection.
     boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
 
-    int64_t     GetSerial() const { return serial_; }
+    Serial      GetSerial() const { return serial_; }
     uint64_t    GetLastRecvTime() const { return last_recv_time_; }
+
+    const TransferStats& GetTransferStats() const { return stats_; }
 
 private:
     // handle completion of a read operation.
@@ -71,6 +63,8 @@ private:
     bool CheckHeader(boost::system::error_code& err, size_t bytes);
     bool CheckContent(boost::system::error_code& err, const uint8_t* buf, size_t bytes);
 
+    void UpdateTransferStats();
+
 private:
     // socket for the connection.
     boost::asio::ip::tcp::socket        socket_;
@@ -82,17 +76,19 @@ private:
     StackBuffer     stack_buf_;
 
     // serial number of this connection
-    int64_t         serial_ = 0;
+    Serial          serial_ = 0;
 
     uint64_t        last_recv_time_ = 0;
+    uint64_t        start_recv_time_ = 0;
 
     // error callback
-    ErrorCallback    on_error_;
+    ErrorCallback   on_error_;
 
     // read data callback
-    ReadCallback     on_read_;
+    ReadCallback    on_read_;
 
-    TransferStats    stats_;
+    TransferStats   stats_;
+
 };
 
 typedef std::shared_ptr<TcpConnection>  TcpConnectionPtr;

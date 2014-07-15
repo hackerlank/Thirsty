@@ -9,22 +9,6 @@
 #include "core/Range.h"
 
 
-struct ServerOptions
-{
-    // heartbeat seconds
-    uint16_t  heart_beat_sec = 100;
-
-    // max connection allowed
-    uint16_t  max_connections = 5000;
-
-    // max recv packet per second for every connection
-    uint16_t  max_recv_num_per_sec = 1000;
-
-    // max recv size per second for every connection
-    uint32_t  max_recv_size_per_sec = MAX_CONTENT_LEN * 60;
-};
-
-
 class TcpServer : private boost::noncopyable
 {
 public:
@@ -38,24 +22,24 @@ public:
     void Stop();
 
     // close a connection
-    void CloseSession(int64_t serial);
+    void CloseSession(Serial serial);
 
     // send data to connection
-    void SendTo(int64_t serial, const void* data, size_t size);
+    void SendTo(Serial serial, const void* data, uint32_t size);
 
-    void SendTo(int64_t serial, ByteRange range)
+    void SendTo(Serial serial, ByteRange range)
     {
-        SendTo(serial, range.data(), range.size());
+        SendTo(serial, range.data(), static_cast<uint32_t>(range.size()));
     }
 
-    void SendAll(const char* data, size_t size);
+    void SendAll(const char* data, uint32_t size);
 
-    TcpConnectionPtr  GetConnection(int64_t serial);
+    TcpConnectionPtr  GetConnection(Serial serial);
 
 private:
     void StartAccept();
     void HandleAccept(const boost::system::error_code& err, TcpConnectionPtr ptr);
-    void HandleError(const boost::system::error_code& err, int64_t serial);
+    void HandleError(const boost::system::error_code& err, Serial serial);
     void DropDeadConnections();
 
 private:
@@ -66,10 +50,10 @@ private:
     boost::asio::ip::tcp::acceptor  acceptor_;
 
     // connections identified by serial number
-    std::unordered_map<int64_t, TcpConnectionPtr>    connections_;
+    std::unordered_map<Serial, TcpConnectionPtr>    connections_;
 
     // current serial number
-    int64_t         current_serial_ = 1000;
+    Serial  current_serial_ = 1000;
 
     // read data callback
     ReadCallback    on_read_;
