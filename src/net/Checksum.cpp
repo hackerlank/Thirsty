@@ -69,7 +69,7 @@ uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum
     while (offset + sizeof(uint64_t) <= nbytes)
     {
         const uint64_t* src = (const uint64_t*)(data + offset);
-        sum = crc32c_u64(sum, *src);
+        sum = (uint32_t)crc32c_u64(sum, *src);
         offset += sizeof(uint64_t);
     }
 

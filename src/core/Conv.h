@@ -646,7 +646,7 @@ Tgt digits_to(const char * b, const char * e)
 
     for (; e - b >= 4; b += 4)
     {
-        result *= 10000;
+        result = static_cast<Tgt>(result * 10000);
         const int32_t r0 = shift1000[static_cast<size_t>(b[0])];
         const int32_t r1 = shift100[static_cast<size_t>(b[1])];
         const int32_t r2 = shift10[static_cast<size_t>(b[2])];
@@ -808,7 +808,7 @@ to(StringPiece* src)
         auto t = detail::digits_to<typename std::make_unsigned<Tgt>::type>(b, m);
         if (negative)
         {
-            result = -t;
+            result = -static_cast<Tgt>(t);
             FOLLY_RANGE_CHECK(result <= 0, "Negative overflow");
         }
         else
@@ -877,7 +877,7 @@ to(StringPiece *const src)
     FOLLY_RANGE_CHECK(!src->empty(), "No digits found in input string");
 
     int length;
-    auto result = conv.StringToDouble(src->data(), src->size(),
+    auto result = conv.StringToDouble(src->data(), static_cast<int>(src->size()),
         &length); // processed char count
 
     if (!std::isnan(result))

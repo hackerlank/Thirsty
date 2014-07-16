@@ -269,7 +269,7 @@ double prettyToDouble(StringPiece *const prettyString,
         }
         else if (prettyString->startsWith(suffixes[j].suffix))
         {
-            int suffixLen = strlen(suffixes[j].suffix);
+            int suffixLen = static_cast<int>(strlen(suffixes[j].suffix));
             //We are looking for a longest suffix matching prefix of the string
             //after numeric value. We need this in case suffixes have common prefix.
             if (suffixLen > longestPrefixLen)

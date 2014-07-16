@@ -341,7 +341,7 @@ public:
         const size_type osize = o.size();
         const size_type msize = std::min(tsize, osize);
         int r = traits_type::compare(data(), o.data(), msize);
-        if (r == 0) r = tsize - osize;
+        if (r == 0) r = static_cast<int>(tsize - osize);
         return r;
     }
 
