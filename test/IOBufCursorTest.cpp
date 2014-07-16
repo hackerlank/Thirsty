@@ -17,7 +17,7 @@
 #include "io/Cursor.h"
 #include "io/IOBuf.h"
 #include "core/Range.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include <gtest/gtest.h>
 #include <random>
 

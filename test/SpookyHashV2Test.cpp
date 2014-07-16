@@ -21,7 +21,7 @@
 #endif
 
 #include "core/SpookyHashV2.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include <cinttypes>
 #include <cstdio>
 #include <cstddef>

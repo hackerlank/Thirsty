@@ -3,7 +3,7 @@
 --
 
 -- windows only
-local BOOST_ROOT = os.getenv('BOOST_ROOT')
+local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/include'
 
 solution 'ServerExample'
     configurations {'Debug', 'Release'}
@@ -19,6 +19,20 @@ solution 'ServerExample'
     configuration 'Release'
         defines { 'NDEBUG' }
         flags { 'Symbols', 'Optimize' }
+        
+	configuration "vs*"
+		defines 
+        {
+            'WIN32',
+            'WIN32_LEAN_AND_MEAN',
+            '_WIN32_WINNT=0x0600',
+            '_CRT_SECURE_NO_WARNINGS',
+            'NOMINMAX',
+        }
+		
+	configuration "gmake"
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }        
 
     project 'echo_server'
         location 'build'
@@ -35,14 +49,9 @@ solution 'ServerExample'
         excludes
         {
             '../../src/main.cpp',
-        }        
-
-
-        if os.get() == 'windows' then
+        }
         defines
-        {
-            '_WIN32_WINNT=0x0600',
-            '_CRT_SECURE_NO_WARNINGS',            
+        {          
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
@@ -54,43 +63,19 @@ solution 'ServerExample'
         }
         libdirs
         {
-            BOOST_ROOT .. '/stage/lib',
+            BOOST_ROOT .. '/stage/lib-x64',
         }
         includedirs
         {
             '../../src',
             BOOST_ROOT,
         }
-        links
-        {
-        }        
-        end
         
         if os.get() == 'linux' then
-        defines
-        {
-            'BOOST_ASIO_SEPARATE_COMPILATION',
-            'BOOST_REGEX_NO_LIB',
-            'BOOST_ASIO_HAS_MOVE',
-            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
-            'BOOST_ASIO_HAS_STD_ARRAY',
-            'BOOST_ASIO_HAS_STD_ATOMIC',
-            'BOOST_ASIO_HAS_STD_SHARED_PTR',
-            'BOOST_ASIO_HAS_STD_CHRONO',
-        }
-        buildoptions
-        { 
-            '-std=c++11',
-        }
-        includedirs
-        {
-            '../../src',
-        }
         links
         {
             'rt',
             'pthread',
-            'bfd',
             'boost_system',
             'boost_date_time',
             'boost_chrono',
@@ -105,6 +90,7 @@ solution 'ClientExample'
     configurations {'Debug', 'Release'}
     language 'C++'
     flags {'ExtraWarnings'}
+    platforms {'x64'}
     targetdir 'bin'
     
     configuration 'Debug'
@@ -114,6 +100,20 @@ solution 'ClientExample'
     configuration 'Release'
         defines { 'NDEBUG' }
         flags { 'Symbols', 'Optimize' }
+
+	configuration "vs*"
+		defines 
+        {
+            'WIN32',
+            'WIN32_LEAN_AND_MEAN',
+            '_WIN32_WINNT=0x0600',
+            '_CRT_SECURE_NO_WARNINGS',
+            'NOMINMAX',
+        }
+		
+	configuration "gmake"
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' } 
+        defines { '__STDC_LIMIT_MACROS' }        
         
     project 'echo_client'
         location 'build'
@@ -131,12 +131,8 @@ solution 'ClientExample'
         {
             '../../src/main.cpp',
         }
-        
-        if os.get() == 'windows' then
         defines
-        {
-            '_WIN32_WINNT=0x0600',
-            '_CRT_SECURE_NO_WARNINGS',            
+        {           
             'BOOST_ASIO_SEPARATE_COMPILATION',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
@@ -148,47 +144,19 @@ solution 'ClientExample'
         }
         libdirs
         {
-            BOOST_ROOT .. '/stage/lib',
+            BOOST_ROOT .. '/stage/lib-x64',
         }
         includedirs
         {
             '../../src',
             BOOST_ROOT,
         }
-        links
-        {
-        }        
-        end
         
         if os.get() == 'linux' then
-        defines
-        {
-            'BOOST_ASIO_SEPARATE_COMPILATION',
-            'BOOST_REGEX_NO_LIB',
-            'BOOST_ASIO_HAS_MOVE',
-            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
-            'BOOST_ASIO_HAS_STD_ARRAY',
-            'BOOST_ASIO_HAS_STD_ATOMIC',
-            'BOOST_ASIO_HAS_STD_SHARED_PTR',
-            'BOOST_ASIO_HAS_STD_CHRONO',
-        }
-        buildoptions 
-        { 
-            '-std=c++11', 
-        }
-        includedirs
-        {
-            '../../src',
-        }
-        libdirs
-        {
-            'usr/local/lib',
-        }
         links
         {
             'rt',
             'pthread',
-            'bfd',
             'boost_system',
             'boost_date_time',
             'boost_chrono',

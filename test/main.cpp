@@ -2,7 +2,7 @@
 #include <time.h>
 #include <iostream>
 #include <gtest/gtest.h>
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include "logging.h"
 
 #ifdef _WIN32

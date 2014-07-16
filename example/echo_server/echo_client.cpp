@@ -15,9 +15,10 @@ TcpClientPtr CreateClient(boost::asio::io_service& io_service,
                           const std::string& host,
                           int16_t port)
 {
-    TcpClientPtr client = make_shared<TcpClient>(io_service, [](int32_t error, const string& msg)
+    TcpClientPtr client = make_shared<TcpClient>(io_service, 60,
+        [](const boost::system::error_code& err)
     {
-        printf("Error: %d, %s.\n", error, msg.c_str());
+        printf("Error: %d, %s.\n", err.value(), err.message().c_str());
     });
     client->AsynConnect(host, port, [client](const string& host, int16_t port)
     {

@@ -2,8 +2,9 @@
 #include <functional>
 #include <vector>
 #include <boost/date_time.hpp>
-#include "logging.h"
 #include "core/Strings.h"
+#include "Utils.h"
+#include "logging.h"
 
 
 using namespace std::placeholders;
@@ -43,12 +44,12 @@ void TcpServer::Stop()
     connections_.clear();
 }
 
-void TcpServer::CloseSession(int64_t serial)
+void TcpServer::CloseSession(Serial serial)
 {
     connections_.erase(serial);
 }
 
-TcpConnectionPtr  TcpServer::GetConnection(int64_t serial)
+TcpConnectionPtr  TcpServer::GetConnection(Serial serial)
 {
     auto iter = connections_.find(serial);
     if (iter != connections_.end())
@@ -58,7 +59,7 @@ TcpConnectionPtr  TcpServer::GetConnection(int64_t serial)
     return TcpConnectionPtr();
 }
 
-void TcpServer::SendTo(int64_t serial, const void* data, size_t size)
+void TcpServer::SendTo(Serial serial, const void* data, uint32_t size)
 {
     auto conn = GetConnection(serial);
     if (conn)
@@ -67,7 +68,7 @@ void TcpServer::SendTo(int64_t serial, const void* data, size_t size)
     }
 }
 
-void TcpServer::SendAll(const char* data, size_t size)
+void TcpServer::SendAll(const char* data, uint32_t size)
 {
     for (auto& value : connections_)
     {
@@ -106,7 +107,7 @@ void TcpServer::HandleAccept(const boost::system::error_code& err, TcpConnection
     }
 }
 
-void TcpServer::HandleError(const boost::system::error_code& ec, int64_t serial)
+void TcpServer::HandleError(const boost::system::error_code& ec, Serial serial)
 {
     CloseSession(serial);
     LOG(ERROR) << serial << ", " << ec.value() << ": " << ec.message();
@@ -114,22 +115,31 @@ void TcpServer::HandleError(const boost::system::error_code& ec, int64_t serial)
 
 void TcpServer::DropDeadConnections()
 {
-    std::vector<int64_t> dead_connections;
+    std::vector<Serial> dead_connections;
     dead_connections.reserve(32);
-    time_t now = time(NULL);
+    uint64_t now = getNowTickCount();
     for (auto& item : connections_)
     {
         auto& conn = item.second;
         auto elapsed = now - conn->GetLastRecvTime();
-        if (elapsed >= options_.heart_beat_sec)
+        if (elapsed >= options_.heart_beat_sec * 1000000000UL)
         {
             dead_connections.emplace_back(item.first);
         }
-    }
-    for (auto serial : dead_connections)
-    {
-        CloseSession(serial);
+        else
+        {
+            auto stats = conn->GetTransferStats();
+            if (stats.peak_recv_num_per_sec > options_.max_recv_num_per_sec
+             || stats.peak_recv_size_per_sec > options_.max_recv_size_per_sec)
+            {
+                dead_connections.emplace_back(item.first);
+            }
+        }
     }
 
-    heartbeat_timer_->Schedule();
+    boost::system::error_code ec;
+    for (auto serial : dead_connections)
+    {
+        HandleError(ec, serial);
+    }
 }

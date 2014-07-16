@@ -15,7 +15,7 @@
  */
 
 #include "core/Foreach.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include <gtest/gtest.h>
 #include <map>
 #include <string>

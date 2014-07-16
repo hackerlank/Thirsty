@@ -1,9 +1,11 @@
 #include "TcpConnection.h"
 #include <functional>
+#include "Core/Conv.h"
 #include "core/Malloc.h"
 #include "core/Strings.h"
 #include "logging.h"
 #include "Checksum.h"
+#include "Utils.h"
 
 
 using namespace std;
@@ -11,7 +13,7 @@ using namespace std::placeholders;
 
 
 TcpConnection::TcpConnection(boost::asio::io_service& io_service,
-                             int64_t serial,
+                             Serial serial,
                              ErrorCallback on_error,
                              ReadCallback on_read)
     : socket_(io_service),
@@ -20,6 +22,7 @@ TcpConnection::TcpConnection(boost::asio::io_service& io_service,
       on_read_(on_read)
 {
     assert(on_error && on_read);
+    start_recv_time_ = getNowTickCount();
 }
 
 TcpConnection::~TcpConnection()
@@ -35,7 +38,7 @@ void TcpConnection::Close()
 
 void TcpConnection::AsynRead()
 {
-    last_recv_time_ = time(NULL);
+    last_recv_time_ = getNowTickCount();
     boost::asio::async_read(socket_, boost::asio::buffer(&head_, sizeof(head_)),
         std::bind(&TcpConnection::HandleReadHead, this, _1, _2));
 }
@@ -45,10 +48,20 @@ void TcpConnection::HandleReadHead(const boost::system::error_code& ec, size_t b
     boost::system::error_code err = ec;
     if (!err && CheckHeader(err, bytes))
     {
-        uint8_t* buf = (head_.size <= stack_buf_.size() ? stack_buf_.data()
-            : (uint8_t*)checkedMalloc(goodMallocSize(head_.size)));
-        boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
-            std::bind(&TcpConnection::HandleReadContent, this, _1, _2, buf));
+        if (head_.size > 0)
+        {
+            uint8_t* buf = (head_.size <= stack_buf_.size() ? stack_buf_.data()
+                : (uint8_t*)checkedMalloc(goodMallocSize(head_.size)));
+            boost::asio::async_read(socket_, boost::asio::buffer(buf, head_.size),
+                std::bind(&TcpConnection::HandleReadContent, this, _1, _2, buf));
+        }
+        else // empty content packet for heartbeating
+        {
+            last_recv_time_ = getNowTickCount();
+            stats_.total_recv_size += bytes;
+            stats_.total_recv_count++;
+            AsynRead();
+        }
     }
     else
     {
@@ -65,6 +78,8 @@ void TcpConnection::HandleReadContent(const boost::system::error_code& ec,
     {
         on_read_(serial_, ByteRange((const uint8_t*)buf, bytes));
         AsynRead();
+        stats_.total_recv_size += bytes + sizeof(head_);
+        stats_.total_recv_count++;
     }
     else
     {
@@ -77,7 +92,7 @@ void TcpConnection::HandleReadContent(const boost::system::error_code& ec,
 }
 
 
-void TcpConnection::AsynWrite(const void* data, size_t size)
+void TcpConnection::AsynWrite(const void* data, uint32_t size)
 {
     if (data && size > 0 && size <= MAX_CONTENT_LEN)
     {
@@ -101,6 +116,11 @@ void TcpConnection::HandleWrite(const boost::system::error_code& err,
     {
         on_error_(err);
     }
+    else
+    {
+        stats_.total_send_size += bytes;
+        stats_.total_send_count++;
+    }
     free(buf);
 }
 
@@ -112,7 +132,7 @@ bool TcpConnection::CheckHeader(boost::system::error_code& err, size_t bytes)
         auto checksum = crc32c((const uint8_t*)&head_.size, sizeof(head_.size));
         if (checksum == head_.size_checksum)
         {
-            if (head_.size > 0 && head_.size <= MAX_CONTENT_LEN)
+            if (head_.size >= 0 && head_.size <= MAX_CONTENT_LEN)
             {
                 return true;
             }
@@ -147,4 +167,24 @@ bool TcpConnection::CheckContent(boost::system::error_code& err, const uint8_t* 
         }
     }
     return false;
+}
+
+void TcpConnection::UpdateTransferStats()
+{
+    auto flag = 0x100000; // 1k
+    if ((stats_.total_recv_size & flag) / flag > 0)
+    {
+        uint64_t now = getNowTickCount();
+        uint64_t elapsed = (now - start_recv_time_) / 1000000000U;
+        uint32_t packet_freq = to<uint32_t>(stats_.total_recv_count / elapsed);
+        uint64_t size_freq = stats_.total_recv_size / elapsed;
+        if (packet_freq > stats_.peak_recv_num_per_sec)
+        {
+            stats_.peak_recv_num_per_sec = packet_freq;
+        }
+        if (size_freq > stats_.peak_recv_size_per_sec)
+        {
+            stats_.peak_recv_size_per_sec = size_freq;
+        }
+    }
 }

@@ -44,7 +44,7 @@ void Timer::HandleTimeout(const boost::system::error_code& err)
     {
         if (callback_ && !canceled_)
         {
-            callback_(shared_from_this());
+            callback_();
         }
         else
         {

@@ -16,7 +16,7 @@
 
 #include "core/Conv.h"
 #include "core/Foreach.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include <climits>
 #include <limits>
 #include <stdexcept>

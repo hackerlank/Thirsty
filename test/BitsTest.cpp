@@ -17,7 +17,7 @@
 // @author Tudor Bosman (tudorb@fb.com)
 
 #include "core/Bits.h"
-#include "core/Benchmark.h"
+#include "Benchmark.h"
 #include <gtest/gtest.h>
 
 
