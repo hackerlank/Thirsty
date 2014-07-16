@@ -10,7 +10,7 @@ using namespace std;
 using namespace std::placeholders;
 
 
-void OnRead(TcpServerPtr server, int64_t serial, ByteRange range)
+void OnRead(TcpServerPtr server, Serial serial, ByteRange range)
 {
     time_t now = time(NULL);
     const char* date = ctime(&now);
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
         boost::asio::io_service io_service;
         ServerOptions opt;
         TcpServerPtr echo_server = make_shared<TcpServer>(io_service, opt);
-        echo_server->Start(host, port, [&](int64_t serial, ByteRange data)
+        echo_server->Start(host, port, [&](Serial serial, ByteRange data)
         {
             time_t now = time(NULL);
             const char* date = ctime(&now);
