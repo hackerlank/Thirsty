@@ -59,7 +59,7 @@ void TcpClient::AsynConnect(const std::string& host,
     socket_.async_connect(endpoint, std::bind(&TcpClient::HandleConnect, this, _1, host, port));
 }
 
-void TcpClient::AsynWrite(const void* data, size_t bytes)
+void TcpClient::AsynWrite(const void* data, uint32_t bytes)
 {
     if (data && bytes && bytes <= MAX_CONTENT_LEN)
     {

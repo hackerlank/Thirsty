@@ -31,8 +31,11 @@ public:
     void    AsynConnect(const std::string& host, int16_t port, ConnectCallback callback);
     
     // send data to server
-    void    AsynWrite(const void* data, size_t bytes);
-    void    AsynWrite(ByteRange range) { AsynWrite(range.data(), range.size()); }
+    void    AsynWrite(const void* data, uint32_t bytes);
+    void    AsynWrite(ByteRange range) 
+    { 
+        AsynWrite(range.data(), static_cast<uint32_t>(range.size())); 
+    }
 
     boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
 

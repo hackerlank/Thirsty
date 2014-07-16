@@ -15,7 +15,7 @@
 typedef std::function<void(const boost::system::error_code)> ErrorCallback;
 
 // read callback
-typedef std::function<void(int64_t, ByteRange)>     ReadCallback;
+typedef std::function<void(Serial, ByteRange)>     ReadCallback;
 
 
 class TcpConnection
