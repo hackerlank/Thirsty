@@ -8,7 +8,6 @@ local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/include'
 solution 'ServerExample'
     configurations {'Debug', 'Release'}
     language 'C++'
-    flags {'ExtraWarnings'}
     platforms {'x64'}
     targetdir 'bin'
 
@@ -89,7 +88,6 @@ solution 'ServerExample'
 solution 'ClientExample'
     configurations {'Debug', 'Release'}
     language 'C++'
-    flags {'ExtraWarnings'}
     platforms {'x64'}
     targetdir 'bin'
     

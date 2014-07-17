@@ -85,7 +85,7 @@ inline size_t encodeVarint(uint64_t val, uint8_t* buf)
         *p++ = 0x80 | (val & 0x7f);
         val >>= 7;
     }
-    *p++ = val;
+    *p++ = static_cast<uint8_t>(val);
     return p - buf;
 }
 

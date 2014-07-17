@@ -81,7 +81,7 @@ public:
         if (!contains(i))
         {
             dense_[size_] = i;
-            sparse_[i] = size_;
+            sparse_[i] = static_cast<uint8_t>(size_);
             size_++;
         }
     }

@@ -117,9 +117,9 @@ void internalSplit(DelimT delim, StringPiece sp, OutputIterator out,
                 *out++ = conv(StringPiece(&s[tokenStartPos], tokenSize));
             }
 
-            tokenStartPos = i + dSize;
+            tokenStartPos = static_cast<int>(i + dSize);
             tokenSize = 0;
-            i += dSize - 1;
+            i += static_cast<int>(dSize - 1);
         }
         else 
         {
@@ -129,7 +129,7 @@ void internalSplit(DelimT delim, StringPiece sp, OutputIterator out,
 
     if (!ignoreEmpty || tokenSize > 0) 
     {
-        tokenSize = strSize - tokenStartPos;
+        tokenSize = static_cast<int>(strSize - tokenStartPos);
         *out++ = conv(StringPiece(&s[tokenStartPos], tokenSize));
     }
 }

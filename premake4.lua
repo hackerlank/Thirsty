@@ -11,7 +11,7 @@ local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/include'
 solution 'Thirsty'
     configurations {'Debug', 'Release'}
     language 'C++'
-    flags {'ExtraWarnings'}
+    --flags {'ExtraWarnings'}
     targetdir 'bin'
     platforms {'x64'}
 
@@ -89,7 +89,7 @@ solution 'Thirsty'
 solution 'UnitTest'
     configurations {'Debug', 'Release'}
     language 'C++'
-    flags {'ExtraWarnings'}
+    --flags {'ExtraWarnings'}
     targetdir 'bin'
     platforms {'x64'}
     

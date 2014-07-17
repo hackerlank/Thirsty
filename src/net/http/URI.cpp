@@ -36,7 +36,7 @@ namespace {
     {
         for (auto& c : s)
         {
-            c = tolower(c);
+            c = static_cast<String::value_type>(tolower(c));
         }
     }
 
