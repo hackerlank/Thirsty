@@ -64,13 +64,19 @@ solution 'Thirsty'
         includedirs
         {
             'src',
+            'dep/lua/src',
+            'dep/zmq/include',
             BOOST_ROOT,
         }
         libdirs
         {
             BOOST_ROOT .. '/stage/lib-x64',
         }
-        
+        links
+        {
+            'lua',
+            'zmq',
+        }
         if os.get() == 'linux' then
         links
         {
@@ -81,8 +87,45 @@ solution 'Thirsty'
             'boost_chrono',
         }
         end
-        
+
+    project 'zmq'
+        location 'build'
+        kind 'StaticLib'
+        uuid 'A75AF625-DDF0-4E60-97D8-A2FDC6229AF7'        
+        files
+        {
+            'dep/zmq/include/*.h',
+            'dep/zmq/src/*.hpp',
+            'dep/zmq/src/*.cpp',
+        }
+        if os.get() == 'windows' then
+        includedirs 
+        { 
+            'dep/zmq/msvc',
+            'dep/zmq/include',
+        }
+        else
+        includedirs
+        {
+            'dep/zmq/gcc',
+            'dep/zmq/include',
+        }
+        end      
     
+    project 'lua'
+        location 'build'
+        kind 'StaticLib'
+        uuid '5D42E365-97FA-4AA2-A973-24CD89D8469A'
+        files
+        {
+            'dep/lua/src/*.c',
+            'dep/lua/src/*.h',
+        }
+        excludes
+        {
+            'dep/lua/src/lua.c',
+            'dep/lua/src/luac.c',
+        }
 --
 -- UnitTest
 --    
