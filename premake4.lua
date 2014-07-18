@@ -34,10 +34,6 @@ solution 'Thirsty'
             'NOMINMAX',
         }
 		
-	configuration "gmake"
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
-        defines { '__STDC_LIMIT_MACROS' }
-
     project 'Thirsty'
         location 'build'
         kind 'ConsoleApp'
@@ -78,6 +74,8 @@ solution 'Thirsty'
             'zmq',
         }
         if os.get() == 'linux' then
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }        
         links
         {
             'rt',
@@ -113,6 +111,7 @@ solution 'Thirsty'
         end      
     
     project 'lua'
+        language 'C'
         location 'build'
         kind 'StaticLib'
         uuid '5D42E365-97FA-4AA2-A973-24CD89D8469A'
@@ -126,6 +125,8 @@ solution 'Thirsty'
             'dep/lua/src/lua.c',
             'dep/lua/src/luac.c',
         }
+        
+        
 --
 -- UnitTest
 --    
@@ -154,11 +155,7 @@ solution 'UnitTest'
             '_SCL_SECURE_NO_WARNINGS',
             'NOMINMAX',
         }
-		
-	configuration "gmake"
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
-        defines { '__STDC_LIMIT_MACROS' }
-        
+		        
     project 'unittest'
         location 'build/test'
         kind 'ConsoleApp'
@@ -196,6 +193,8 @@ solution 'UnitTest'
             'thirsty',
         }
         if os.get() == 'linux' then
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }        
         links
         {
             'rt',
@@ -238,3 +237,7 @@ solution 'UnitTest'
             'dep/gtest/include',
             BOOST_ROOT,
         }     
+        if os.get() == 'linux' then
+		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines { '__STDC_LIMIT_MACROS' }        
+        end
