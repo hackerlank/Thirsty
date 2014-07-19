@@ -1,270 +1,271 @@
+/* src/platform.hpp.  Generated from platform.hpp.in by configure.  */
 /* src/platform.hpp.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the <alloca.h> header file. */
-#undef HAVE_ALLOCA_H
+#define HAVE_ALLOCA_H 1
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
-#undef HAVE_ARPA_INET_H
+#define HAVE_ARPA_INET_H 1
 
 /* Define to 1 if you have the `clock_gettime' function. */
-#undef HAVE_CLOCK_GETTIME
+#define HAVE_CLOCK_GETTIME 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <errno.h> header file. */
-#undef HAVE_ERRNO_H
+#define HAVE_ERRNO_H 1
 
 /* Define to 1 if you have the `fork' function. */
-#undef HAVE_FORK
+#define HAVE_FORK 1
 
 /* Define to 1 if you have the `freeifaddrs' function. */
-#undef HAVE_FREEIFADDRS
+#define HAVE_FREEIFADDRS 1
 
 /* Define to 1 if you have the `gethrtime' function. */
-#undef HAVE_GETHRTIME
+/* #undef HAVE_GETHRTIME */
 
 /* Define to 1 if you have the `getifaddrs' function. */
-#undef HAVE_GETIFADDRS
+#define HAVE_GETIFADDRS 1
 
 /* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
-#undef HAVE_IFADDRS_H
+#define HAVE_IFADDRS_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `iphlpapi' library (-liphlpapi). */
-#undef HAVE_LIBIPHLPAPI
+/* #undef HAVE_LIBIPHLPAPI */
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
+/* #undef HAVE_LIBNSL */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-#undef HAVE_LIBPTHREAD
+#define HAVE_LIBPTHREAD 1
 
 /* Define to 1 if you have the `rpcrt4' library (-lrpcrt4). */
-#undef HAVE_LIBRPCRT4
+/* #undef HAVE_LIBRPCRT4 */
 
 /* Define to 1 if you have the `rt' library (-lrt). */
-#undef HAVE_LIBRT
+#define HAVE_LIBRT 1
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
-#undef HAVE_LIBSOCKET
+/* #undef HAVE_LIBSOCKET */
 
 /* Define to 1 if you have the `sodium' library (-lsodium). */
-#undef HAVE_LIBSODIUM
+/* #undef HAVE_LIBSODIUM */
 
 /* Define to 1 if you have the `ws2_32' library (-lws2_32). */
-#undef HAVE_LIBWS2_32
+/* #undef HAVE_LIBWS2_32 */
 
 /* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
+#define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+#define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `memset' function. */
-#undef HAVE_MEMSET
+#define HAVE_MEMSET 1
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
-#undef HAVE_NETINET_IN_H
+#define HAVE_NETINET_IN_H 1
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
-#undef HAVE_NETINET_TCP_H
+#define HAVE_NETINET_TCP_H 1
 
 /* Define to 1 if you have the `perror' function. */
-#undef HAVE_PERROR
+#define HAVE_PERROR 1
 
 /* Define to 1 if you have the `socket' function. */
-#undef HAVE_SOCKET
+#define HAVE_SOCKET 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
-#undef HAVE_STDBOOL_H
+#define HAVE_STDBOOL_H 1
 
 /* Define to 1 if you have the <stddef.h> header file. */
-#undef HAVE_STDDEF_H
+#define HAVE_STDDEF_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
+#define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+#define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/eventfd.h> header file. */
-#undef HAVE_SYS_EVENTFD_H
+#define HAVE_SYS_EVENTFD_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-#undef HAVE_SYS_SOCKET_H
+#define HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
+#define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+#define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
-#undef HAVE_SYS_UIO_H
+#define HAVE_SYS_UIO_H 1
 
 /* Define to 1 if you have the <time.h> header file. */
-#undef HAVE_TIME_H
+#define HAVE_TIME_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <windows.h> header file. */
-#undef HAVE_WINDOWS_H
+/* #undef HAVE_WINDOWS_H */
 
 /* Define to 1 if the system has the type `_Bool'. */
-#undef HAVE__BOOL
+/* #undef HAVE__BOOL */
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#undef LT_OBJDIR
+#define LT_OBJDIR ".libs/"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
+/* #undef NO_MINUS_C_MINUS_O */
 
 /* Name of package */
-#undef PACKAGE
+#define PACKAGE "zeromq"
 
 /* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
+#define PACKAGE_BUGREPORT "zeromq-dev@lists.zeromq.org"
 
 /* Define to the full name of this package. */
-#undef PACKAGE_NAME
+#define PACKAGE_NAME "zeromq"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#define PACKAGE_STRING "zeromq 4.0.4"
 
 /* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+#define PACKAGE_TARNAME "zeromq"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#undef PACKAGE_VERSION
+#define PACKAGE_VERSION "4.0.4"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
-#undef RETSIGTYPE
+#define RETSIGTYPE void
 
 /* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
+#define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#undef VERSION
+#define VERSION "4.0.4"
 
 /* Force to use mutexes */
-#undef ZMQ_FORCE_MUTEXES
+/* #undef ZMQ_FORCE_MUTEXES */
 
 /* Have AIX OS */
-#undef ZMQ_HAVE_AIX
+/* #undef ZMQ_HAVE_AIX */
 
 /* Have Android OS */
-#undef ZMQ_HAVE_ANDROID
+/* #undef ZMQ_HAVE_ANDROID */
 
 /* Have Cygwin */
-#undef ZMQ_HAVE_CYGWIN
+/* #undef ZMQ_HAVE_CYGWIN */
 
 /* Have eventfd extension. */
-#undef ZMQ_HAVE_EVENTFD
+#define ZMQ_HAVE_EVENTFD 1
 
 /* Have FreeBSD OS */
-#undef ZMQ_HAVE_FREEBSD
+/* #undef ZMQ_HAVE_FREEBSD */
 
 /* Have HPUX OS */
-#undef ZMQ_HAVE_HPUX
+/* #undef ZMQ_HAVE_HPUX */
 
 /* Have ifaddrs.h header. */
-#undef ZMQ_HAVE_IFADDRS
+#define ZMQ_HAVE_IFADDRS 1
 
 /* Have Linux OS */
-#undef ZMQ_HAVE_LINUX
+#define ZMQ_HAVE_LINUX 1
 
 /* Have MinGW32 */
-#undef ZMQ_HAVE_MINGW32
+/* #undef ZMQ_HAVE_MINGW32 */
 
 /* Have NetBSD OS */
-#undef ZMQ_HAVE_NETBSD
+/* #undef ZMQ_HAVE_NETBSD */
 
 /* Have OpenBSD OS */
-#undef ZMQ_HAVE_OPENBSD
+/* #undef ZMQ_HAVE_OPENBSD */
 
 /* Have OpenPGM extension */
-#undef ZMQ_HAVE_OPENPGM
+/* #undef ZMQ_HAVE_OPENPGM */
 
 /* Have DarwinOSX OS */
-#undef ZMQ_HAVE_OSX
+/* #undef ZMQ_HAVE_OSX */
 
 /* Have QNX Neutrino OS */
-#undef ZMQ_HAVE_QNXNTO
+/* #undef ZMQ_HAVE_QNXNTO */
 
 /* Whether SOCK_CLOEXEC is defined and functioning. */
-#undef ZMQ_HAVE_SOCK_CLOEXEC
+#define ZMQ_HAVE_SOCK_CLOEXEC 1
 
 /* Have Solaris OS */
-#undef ZMQ_HAVE_SOLARIS
+/* #undef ZMQ_HAVE_SOLARIS */
 
 /* Whether SO_KEEPALIVE is supported. */
-#undef ZMQ_HAVE_SO_KEEPALIVE
+#define ZMQ_HAVE_SO_KEEPALIVE 1
 
 /* Whether TCP_KEEPALIVE is supported. */
-#undef ZMQ_HAVE_TCP_KEEPALIVE
+/* #undef ZMQ_HAVE_TCP_KEEPALIVE */
 
 /* Whether TCP_KEEPCNT is supported. */
-#undef ZMQ_HAVE_TCP_KEEPCNT
+#define ZMQ_HAVE_TCP_KEEPCNT 1
 
 /* Whether TCP_KEEPIDLE is supported. */
-#undef ZMQ_HAVE_TCP_KEEPIDLE
+#define ZMQ_HAVE_TCP_KEEPIDLE 1
 
 /* Whether TCP_KEEPINTVL is supported. */
-#undef ZMQ_HAVE_TCP_KEEPINTVL
+#define ZMQ_HAVE_TCP_KEEPINTVL 1
 
 /* Have uio.h header. */
-#undef ZMQ_HAVE_UIO
+#define ZMQ_HAVE_UIO 1
 
 /* Have Windows OS */
-#undef ZMQ_HAVE_WINDOWS
+/* #undef ZMQ_HAVE_WINDOWS */
 
 /* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
-#undef _UINT32_T
+/* #undef _UINT32_T */
 
 /* Define to empty if `const' does not conform to ANSI C. */
-#undef const
+/* #undef const */
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-#undef inline
+/* #undef inline */
 #endif
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
-#undef size_t
+/* #undef size_t */
 
 /* Define to `int' if <sys/types.h> does not define. */
-#undef ssize_t
+/* #undef ssize_t */
 
 /* Define to the type of an unsigned integer type of width exactly 32 bits if
    such a type exists and the standard includes do not define it. */
-#undef uint32_t
+/* #undef uint32_t */
 
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */
-#undef volatile
+/* #undef volatile */
