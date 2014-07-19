@@ -52,9 +52,13 @@
 #include <type_traits>
 
 #ifdef _MSC_VER
-#include <intrin.h>
+# include <intrin.h>
+# pragma intrinsic(_BitScanForward)
+# pragma intrinsic(_BitScanForward64)
+# pragma intrinsic(_BitScanReverse)
+# pragma intrinsic(_BitScanReverse64)
 #else
-#include <byteswap.h>
+# include <byteswap.h>
 #endif
 
 
@@ -62,7 +66,8 @@
 // Generate overloads for findFirstSet as wrappers around
 // appropriate ffs, ffsl, ffsll gcc builtins
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_unsigned<T>::value &&
     sizeof(T) <= sizeof(uint32_t)),
@@ -78,7 +83,8 @@ findFirstSet(T x)
 }
 
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_unsigned<T>::value &&
     sizeof(T) > sizeof(uint32_t) &&
@@ -95,7 +101,8 @@ findFirstSet(T x)
 }
 
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value && std::is_signed<T>::value),
     unsigned int>::type
 findFirstSet(T x)
@@ -109,7 +116,8 @@ findFirstSet(T x)
 // findLastSet: return the 1-based index of the highest bit set
 // for x > 0, findLastSet(x) == 1 + floor(log2(x))
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_unsigned<T>::value &&
     sizeof(T) <= sizeof(uint32_t)),
@@ -125,7 +133,8 @@ findLastSet(T x)
 }
 
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_unsigned<T>::value &&
     sizeof(T) > sizeof(uint32_t) &&
@@ -143,7 +152,8 @@ findLastSet(T x)
 
 
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_signed<T>::value),
     unsigned int>::type
@@ -153,7 +163,8 @@ findLastSet(T x)
 }
 
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     std::is_integral<T>::value && std::is_unsigned<T>::value,
     T>::type
 nextPowTwo(T v)
@@ -162,7 +173,8 @@ nextPowTwo(T v)
 }
 
 template <class T>
-inline const typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     std::is_integral<T>::value && std::is_unsigned<T>::value,
     bool>::type
 isPowTwo(T v)
@@ -174,7 +186,8 @@ isPowTwo(T v)
  * Population count
  */
 template <class T>
-inline typename std::enable_if<
+inline FOLLY_INTRINSIC_CONSTEXPR
+typename std::enable_if<
     (std::is_integral<T>::value &&
     std::is_unsigned<T>::value &&
     sizeof(T) <= sizeof(uint32_t)),

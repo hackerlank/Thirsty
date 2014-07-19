@@ -108,11 +108,16 @@ std::unique_ptr<T> make_unique(Args&& ...args)
 using std::make_unique;
 #endif
 
+#if !defined(__clang__) && !defined(_MSC_VER)
+#define FOLLY_INTRINSIC_CONSTEXPR constexpr
+#else
+// GCC is the only compiler with intrinsics constexpr.
+#define FOLLY_INTRINSIC_CONSTEXPR const
+#endif
+
 // MSVC specific defines
 // mainly for posix compat
 #ifdef _MSC_VER
-
-#include <intrin.h>
 
 // this definition is in a really silly place with a silly name
 // and ifdefing it every time we want it is painful
