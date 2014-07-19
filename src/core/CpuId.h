@@ -31,15 +31,13 @@ class CpuId
 public:
     CpuId()
     {
-#if FOLLY_X64 || defined(__i386__)        
 #ifdef _MSC_VER
         int cpu_info[4] = {};
         __cpuid(cpu_info, 1);
         c_ = cpu_info[2];
         d_ = cpu_info[3];
-#else
+#elif FOLLY_X64 || defined(__i386__)
         __asm__("cpuid" : "=c"(c_), "=d"(d_) : "a"(1) : "ebx");
-#endif
 #else
         // On non-Intel, none of these features exist; at least not in the same form
         // as they do on Intel
