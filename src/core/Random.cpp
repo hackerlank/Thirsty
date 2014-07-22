@@ -1,20 +1,20 @@
 #include "Random.h"
 #include <cassert>
 #include <random>
+#include <boost/thread/tss.hpp>
 
 using namespace std;
 
 static default_random_engine* get_tls_rng()
 {
-    static FOLLY_TLS default_random_engine*  rng; // thread local storage
-    if (rng == nullptr)
+    // thread local storage
+    static boost::thread_specific_ptr<default_random_engine>  rng;
+    if (rng.get() == nullptr)
     {
-        // make sense that `rng` is never deleted before process exit.
-        // DO NOT create and destroy too many threads frequently.
-        rng = new default_random_engine();
+        rng.reset(new default_random_engine());
     }
-    assert(rng);
-    return rng;
+    assert(rng.get());
+    return rng.get();
 }
 
 void Random::seed(int32_t seed_value)
