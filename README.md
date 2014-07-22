@@ -12,9 +12,9 @@ interface for Lua which making game development more enjoyable.
 
 main features are shown as follow:
 
-* Cross-platform networking support
+* Cross-platform TCP networking support
 
-* Multi-threaded model with message queue
+* Multi-thread IPC with message queue
 
 
 ## Installation
