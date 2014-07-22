@@ -32,6 +32,6 @@ To build the library and tests:
 ### Build on Linux
 
 1. Obtain boost library(http://boost.org) 
-2. Build and install boost.system, boost.date_time and boost.thread
+2. Build and install `boost.system`, `boost.date_time` and `boost.thread`, header files in `/usr/local/include`
 3. Run `./build_gmake.sh` to generate make files
 4. Run `make -f Thirsty.make config=release32`
