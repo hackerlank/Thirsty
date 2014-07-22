@@ -82,7 +82,7 @@ solution 'Thirsty'
             'pthread',
             'boost_system',
             'boost_date_time',
-            'boost_chrono',
+            'boost_thread',
         }
         end
 
@@ -201,7 +201,7 @@ solution 'UnitTest'
             'pthread',
             'boost_system',
             'boost_date_time',
-            'boost_chrono',
+            'boost_thread',
         }
         end
         
