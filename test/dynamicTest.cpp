@@ -98,7 +98,8 @@ TEST(Dynamic, ObjectErase)
 }
 
 
-TEST(Dynamic, ArrayErase) {
+TEST(Dynamic, ArrayErase) 
+{
     dynamic arr = { 1, 2, 3, 4, 5, 6 };
 
     EXPECT_THROW(arr.erase(1), std::exception);
@@ -113,7 +114,8 @@ TEST(Dynamic, ArrayErase) {
     EXPECT_EQ(arr[1], 6);
 }
 
-TEST(Dynamic, StringBasics) {
+TEST(Dynamic, StringBasics) 
+{
     dynamic str = "hello world";
     EXPECT_EQ(11, str.size());
     EXPECT_FALSE(str.empty());
@@ -121,7 +123,8 @@ TEST(Dynamic, StringBasics) {
     EXPECT_TRUE(str.empty());
 }
 
-TEST(Dynamic, ArrayBasics) {
+TEST(Dynamic, ArrayBasics) 
+{
     dynamic array = { 1, 2, 3 };
     EXPECT_EQ(array.size(), 3);
     EXPECT_EQ(array.at(0), 1);
@@ -138,7 +141,8 @@ TEST(Dynamic, ArrayBasics) {
     EXPECT_EQ(array[11], "something");
 }
 
-TEST(Dynamic, DeepCopy) {
+TEST(Dynamic, DeepCopy) 
+{
     dynamic val = { "foo", "bar", { "foo1", "bar1" } };
     EXPECT_EQ(val.at(2).at(0), "foo1");
     EXPECT_EQ(val.at(2).at(1), "bar1");
@@ -166,14 +170,17 @@ TEST(Dynamic, DeepCopy) {
 }
 
 
-TEST(Dynamic, Operator) {
+TEST(Dynamic, Operator) 
+{
     bool caught = false;
-    try {
+    try 
+    {
         dynamic d1 = dynamic::object;
         dynamic d2 = dynamic::object;
         auto foo = d1 < d2;
     }
-    catch (std::exception const& e) {
+    catch (std::exception const& e) 
+    {
         caught = true;
     }
     EXPECT_TRUE(caught);
@@ -189,7 +196,8 @@ TEST(Dynamic, Operator) {
     EXPECT_EQ(math, 3);
 }
 
-TEST(Dynamic, Conversions) {
+TEST(Dynamic, Conversions) 
+{
     dynamic str = "12.0";
     EXPECT_EQ(str.asDouble(), 12.0);
     EXPECT_ANY_THROW(str.asInt());
@@ -209,7 +217,8 @@ TEST(Dynamic, Conversions) {
     EXPECT_EQ(12.0, num.asDouble());
 }
 
-TEST(Dynamic, StringPtrs) {
+TEST(Dynamic, StringPtrs) 
+{
     dynamic str = "12.0";
     dynamic num = 12.0;
 
@@ -221,7 +230,8 @@ TEST(Dynamic, StringPtrs) {
 }
 
 
-TEST(Dynamic, FormattedIO) {
+TEST(Dynamic, FormattedIO)
+{
     std::ostringstream out;
     dynamic doubl = 123.33;
     dynamic dint = 12;
@@ -244,4 +254,58 @@ TEST(Dynamic, FormattedIO) {
         dynamic::object(true, false) };
     out << objy2;
     EXPECT_EQ(out.str(), R"([{"a":12},{12:"str"},{true:false}])");
+}
+
+
+TEST(Dynamic, GetSetDefaultTest) 
+{
+    dynamic default_array = {};
+    dynamic d1 = dynamic::object("foo", "bar");
+    EXPECT_EQ(d1.getDefault("foo", "baz"), "bar");
+    EXPECT_EQ(d1.getDefault("quux", "baz"), "baz");
+
+    dynamic d2 = dynamic::object("foo", "bar");
+    EXPECT_EQ(d2.setDefault("foo", "quux"), "bar");
+    d2.setDefault("bar", default_array).push_back(42);
+    EXPECT_EQ(d2["bar"][0], 42);
+
+    dynamic d3 = dynamic::object, empty = dynamic::object;
+    EXPECT_EQ(d3.getDefault("foo"), empty);
+    d3.setDefault("foo")["bar"] = "baz";
+    EXPECT_EQ(d3["foo"]["bar"], "baz");
+
+    // we do not allow getDefault/setDefault on arrays
+    dynamic d4 = {};
+    EXPECT_ANY_THROW(d4.getDefault("foo", "bar"));
+    EXPECT_ANY_THROW(d4.setDefault("foo", "bar"));
+}
+
+
+TEST(Dynamic, ObjectForwarding) 
+{
+    // Make sure dynamic::object can be constructed the same way as any
+    // dynamic.
+    dynamic d = dynamic::object("asd", { "foo", "bar" });
+    dynamic d2 = dynamic::object("key2", { "value", "words" })
+        ("key", "value1");
+}
+
+
+TEST(Dynamic, GetPtr) 
+{
+    dynamic array = { 1, 2, "three" };
+    EXPECT_TRUE(array.get_ptr(0));
+    EXPECT_FALSE(array.get_ptr(3));
+    EXPECT_EQ(dynamic("three"), *array.get_ptr(2));
+    const dynamic& carray = array;
+    EXPECT_EQ(dynamic("three"), *carray.get_ptr(2));
+
+    dynamic object = dynamic::object("one", 1)("two", 2);
+    EXPECT_TRUE(object.get_ptr("one"));
+    EXPECT_FALSE(object.get_ptr("three"));
+    EXPECT_EQ(dynamic(2), *object.get_ptr("two"));
+    *object.get_ptr("one") = 11;
+    EXPECT_EQ(dynamic(11), *object.get_ptr("one"));
+    const dynamic& cobject = object;
+    EXPECT_EQ(dynamic(2), *cobject.get_ptr("two"));
 }
