@@ -171,6 +171,11 @@ std::string join(const Delim& delimiter,
     return output;
 }
 
+/**
+ * Returns a subpiece with all whitespace removed from the front of @sp.
+ * Whitespace means any of [' ', '\n', '\r', '\t'].
+ */
+StringPiece skipWhitespace(StringPiece sp);
 
 /*
  * A pretty-printer for numbers that appends suffixes of units of the
