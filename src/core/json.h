@@ -48,7 +48,8 @@
 
 namespace json {
 
-  struct serialization_opts {
+  struct serialization_opts 
+  {
     explicit serialization_opts()
       : allow_non_string_keys(false)
       , javascript_safe(false)
@@ -140,3 +141,9 @@ std::string toJson(dynamic const&);
  */
 std::string toPrettyJson(dynamic const&);
 
+/*
+ * Encode a single unicode code point into a UTF-8 byte sequence.
+ *
+ * Return value is undefined if `cp' is an invalid code point.
+ */
+std::string codePointToUtf8(char32_t cp);

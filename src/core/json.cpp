@@ -4,7 +4,8 @@
 #include <boost/algorithm/string.hpp>
 
 
-std::string codePointToUtf8(char32_t cp) {
+std::string codePointToUtf8(char32_t cp) 
+{
     std::string result;
 
     // Based on description from http://en.wikipedia.org/wiki/UTF-8.
@@ -34,7 +35,6 @@ std::string codePointToUtf8(char32_t cp) {
         result[1] = static_cast<char>(0x80 | (0x3f & (cp >> 12)));
         result[0] = static_cast<char>(0xF0 | (cp >> 18));
     }
-
     return result;
 }
 
@@ -128,8 +128,8 @@ char32_t decodeUtf8(const unsigned char*& p,
 struct Printer 
 {
     explicit Printer(std::string& out,
-        unsigned* indentLevel,
-        serialization_opts const* opts)
+                     unsigned* indentLevel,
+                     serialization_opts const* opts)
         : out_(out)
         , indentLevel_(indentLevel)
         , opts_(*opts)

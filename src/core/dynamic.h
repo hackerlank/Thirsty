@@ -167,14 +167,14 @@ public:
     /* implicit */ dynamic(std::initializer_list<dynamic> il);
 
     /*
-    * Conversion constructors from most of the other types.
-    */
+     * Conversion constructors from most of the other types.
+     */
     template<class T> /* implicit */ dynamic(T t);
 
     /*
-    * Create a dynamic that is an array of the values from the supplied
-    * iterator range.
-    */
+     * Create a dynamic that is an array of the values from the supplied
+     * iterator range.
+     */
     template<class Iterator> dynamic(Iterator first, Iterator last);
 
     dynamic(dynamic const&);
@@ -182,15 +182,15 @@ public:
     ~dynamic();
 
     /*
-    * "Deep" equality comparison.  This will compare all the way down
-    * an object or array, and is potentially expensive.
-    */
+     * "Deep" equality comparison.  This will compare all the way down
+     * an object or array, and is potentially expensive.
+     */
     bool operator==(dynamic const& o) const;
 
     /*
-    * For all types except object this returns the natural ordering on
-    * those types.  For objects, we throw TypeError.
-    */
+     * For all types except object this returns the natural ordering on
+     * those types.  For objects, we throw TypeError.
+     */
     bool operator<(dynamic const& o) const;
 
     /*
@@ -389,7 +389,7 @@ public:
         getDefault(const dynamic& k, const dynamic& v = dynamic::object) const;
     dynamic&& getDefault(const dynamic& k, dynamic&& v) const;
     template<class K, class V = dynamic>
-    dynamic& setDefault(K&& k, V&& v = dynamic::object);
+    dynamic& setDefault(K&& k, V&& v = dynamic(dynamic::object));
 
     /*
      * Resizes an array so it has at n elements, using the supplied
@@ -506,7 +506,8 @@ private:
         int64_t integer;
 
         /*
-         * Union's can not contain non-pod member
+         * unions cannot contain non-POD member, so we use aligned storage
+         * with explicit construction and destruction
          */
         typedef std::aligned_storage<sizeof(std::string),
             alignof(std::string)>::type AlignedStringStorage;
