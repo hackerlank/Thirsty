@@ -16,15 +16,15 @@ class Timer : private boost::noncopyable
 public:
     typedef std::function<void()>   CallbackType;
 
-    Timer(boost::asio::io_service& io_service,
-          int32_t expire_time,
-          CallbackType callback);
-
+    explicit Timer(boost::asio::io_service& io_service);
     ~Timer();
 
-    void    Schedule();
+    void    Schedule(int32_t expire, CallbackType callback);
+    void    Schedule(int32_t expire);
 
     void    Cancel();
+
+    int32_t GetExpire() const { return expire_; }
 
 private:
     void    HandleTimeout(const boost::system::error_code& err);
@@ -33,8 +33,8 @@ private:
 
     boost::asio::deadline_timer     timer_;
 
-    const int32_t       expire_time_ = ~0;
-    CallbackType        callback_;
+    int32_t         expire_ = ~0;
+    CallbackType    callback_ = nullptr;
 };
 
 

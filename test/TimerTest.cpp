@@ -3,78 +3,64 @@
 #include <functional>
 #include <gtest/gtest.h>
 #include <boost/asio.hpp>
+#include "Benchmark.h"
+
 
 using namespace std;
 using namespace std::placeholders;
-using boost::asio::io_service;
 
-typedef shared_ptr<io_service>  io_servie_ptr;
 
-static void TimeoutHandle(TimerPtr timer, io_servie_ptr ios_ptr, size_t* counter)
+static void TimeoutHandle(TimerPtr timer, 
+                          boost::asio::io_service& io_service, 
+                          size_t* counter)
 {
     size_t& count = *counter;
     if (--count > 0)
     {
         printf("Testing timer, schedule count: %d\n", count);
-        timer->Schedule();
+        timer->Schedule(timer->GetExpire(), std::bind(TimeoutHandle, timer,
+            std::ref(io_service), counter));
     }
     else
     {
-        ios_ptr->stop();
+        io_service.stop();
     }
 }
 
 TEST(Timer, Schedule)
 {
-    io_servie_ptr ios_ptr = make_shared<io_service>();
+    boost::asio::io_service io_service;
     static size_t counter = 10;
     int gcount = counter;
-    TimerPtr timer = make_shared<Timer>(*ios_ptr, 100, std::bind(TimeoutHandle, _1, ios_ptr, &counter));
-    timer->Schedule();
-    auto r = ios_ptr->run();
+    TimerPtr timer = make_shared<Timer>(io_service);
+    timer->Schedule(100, std::bind(TimeoutHandle, timer, 
+        std::ref(io_service), &counter));
+    auto r = io_service.run();
     EXPECT_TRUE(r == gcount);
 }
 
-// how many timers to bench
-#ifdef NDEBUG
-size_t global_counter = 100000;
-#else
-size_t global_counter = 1000;
-#endif
-
-static void TimeoutHandle2(TimerPtr timer, int* counter, io_servie_ptr ios_ptr)
+static void TimeoutHandle2(TimerPtr timer, 
+                           boost::asio::io_service& io_service, 
+                           int* counter)
 {
-    if (--*counter > 0)
+    if (--*counter = 0)
     {
-        timer->Schedule();
-    }
-    else
-    {
-        delete counter;
-        timer->Cancel();
-        if (--global_counter == 0)
-        {
-            ios_ptr->stop();
-        }
+        io_service.stop();
     }
 }
 
-TEST(Timer, Benchmark)
+BENCHMARK(TimerSchedule, iter)
 {
-    io_servie_ptr ios_ptr = make_shared<io_service>();
-    int gcounter = global_counter;
-    int times = 5;
+    boost::asio::io_service io_service;
+    int gcounter = 1000000;
+    int times = gcounter;
     vector<TimerPtr> vec;
-    for (int i = 0; i < global_counter; i++)
+    for (int i = 0; i < times; i++)
     {
-        int* counter = new int(times);
-        int expire = rand() % 300 + 50;
-        auto timer = make_shared<Timer>(*ios_ptr, expire, std::bind(TimeoutHandle2, _1, 
-            counter, ios_ptr));
-        timer->Schedule();
+        TimerPtr timer = make_shared<Timer>(io_service);
+        timer->Schedule(0, std::bind(TimeoutHandle2, timer, std::ref(io_service), &gcounter));
         vec.emplace_back(timer);
     }
-    printf("Benchmarking %d timer with %d times each....\n", gcounter, times);
-    size_t r = ios_ptr->run();
+    size_t r = io_service.run();
     EXPECT_TRUE(r == gcounter * times);
 }

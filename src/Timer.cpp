@@ -1,19 +1,13 @@
 #include "Timer.h"
-#include <cassert>
 #include <boost/date_time.hpp>
 #include "logging.h"
 
 using namespace std::placeholders;
 
 
-Timer::Timer(boost::asio::io_service& io_service,
-             int32_t expire_time,
-             CallbackType callback)
-    : timer_(io_service),
-      expire_time_(expire_time),
-      callback_(callback)
+Timer::Timer(boost::asio::io_service& io_service)
+    : timer_(io_service)
 {
-    assert(callback);
 }
 
 Timer::~Timer()
@@ -32,10 +26,27 @@ void Timer::Cancel()
 }
 
 
-void Timer::Schedule()
+void Timer::Schedule(int32_t expire, CallbackType callback)
 {
-    timer_.expires_from_now(boost::posix_time::milliseconds(expire_time_));
-    timer_.async_wait(std::bind(&Timer::HandleTimeout, this, _1));
+    if (expire >= 0 && callback)
+    {
+        Cancel();
+        expire_ = expire;
+        callback_ = callback;
+        timer_.expires_from_now(boost::posix_time::milliseconds(expire));
+        timer_.async_wait(std::bind(&Timer::HandleTimeout, this, _1));
+    }
+}
+
+void Timer::Schedule(int32_t expire)
+{
+    if (expire >= 0 && callback_)
+    {
+        Cancel();
+        expire_ = expire;
+        timer_.expires_from_now(boost::posix_time::milliseconds(expire));
+        timer_.async_wait(std::bind(&Timer::HandleTimeout, this, _1));
+    }
 }
 
 void Timer::HandleTimeout(const boost::system::error_code& err)

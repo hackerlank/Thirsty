@@ -38,13 +38,12 @@ void TcpClient::AsynRead(ReadCallback callback)
 
     if (!heartbeat_timer_)
     {
-        heartbeat_timer_ = std::make_shared<Timer>(io_service_, heartbeat_sec_, 
-            [this]()
+        heartbeat_timer_ = std::make_shared<Timer>(io_service_);
+        heartbeat_timer_->Schedule(heartbeat_sec_, [this]()
         {
             this->AsynWriteHeartbeat();
-            this->heartbeat_timer_->Schedule();
+            this->heartbeat_timer_->Schedule(heartbeat_sec_);
         });
-        heartbeat_timer_->Schedule();
     }
 }
 
