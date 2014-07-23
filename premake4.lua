@@ -48,6 +48,7 @@ solution 'Thirsty'
             'BOOST_ASIO_HAS_STD_ATOMIC',
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
+            'FOLLY_HAVE_LIBZ',
         }        
         files
         {
@@ -61,6 +62,7 @@ solution 'Thirsty'
         {
             'src',
             'dep/lua/src',
+            'dep/zlib/src',
             'dep/zmq/include',
             BOOST_ROOT,
         }
@@ -70,15 +72,23 @@ solution 'Thirsty'
         }
         links
         {
-            'lua',
+            'lua51',
+            'zlib',
             'zmq',
         }
         if os.get() == 'linux' then
 		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
-        defines { '__STDC_LIMIT_MACROS' }        
+        defines 
+        { 
+            '__STDC_LIMIT_MACROS',
+            'FOLLY_HAVE_LIBLZ4',
+            'FOLLY_HAVE_LIBSNAPPY',
+            'FOLLY_HAVE_LIBLZMA',
+        }
         links
         {
             'rt',
+            'zlib',
             'pthread',
             'boost_system',
             'boost_date_time',
@@ -96,6 +106,10 @@ solution 'Thirsty'
             'dep/zmq/src/*.hpp',
             'dep/zmq/src/*.cpp',
         }
+        defines 
+        {
+            'ZMQ_STATIC',
+        }
         if os.get() == 'windows' then
         includedirs 
         { 
@@ -110,7 +124,7 @@ solution 'Thirsty'
         }
         end      
     
-    project 'lua'
+    project 'lua51'
         language 'C'
         location 'build'
         kind 'StaticLib'
@@ -126,6 +140,19 @@ solution 'Thirsty'
             'dep/lua/src/luac.c',
         }
         
+    project 'zlib'
+        language 'C'
+        location 'build'
+        kind 'StaticLib'
+        uuid 'C7011CD6-54AC-4199-B793-D61004483C74'
+        defines
+        {
+        }
+        files
+        {
+            'dep/zlib/src/*.c',
+            'dep/zlib/src/*.h',
+        }      
         
 --
 -- UnitTest
@@ -187,11 +214,20 @@ solution 'UnitTest'
         libdirs
         {
             BOOST_ROOT .. '/stage/lib-x64',
+            'bin',
         }
         links
         {
             'thirsty',
+            'lua51',
+            'zlib',
         }
+        if os.get() == 'windows' then
+        excludes
+        {
+            'test/CompressionTest.cpp',
+        }        
+        end
         if os.get() == 'linux' then
 		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
         defines { '__STDC_LIMIT_MACROS' }        
@@ -234,6 +270,8 @@ solution 'UnitTest'
         includedirs
         {
             'src',
+            'dep/lua/src',
+            'dep/zlib/src',
             'dep/gtest/include',
             BOOST_ROOT,
         }     
