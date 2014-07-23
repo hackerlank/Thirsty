@@ -282,7 +282,7 @@ std::unique_ptr<IOBuf> LZ4Codec::doCompress(const IOBuf* data)
     return out;
 }
 
-std::unique_ptr<IOBuf> LZ4Codec::doUncompressconst IOBuf* data, uint64_t uncompressedLength)
+std::unique_ptr<IOBuf> LZ4Codec::doUncompress(const IOBuf* data, uint64_t uncompressedLength)
 {
     std::unique_ptr<IOBuf> clone;
     if (data->isChained())
@@ -794,7 +794,7 @@ std::unique_ptr<IOBuf> LZMA2Codec::doCompress(const IOBuf* data)
     rc = lzma_easy_encoder(&stream, level_, LZMA_CHECK_NONE);
     if (rc != LZMA_OK) 
     {
-        throw std::runtime_error(folly::to<std::string>(
+        throw std::runtime_error(to<std::string>(
             "LZMA2Codec: lzma_easy_encoder error: ", rc));
     }
 
@@ -838,7 +838,7 @@ std::unique_ptr<IOBuf> LZMA2Codec::doCompress(const IOBuf* data)
             rc = lzma_code(&stream, LZMA_RUN);
             if (rc != LZMA_OK) 
             {
-                throw std::runtime_error(folly::to<std::string>(
+                throw std::runtime_error(to<std::string>(
                     "LZMA2Codec: lzma_code error: ", rc));
             }
         }
@@ -855,7 +855,7 @@ std::unique_ptr<IOBuf> LZMA2Codec::doCompress(const IOBuf* data)
 
     if (rc != LZMA_STREAM_END)
     {
-        throw std::runtime_error(folly::to<std::string>(
+        throw std::runtime_error(to<std::string>(
             "LZMA2Codec: lzma_code ended with error: ", rc));
     }
 
@@ -897,7 +897,7 @@ std::unique_ptr<IOBuf> LZMA2Codec::doUncompress(const IOBuf* data,
     rc = lzma_auto_decoder(&stream, std::numeric_limits<uint64_t>::max(), 0);
     if (rc != LZMA_OK) 
     {
-        throw std::runtime_error(folly::to<std::string>(
+        throw std::runtime_error(to<std::string>(
             "LZMA2Codec: lzma_auto_decoder error: ", rc));
     }
 
