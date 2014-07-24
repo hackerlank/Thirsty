@@ -3,7 +3,7 @@
 --
 
 -- windows only
-local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/include'
+local BOOST_ROOT = os.getenv('BOOST_ROOT') or ''
 
 --
 -- Thirsty
@@ -23,8 +23,8 @@ solution 'Thirsty'
         defines { 'NDEBUG' }
         flags { 'Symbols', 'Optimize' }
         
-	configuration "vs*"
-		defines 
+    configuration "vs*"
+        defines 
         {
             'WIN32',
             'WIN32_LEAN_AND_MEAN',
@@ -33,7 +33,7 @@ solution 'Thirsty'
             '_SCL_SECURE_NO_WARNINGS',
             'NOMINMAX',
         }
-		
+        
     project 'Thirsty'
         location 'build'
         kind 'ConsoleApp'
@@ -48,7 +48,7 @@ solution 'Thirsty'
             'BOOST_ASIO_HAS_STD_ATOMIC',
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
-            'FOLLY_HAVE_LIBZ',
+            'FOLLY_HAVE_LIBLZ4',
         }        
         files
         {
@@ -62,7 +62,6 @@ solution 'Thirsty'
         {
             'src',
             'dep/lua/src',
-            'dep/zlib/src',
             'dep/zmq/include',
             BOOST_ROOT,
         }
@@ -73,22 +72,21 @@ solution 'Thirsty'
         links
         {
             'lua51',
-            'zlib',
             'zmq',
         }
         if os.get() == 'linux' then
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
         defines 
         { 
             '__STDC_LIMIT_MACROS',
-            'FOLLY_HAVE_LIBLZ4',
+            'FOLLY_HAVE_LIBZ',
             'FOLLY_HAVE_LIBSNAPPY',
             'FOLLY_HAVE_LIBLZMA',
         }
         links
         {
+            'z',
             'rt',
-            'zlib',
             'pthread',
             'boost_system',
             'boost_date_time',
@@ -140,20 +138,6 @@ solution 'Thirsty'
             'dep/lua/src/luac.c',
         }
         
-    project 'zlib'
-        language 'C'
-        location 'build'
-        kind 'StaticLib'
-        uuid 'C7011CD6-54AC-4199-B793-D61004483C74'
-        defines
-        {
-        }
-        files
-        {
-            'dep/zlib/src/*.c',
-            'dep/zlib/src/*.h',
-        }      
-        
 --
 -- UnitTest
 --    
@@ -172,8 +156,8 @@ solution 'UnitTest'
         defines { 'NDEBUG' }
         flags { 'Symbols', 'Optimize' }
 
-	configuration "vs*"
-		defines 
+    configuration "vs*"
+        defines 
         {
             'WIN32',
             'WIN32_LEAN_AND_MEAN',
@@ -182,7 +166,7 @@ solution 'UnitTest'
             '_SCL_SECURE_NO_WARNINGS',
             'NOMINMAX',
         }
-		        
+                
     project 'unittest'
         location 'build/test'
         kind 'ConsoleApp'
@@ -220,7 +204,6 @@ solution 'UnitTest'
         {
             'thirsty',
             'lua51',
-            'zlib',
         }
         if os.get() == 'windows' then
         excludes
@@ -229,10 +212,11 @@ solution 'UnitTest'
         }        
         end
         if os.get() == 'linux' then
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
         defines { '__STDC_LIMIT_MACROS' }        
         links
         {
+            'z',
             'rt',
             'pthread',
             'boost_system',
@@ -271,11 +255,16 @@ solution 'UnitTest'
         {
             'src',
             'dep/lua/src',
-            'dep/zlib/src',
             'dep/gtest/include',
             BOOST_ROOT,
         }     
         if os.get() == 'linux' then
-		buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
-        defines { '__STDC_LIMIT_MACROS' }        
+        buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
+        defines 
+        { 
+            '__STDC_LIMIT_MACROS',
+            'FOLLY_HAVE_LIBZ',
+            'FOLLY_HAVE_LIBSNAPPY',
+            'FOLLY_HAVE_LIBLZMA',            
+        }
         end
