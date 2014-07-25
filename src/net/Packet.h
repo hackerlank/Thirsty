@@ -2,6 +2,9 @@
 
 #include <cstdint>
 #include <array>
+#include <functional>
+#include <boost/system/error_code.hpp>
+#include "core/Range.h"
 
 /**
  *  a network packet on the wire consist of :
@@ -74,3 +77,9 @@ struct TransferStats
 typedef uint32_t    Serial;
 
 typedef std::array<uint8_t, STACK_BUF_SIZE> StackBuffer;
+
+// error callback
+typedef std::function<void(const boost::system::error_code)> ErrorCallback;
+
+// read callback
+typedef std::function<void(Serial, ByteRange)>     ReadCallback;

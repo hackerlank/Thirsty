@@ -4,18 +4,17 @@
 #include "core/Malloc.h"
 #include "logging.h"
 #include "Checksum.h"
+#include "Utils.h"
 
 using namespace std;
 using namespace std::placeholders;
 
 
 TcpClient::TcpClient(boost::asio::io_service& io_service, 
-                     uint32_t heartbeat_sec,
                      ErrorCallback callback)
     : io_service_(io_service),
       socket_(io_service),
-      on_error_(callback),
-      heartbeat_sec_(heartbeat_sec)
+      on_error_(callback)
 {
     assert(callback);
 }
@@ -30,21 +29,11 @@ void TcpClient::Close()
     socket_.close();
 }
 
-void TcpClient::AsynRead(ReadCallback callback)
+void TcpClient::StartRead(ReadCallback callback)
 {
     assert(callback);
     on_read_ = callback;
     AsynReadHead();
-
-    if (!heartbeat_timer_)
-    {
-        heartbeat_timer_ = std::make_shared<Timer>(io_service_);
-        heartbeat_timer_->Schedule(heartbeat_sec_, [this]()
-        {
-            this->AsynWriteHeartbeat();
-            this->heartbeat_timer_->Schedule(heartbeat_sec_);
-        });
-    }
 }
 
 void TcpClient::AsynConnect(const std::string& host,

@@ -4,18 +4,11 @@
 #include <ctime>
 #include <memory>
 #include <array>
-#include <functional>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
 #include "Packet.h"
 #include "core/Range.h"
 
-
-// error callback
-typedef std::function<void(const boost::system::error_code)> ErrorCallback;
-
-// read callback
-typedef std::function<void(Serial, ByteRange)>     ReadCallback;
 
 
 class TcpConnection

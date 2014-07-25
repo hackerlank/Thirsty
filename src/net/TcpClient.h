@@ -10,22 +10,19 @@
 #include "Timer.h"
 
 
-typedef std::function<void(const boost::system::error_code&)>   ErrorCallback;
-typedef std::function<void(const std::string&, int16_t)>        ConnectCallback;
-typedef std::function<void(ByteRange)>                          ReadCallback;
-
-
 class TcpClient
     : public std::enable_shared_from_this<TcpClient>,
       private boost::noncopyable
 {
 public:
+    typedef std::function<void(const std::string&, int16_t)>    ConnectCallback;
+    typedef std::function<void(ByteRange)>                      ReadCallback;
+public:
     TcpClient(boost::asio::io_service& io_service, 
-              uint32_t heartbeat_sec, 
               ErrorCallback callback);
     ~TcpClient();
 
-    void    AsynRead(ReadCallback callback);
+    void    StartRead(ReadCallback callback);
     void    Close();
 
     void    AsynConnect(const std::string& host, int16_t port, ConnectCallback callback);
@@ -76,9 +73,6 @@ private:
     ConnectCallback     on_connect_;
     ReadCallback        on_read_;
     ErrorCallback       on_error_;
-
-    uint32_t            heartbeat_sec_ = 60;
-    TimerPtr            heartbeat_timer_;
 };
 
 typedef std::shared_ptr<TcpClient>  TcpClientPtr;
