@@ -49,7 +49,7 @@ void TcpServer::CloseSession(Serial serial)
     connections_.erase(serial);
 }
 
-TcpConnectionPtr  TcpServer::GetConnection(Serial serial)
+TcpConnectionPtr  TcpServer::GetConnection(Serial serial) const
 {
     auto iter = connections_.find(serial);
     if (iter != connections_.end())
@@ -142,4 +142,22 @@ void TcpServer::DropDeadConnections()
     {
         HandleError(ec, serial);
     }
+}
+
+const TransferStats& TcpServer::GetConnectionStats(Serial serial) const
+{
+    static const TransferStats dummy;
+    auto conn = GetConnection(serial);
+    return (conn ? conn->GetTransferStats() : dummy);
+}
+
+std::unordered_map<Serial, TransferStats>  TcpServer::GetTotalStats() const
+{
+    std::unordered_map<Serial, TransferStats> result;
+    for (auto& value : connections_)
+    {
+        auto& connection = value.second;
+        result[value.first] = connection->GetTransferStats();
+    }
+    return std::move(result);
 }

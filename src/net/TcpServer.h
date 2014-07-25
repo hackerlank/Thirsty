@@ -34,7 +34,11 @@ public:
 
     void SendAll(const char* data, uint32_t size);
 
-    TcpConnectionPtr  GetConnection(Serial serial);
+    TcpConnectionPtr  GetConnection(Serial serial) const;
+
+    const TransferStats& GetConnectionStats(Serial serial) const;
+
+    std::unordered_map<Serial, TransferStats>  GetTotalStats() const;
 
 private:
     void StartAccept();
