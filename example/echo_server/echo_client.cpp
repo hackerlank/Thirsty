@@ -15,7 +15,7 @@ TcpClientPtr CreateClient(boost::asio::io_service& io_service,
                           const std::string& host,
                           int16_t port)
 {
-    TcpClientPtr client = make_shared<TcpClient>(io_service, 60,
+    TcpClientPtr client = make_shared<TcpClient>(io_service, 
         [](const boost::system::error_code& err)
     {
         printf("Error: %d, %s.\n", err.value(), err.message().c_str());
@@ -25,10 +25,8 @@ TcpClientPtr CreateClient(boost::asio::io_service& io_service,
         printf("connect to server(%s:%d) OK.\n", host.c_str(), port);
         string msg = "a quick fox jumps over the lazy dog.";
         client->AsynWrite(msg.data(), msg.length()+1);
-        client->AsynRead([client](ByteRange range)
+        client->StartRead([client](ByteRange range)
         {
-            //printf("recv %d bytes from server.\n", bytes, data);
-            this_thread::sleep_for(chrono::seconds(1));
             client->AsynWrite(range);
         });
     });
