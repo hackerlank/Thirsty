@@ -11,20 +11,17 @@ class Timer;
 typedef std::shared_ptr<Timer>      TimerPtr;
 
 
-class Timer : private boost::noncopyable
+class Timer : public std::enable_shared_from_this<Timer>,
+              private boost::noncopyable
 {
 public:
-    typedef std::function<void()>   CallbackType;
+    typedef std::function<void(TimerPtr)>   CallbackType;
 
-    explicit Timer(boost::asio::io_service& io_service);
+    explicit Timer(boost::asio::io_service& io_service, uint32_t expire, CallbackType callback);
     ~Timer();
 
-    void    Schedule(int32_t expire, CallbackType callback);
-    void    Schedule(int32_t expire);
-
+    void    Schedule();
     void    Cancel();
-
-    int32_t GetExpire() const { return expire_; }
 
 private:
     void    HandleTimeout(const boost::system::error_code& err);
@@ -33,7 +30,7 @@ private:
 
     boost::asio::deadline_timer     timer_;
 
-    int32_t         expire_ = ~0;
+    uint32_t        expire_ = ~0;
     CallbackType    callback_ = nullptr;
 };
 

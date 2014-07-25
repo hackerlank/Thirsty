@@ -18,8 +18,7 @@ static void TimeoutHandle(TimerPtr timer,
     if (--count > 0)
     {
         printf("Testing timer, schedule count: %d\n", count);
-        timer->Schedule(timer->GetExpire(), std::bind(TimeoutHandle, timer,
-            std::ref(io_service), counter));
+        timer->Schedule();
     }
     else
     {
@@ -32,9 +31,9 @@ TEST(Timer, Schedule)
     boost::asio::io_service io_service;
     static size_t counter = 10;
     int gcount = counter;
-    TimerPtr timer = make_shared<Timer>(io_service);
-    timer->Schedule(100, std::bind(TimeoutHandle, timer, 
-        std::ref(io_service), &counter));
+    TimerPtr timer = make_shared<Timer>(io_service, 100, std::bind(TimeoutHandle, 
+        _1, std::ref(io_service), &counter));
+    timer->Schedule();
     auto r = io_service.run();
     EXPECT_TRUE(r == gcount);
 }
@@ -57,8 +56,9 @@ BENCHMARK(TimerSchedule, iter)
     vector<TimerPtr> vec;
     for (int i = 0; i < times; i++)
     {
-        TimerPtr timer = make_shared<Timer>(io_service);
-        timer->Schedule(0, std::bind(TimeoutHandle2, timer, std::ref(io_service), &gcounter));
+        TimerPtr timer = make_shared<Timer>(io_service, 0, std::bind(TimeoutHandle2, 
+            _1, std::ref(io_service), &gcounter));
+        timer->Schedule();
         vec.emplace_back(timer);
     }
     size_t r = io_service.run();
