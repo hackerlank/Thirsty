@@ -38,7 +38,7 @@ bool crc32c_hw_supported();
  *       all other scenarios, please call crc32c() and let it pick an
  *       implementation based on the capabilities of the underlying CPU.
  */
-uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum = ~0U);
+uint32_t crc32c_hw(const void* data, size_t nbytes, uint32_t startingChecksum = ~0U);
 
 /**
  * Compute a CRC-32C checksum of a buffer using a portable,
@@ -51,7 +51,7 @@ uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum
  *       and let it pick an implementation based on the capabilities of
  *       the underlying CPU.
  */
-uint32_t crc32c_sw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum = ~0U);
+uint32_t crc32c_sw(const void* data, size_t nbytes, uint32_t startingChecksum = ~0U);
 
 } // namespace detail
 
@@ -64,5 +64,4 @@ uint32_t crc32c_sw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum
  *       polynomial and thus yields different results for the same input
  *       than a traditional CRC-32.
  */
-uint32_t crc32c(const uint8_t* data, size_t nbytes, uint32_t startingChecksum = ~0U);
-
+uint32_t crc32c(const void* data, size_t nbytes, uint32_t startingChecksum = ~0U);

@@ -15,6 +15,7 @@
  */
 
 #include "Checksum.h"
+#include <cassert>
 #include <algorithm>
 #include <stdexcept>
 #include <boost/crc.hpp>
@@ -46,8 +47,10 @@ namespace detail {
 #endif
 
 // Fast SIMD implementation of CRC-32C for x86 with SSE 4.2
-uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum)    
+    uint32_t crc32c_hw(const void* input, size_t nbytes, uint32_t startingChecksum)
 {
+    assert(input != nullptr);
+    const uint8_t* data = (const uint8_t*)input;
     uint32_t sum = startingChecksum;
     size_t offset = 0;
 
@@ -90,7 +93,7 @@ bool crc32c_hw_supported()
 
 #else
 
-uint32_t crc32c_hw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum)
+uint32_t crc32c_hw(const uint8_t* data, size_t nbytes, uint32_t startingChecksum)
 {
     throw std::runtime_error("crc32_hw is not implemented on this platform");
 }
@@ -102,34 +105,31 @@ bool crc32c_hw_supported()
 
 #endif
 
-uint32_t crc32c_sw(const uint8_t *data, size_t nbytes, uint32_t startingChecksum)
+uint32_t crc32c_sw(const void* input, size_t nbytes, uint32_t crc)
 {
+    assert(input != nullptr);
+    const uint8_t* data = (const uint8_t*)input;
     // Reverse the bits in the starting checksum so they'll be in the
     // right internal format for Boost's CRC engine.
     //     O(1)-time, branchless bit reversal algorithm from
     //     http://graphics.stanford.edu/~seander/bithacks.html
-    startingChecksum = ((startingChecksum >> 1) & 0x55555555) |
-        ((startingChecksum & 0x55555555) << 1);
-    startingChecksum = ((startingChecksum >> 2) & 0x33333333) |
-        ((startingChecksum & 0x33333333) << 2);
-    startingChecksum = ((startingChecksum >> 4) & 0x0f0f0f0f) |
-        ((startingChecksum & 0x0f0f0f0f) << 4);
-    startingChecksum = ((startingChecksum >> 8) & 0x00ff00ff) |
-        ((startingChecksum & 0x00ff00ff) << 8);
-    startingChecksum = (startingChecksum >> 16) |
-        (startingChecksum << 16);
+    crc = ((crc >> 1) & 0x55555555) | ((crc & 0x55555555) << 1);
+    crc = ((crc >> 2) & 0x33333333) | ((crc & 0x33333333) << 2);
+    crc = ((crc >> 4) & 0x0f0f0f0f) | ((crc & 0x0f0f0f0f) << 4);
+    crc = ((crc >> 8) & 0x00ff00ff) | ((crc & 0x00ff00ff) << 8);
+    crc = (crc >> 16) | (crc << 16);
 
     static const uint32_t CRC32C_POLYNOMIAL = 0x1EDC6F41;
-    boost::crc_optimal<32, CRC32C_POLYNOMIAL, ~0U, 0, true, true> sum(
-        startingChecksum);
+    boost::crc_optimal<32, CRC32C_POLYNOMIAL, ~0U, 0, true, true> sum(crc);
     sum.process_bytes(data, nbytes);
     return sum.checksum();
 }
 
 } // namespace detail
 
-uint32_t crc32c(const uint8_t *data, size_t nbytes, uint32_t startingChecksum)
+uint32_t crc32c(const void* data, size_t nbytes, uint32_t startingChecksum)
 {
+    assert(data != nullptr);
     if (detail::crc32c_hw_supported())
     {
         return detail::crc32c_hw(data, nbytes, startingChecksum);
