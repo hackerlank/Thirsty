@@ -17,8 +17,8 @@
 #include "Compression.h"
 
 #if FOLLY_HAVE_LIBLZ4
-#include <lz4.h>
-#include <lz4hc.h>
+#include "lz4.h"
+#include "lz4hc.h"
 #endif
 
 #if FOLLY_HAVE_LIBSNAPPY
