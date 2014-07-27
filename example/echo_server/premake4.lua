@@ -3,7 +3,7 @@
 --
 
 -- windows only
-local BOOST_ROOT = os.getenv('BOOST_ROOT') or '/usr/local/include'
+local BOOST_ROOT = os.getenv('BOOST_ROOT') or ''
 
 solution 'ServerExample'
     configurations {'Debug', 'Release'}
@@ -59,6 +59,7 @@ solution 'ServerExample'
             'BOOST_ASIO_HAS_STD_ATOMIC',
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
+            'FOLLY_HAVE_LIBLZ4',
         }
         libdirs
         {
@@ -71,6 +72,13 @@ solution 'ServerExample'
         }
         
         if os.get() == 'linux' then
+        defines 
+        { 
+            '__STDC_LIMIT_MACROS',
+            'FOLLY_HAVE_LIBZ',
+            'FOLLY_HAVE_LIBSNAPPY',
+            'FOLLY_HAVE_LIBLZMA',
+        }        
         links
         {
             'rt',
@@ -139,6 +147,7 @@ solution 'ClientExample'
             'BOOST_ASIO_HAS_STD_ATOMIC',
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
+            'FOLLY_HAVE_LIBLZ4',
         }
         libdirs
         {
@@ -151,6 +160,13 @@ solution 'ClientExample'
         }
         
         if os.get() == 'linux' then
+        defines 
+        { 
+            '__STDC_LIMIT_MACROS',
+            'FOLLY_HAVE_LIBZ',
+            'FOLLY_HAVE_LIBSNAPPY',
+            'FOLLY_HAVE_LIBLZMA',
+        }        
         links
         {
             'rt',
