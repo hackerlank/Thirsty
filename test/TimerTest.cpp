@@ -31,12 +31,17 @@ TEST(Timer, Schedule)
     boost::asio::io_service io_service;
     static size_t counter = 10;
     int gcount = counter;
-    TimerPtr timer = make_shared<Timer>(io_service, 100, std::bind(TimeoutHandle, 
-        _1, std::ref(io_service), &counter));
+    TimerPtr timer;
+    auto callback = [&]()
+    {
+        TimeoutHandle(timer, io_service, &counter);
+    };
+    timer.reset(new Timer(io_service, 100, callback));
     timer->Schedule();
     auto r = io_service.run();
     EXPECT_TRUE(r == gcount);
 }
+
 
 static void TimeoutHandle2(TimerPtr timer, 
                            boost::asio::io_service& io_service, 
@@ -56,8 +61,12 @@ BENCHMARK(TimerSchedule, iter)
     vector<TimerPtr> vec;
     for (int i = 0; i < times; i++)
     {
-        TimerPtr timer = make_shared<Timer>(io_service, 0, std::bind(TimeoutHandle2, 
-            _1, std::ref(io_service), &gcounter));
+        TimerPtr timer;
+        auto callback = [&]()
+        {
+            TimeoutHandle2(timer, io_service, &gcounter);
+        };
+        timer.reset(new Timer(io_service, 0, callback));
         timer->Schedule();
         vec.emplace_back(timer);
     }
