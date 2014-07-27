@@ -5,10 +5,20 @@
 #include "net/TcpServer.h"
 #include "core/Conv.h"
 #include "Timer.h"
+#include "Utils.h"
 
 using namespace std;
 using namespace std::placeholders;
 
+
+void MyLogHandler(LogLevel level,
+                  const char* filename,
+                  int line,
+                  const string& message)
+{
+    static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
+    LogFileM(level_names[level], "[%s:%d] %s\n", filename, line, message.c_str());
+}
 
 TcpServerPtr StartServer(boost::asio::io_service& io_service, const string& host, uint16_t port)
 {
@@ -22,12 +32,21 @@ TcpServerPtr StartServer(boost::asio::io_service& io_service, const string& host
     return echo_server;
 }
 
+
 void PrintConnectionStats(TimerPtr timer, TcpServerPtr server)
 {
     auto stats = server->GetTotalStats();
     for (auto& item : stats)
     {
-        cout << "Serial: " << item.first << endl;
+        const auto& stats = item.second;
+        cout << "Serial: " << item.first << endl
+            << "\ttotal_send_count: " << stats.total_send_count << endl
+            << "\ttotal_recv_count: " << stats.total_recv_count << endl
+            << "\ttotal_send_size: " << stats.total_send_size << endl
+            << "\total_recv_size: " << stats.total_recv_size << endl
+            << "\tpeak_recv_num_per_sec: " << stats.peak_recv_num_per_sec << endl
+            << "\tpeak_recv_size_per_sec: " << stats.peak_recv_size_per_sec << endl
+            << endl;
     }
     timer->Schedule();
 }
@@ -45,12 +64,18 @@ int main(int argc, char* argv[])
             port = to<int16_t>(argv[2]);
         }
 
+        SetLogHandler(MyLogHandler);
+
         boost::asio::io_service io_service;
         TcpServerPtr server = StartServer(io_service, host, port);
 
         // create timer
-        TimerPtr timer = make_shared<Timer>(io_service, 5000,
-            std::bind(PrintConnectionStats, _1, server));
+        TimerPtr timer;
+        auto callback = [&]()
+        {
+            PrintConnectionStats(timer, server);
+        };
+        timer.reset(new Timer(io_service, 10000, callback));
         timer->Schedule();
 
         io_service.run();
