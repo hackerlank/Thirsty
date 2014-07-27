@@ -3,8 +3,8 @@
 #include "core/Conv.h"
 #include "core/Malloc.h"
 #include "core/Strings.h"
+#include "net/Checksum.h"
 #include "logging.h"
-#include "Checksum.h"
 #include "Utils.h"
 
 
@@ -14,15 +14,13 @@ using namespace std::placeholders;
 
 TcpConnection::TcpConnection(boost::asio::io_service& io_service,
                              Serial serial,
-                             ErrorCallback on_error,
                              ReadCallback on_read)
     : socket_(io_service),
       serial_(serial),
-      on_error_(on_error),
       on_read_(on_read)
 {
-    assert(on_error && on_read);
-    start_recv_time_ = getNowTickCount();
+    assert(on_read);
+
 }
 
 TcpConnection::~TcpConnection()
@@ -32,8 +30,12 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::Close()
 {
-    stopped_ = true;
-    socket_.close();
+    closed_ = true;
+    if (socket_.is_open())
+    {
+        socket_.shutdown(boost::asio::socket_base::shutdown_both);
+        socket_.close();
+    }
 }
 
 void TcpConnection::AsynRead()
@@ -57,15 +59,16 @@ void TcpConnection::HandleReadHead(const boost::system::error_code& ec, size_t b
         }
         else // empty content packet for heartbeating
         {
-            last_recv_time_ = getNowTickCount();
-            stats_.total_recv_size += bytes;
-            stats_.total_recv_count++;
             AsynRead();
+            last_recv_time_ = getNowTickCount();
+            UpdateTransferStats(bytes, 0);
         }
     }
     else
     {
-        on_error_(err);
+        Close();
+        LOG(ERROR) << "Serial: " << serial_ << ", Error: " << ec.value() 
+            << ": " << ec.message();
     }
 }
 
@@ -78,12 +81,12 @@ void TcpConnection::HandleReadContent(const boost::system::error_code& ec,
     {
         on_read_(serial_, ByteRange((const uint8_t*)buf, bytes));
         AsynRead();
-        stats_.total_recv_size += bytes + sizeof(head_);
-        stats_.total_recv_count++;
+        UpdateTransferStats(bytes + sizeof(head_), 0);
     }
     else
     {
-        on_error_(err);
+        LOG(ERROR) << "Serial: " << serial_ << ", Error: " << ec.value() << ": " << ec.message();
+        Close();
     }
     if (bytes > stack_buf_.size())
     {
@@ -92,20 +95,24 @@ void TcpConnection::HandleReadContent(const boost::system::error_code& ec,
 }
 
 
-void TcpConnection::AsynWrite(const void* data, uint32_t size)
+bool TcpConnection::AsynWrite(const void* data, uint32_t size)
 {
-    if (data && size > 0 && size <= MAX_CONTENT_LEN)
+    if (data == nullptr || size == 0 || size > MAX_CONTENT_LEN)
     {
-        Header head = { size, 0, 0 };
-        head.size_checksum = crc32c((const uint8_t*)&head.size, sizeof(head.size));
-        head.content_checksum = crc32c((const uint8_t*)data, size);
-        size_t buf_size = size + sizeof(head);
-        uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
-        memcpy(buf, &head, sizeof(head));
-        memcpy(buf + sizeof(head), data, size);
-        boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
-            std::bind(&TcpConnection::HandleWrite, this, _1, _2, buf));
-    }    
+        return false;
+    }
+
+    Header head = { size, 0, 0 };
+    head.size_checksum = crc32c(&head.size, sizeof(head.size));
+    head.content_checksum = crc32c(data, size);
+    size_t buf_size = size + sizeof(head);
+    uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
+    memcpy(buf, &head, sizeof(head));
+    memcpy(buf + sizeof(head), data, size);
+    boost::asio::async_write(socket_, boost::asio::buffer(buf, buf_size),
+        std::bind(&TcpConnection::HandleWrite, this, _1, _2, buf));
+
+    return true;
 }
 
 void TcpConnection::HandleWrite(const boost::system::error_code& err,
@@ -114,12 +121,13 @@ void TcpConnection::HandleWrite(const boost::system::error_code& err,
 {
     if (err)
     {
-        on_error_(err);
+        Close();
+        LOG(ERROR) << "Serial: " << serial_ << ", Error: " << err.value() 
+            << ": " << err.message();
     }
     else
     {
-        stats_.total_send_size += bytes;
-        stats_.total_send_count++;
+        UpdateTransferStats(0, bytes);
     }
     free(buf);
 }
@@ -129,7 +137,7 @@ bool TcpConnection::CheckHeader(boost::system::error_code& err, size_t bytes)
     err = boost::asio::error::invalid_argument;
     if (bytes == sizeof(head_))
     {
-        auto checksum = crc32c((const uint8_t*)&head_.size, sizeof(head_.size));
+        auto checksum = crc32c(&head_.size, sizeof(head_.size));
         if (checksum == head_.size_checksum)
         {
             if (head_.size >= 0 && head_.size <= MAX_CONTENT_LEN)
@@ -155,7 +163,7 @@ bool TcpConnection::CheckContent(boost::system::error_code& err, const uint8_t* 
     err = boost::asio::error::invalid_argument;
     if (bytes == head_.size)
     {
-        auto checksum = crc32c((const uint8_t*)buf, bytes);
+        auto checksum = crc32c(buf, bytes);
         if (checksum == head_.content_checksum)
         {
             return true;
@@ -169,22 +177,32 @@ bool TcpConnection::CheckContent(boost::system::error_code& err, const uint8_t* 
     return false;
 }
 
-void TcpConnection::UpdateTransferStats()
+void TcpConnection::UpdateTransferStats(size_t bytes_read, size_t bytes_send)
 {
-    auto flag = 0x100000; // 1k
-    if ((stats_.total_recv_size & flag) / flag > 0)
+    if (bytes_read > 0)
     {
-        uint64_t now = getNowTickCount();
-        uint64_t elapsed = (now - start_recv_time_) / 1000000000U;
-        uint32_t packet_freq = to<uint32_t>(stats_.total_recv_count / elapsed);
-        uint64_t size_freq = stats_.total_recv_size / elapsed;
-        if (packet_freq > stats_.peak_recv_num_per_sec)
-        {
-            stats_.peak_recv_num_per_sec = packet_freq;
-        }
-        if (size_freq > stats_.peak_recv_size_per_sec)
-        {
-            stats_.peak_recv_size_per_sec = size_freq;
-        }
+        stats_.total_recv_size += bytes_read;
+        stats_.total_recv_count++;
     }
+    if (bytes_send)
+    {
+        stats_.total_send_size += bytes_send;
+        stats_.total_send_count++;
+    }
+}
+
+void TcpConnection::UpdateTransferFreqency(int32_t sec)
+{
+    uint32_t packet_freq = (stats_.total_recv_count - last_recv_count_) / sec;
+    float size_freq = (stats_.total_recv_size - last_recv_bytes_) / sec;
+    if (packet_freq > stats_.peak_recv_num_per_sec)
+    {
+        stats_.peak_recv_num_per_sec = packet_freq;
+    }
+    if (size_freq > stats_.peak_recv_size_per_sec)
+    {
+        stats_.peak_recv_size_per_sec = size_freq;
+    }
+    last_recv_count_ = stats_.total_recv_count;
+    last_recv_bytes_ = stats_.total_recv_size;
 }

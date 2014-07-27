@@ -38,7 +38,7 @@ struct ServerOptions
     uint16_t  heart_beat_sec = 100;
 
     // max connection allowed
-    uint16_t  max_connections = 5000;
+    uint16_t  max_connections = 2000;
 
     // max recv packet per second for every connection
     uint32_t  max_recv_num_per_sec = 1000;
@@ -57,16 +57,16 @@ struct TransferStats
     uint32_t    total_recv_count = 0;
 
     // total bytes sended
-    uint64_t    total_send_size = 0;
+    float       total_send_size = 0;
 
     // total bytes recv
-    uint64_t    total_recv_size = 0;
+    float       total_recv_size = 0;
 
     // peak recv packet count per second
     uint32_t    peak_recv_num_per_sec = 0;
 
     // peak recv bytes per second
-    uint64_t    peak_recv_size_per_sec = 0;
+    float    peak_recv_size_per_sec = 0;
 };
 
 // Serial is an identifier for every TCP connection object, for a 

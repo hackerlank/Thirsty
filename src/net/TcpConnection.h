@@ -6,39 +6,45 @@
 #include <array>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
-#include "Packet.h"
+#include "net/Packet.h"
 #include "core/Range.h"
 
 
 
-class TcpConnection
-    : public std::enable_shared_from_this<TcpConnection>,
-      private boost::noncopyable
+class TcpConnection : private boost::noncopyable
 {
 public:
     // construct a connection with the given io_service.
     TcpConnection(boost::asio::io_service& io_service, 
                   Serial serial,
-                  ErrorCallback on_error,
                   ReadCallback on_read);
     ~TcpConnection();
 
     // start the first asynchronous operation for the connection.
-    void AsynRead();
+    void    AsynRead();
 
-    // Send messages
-    void AsynWrite(const void* data, uint32_t size);
+    // send messages
+    bool    AsynWrite(const void* data, uint32_t size);
 
     // stop this connection
-    void Close();
+    void    Close();
 
-    // get the socket associated with the connection.
-    boost::asio::ip::tcp::socket&   GetSocket() { return socket_; }
+    // is this connection closed
+    bool    GetClosed() { return closed_; }
 
+    // get socket descriptor
+    boost::asio::ip::tcp::socket& GetSocket() { return socket_; }
+
+    // serial number of this conncetion
     Serial      GetSerial() const { return serial_; }
+
+    // last recv data timestamp
     uint64_t    GetLastRecvTime() const { return last_recv_time_; }
 
+    // conncetion transfer statics
     const TransferStats& GetTransferStats() const { return stats_; }
+
+    void UpdateTransferFreqency(int32_t sec);
 
 private:
     // handle completion of a read operation.
@@ -56,32 +62,36 @@ private:
     bool CheckHeader(boost::system::error_code& err, size_t bytes);
     bool CheckContent(boost::system::error_code& err, const uint8_t* buf, size_t bytes);
 
-    void UpdateTransferStats();
+    void UpdateTransferStats(size_t bytes_read, size_t bytes_send);    
 
 private:
     // socket for the connection.
     boost::asio::ip::tcp::socket        socket_;
 
-    bool            stopped_ = false;
-
-    // recv header
-    Header          head_;
-    StackBuffer     stack_buf_;
+    // is this connectin closed
+    bool            closed_ = false;
 
     // serial number of this connection
     Serial          serial_ = 0;
 
+    // timestamp of last recv data
     uint64_t        last_recv_time_ = 0;
-    uint64_t        start_recv_time_ = 0;
 
-    // error callback
-    ErrorCallback   on_error_;
+    // packet header
+    Header          head_;
+
+    // cached recv buffer for packet less than 64 bytes
+    StackBuffer     stack_buf_;
 
     // read data callback
     ReadCallback    on_read_;
 
+    // transfer statics
     TransferStats   stats_;
 
+    // recv packet count dure last 
+    uint32_t        last_recv_count_ = 0;
+    float           last_recv_bytes_ = 0;
 };
 
 typedef std::shared_ptr<TcpConnection>  TcpConnectionPtr;

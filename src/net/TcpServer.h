@@ -5,9 +5,9 @@
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
-#include "TcpConnection.h"
+#include "net/TcpConnection.h"
 #include "core/Range.h"
-
+#include "Timer.h"
 
 class TcpServer : private boost::noncopyable
 {
@@ -22,7 +22,7 @@ public:
     void Stop();
 
     // close a connection
-    void CloseSession(Serial serial);
+    void Close(Serial serial);
 
     // send data to connection
     void SendTo(Serial serial, const void* data, uint32_t size);
@@ -32,18 +32,21 @@ public:
         SendTo(serial, range.data(), static_cast<uint32_t>(range.size()));
     }
 
+    // send data to all connections
     void SendAll(const char* data, uint32_t size);
 
+    // get a conncetion by serial number
     TcpConnectionPtr  GetConnection(Serial serial) const;
 
-    const TransferStats& GetConnectionStats(Serial serial) const;
+    // get connection transfer statics by serial number
+    const TransferStats* GetConnectionStats(Serial serial) const;
 
+    // get all connection's transfer statics
     std::unordered_map<Serial, TransferStats>  GetTotalStats() const;
 
 private:
     void StartAccept();
     void HandleAccept(const boost::system::error_code& err, TcpConnectionPtr ptr);
-    void HandleError(const boost::system::error_code& err, Serial serial);
     void DropDeadConnections();
 
 private:
@@ -65,6 +68,8 @@ private:
     // server options
     ServerOptions   options_;
 
+    // dead_line timer for dropping dead connections
+    TimerPtr    drop_dead_timer_;
 };
 
 typedef std::shared_ptr<TcpServer>    TcpServerPtr;

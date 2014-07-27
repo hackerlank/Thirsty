@@ -12,7 +12,7 @@ using namespace std::placeholders;
 
 TcpServer::TcpServer(boost::asio::io_service& io_service, const ServerOptions& options)
     : io_service_(io_service),
-      acceptor_(io_service_),
+      acceptor_(io_service),
       options_(options)
 {
 }
@@ -36,6 +36,11 @@ void TcpServer::Start(const std::string& addr,
     acceptor_.listen();
 
     StartAccept();
+
+    // drop dead connections in every second
+    drop_dead_timer_ = std::make_shared<Timer>(io_service_, 1000, std::bind(
+        &TcpServer::DropDeadConnections, this));
+    drop_dead_timer_->Schedule();
 }
 
 void TcpServer::Stop()
@@ -44,7 +49,7 @@ void TcpServer::Stop()
     connections_.clear();
 }
 
-void TcpServer::CloseSession(Serial serial)
+void TcpServer::Close(Serial serial)
 {
     connections_.erase(serial);
 }
@@ -80,9 +85,9 @@ void TcpServer::SendAll(const char* data, uint32_t size)
 
 void TcpServer::StartAccept()
 {
-    auto serial = current_serial_++;
-    TcpConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, serial,
-        std::bind(&TcpServer::HandleError, this, _1, serial), on_read_);
+    while (connections_.count(current_serial_++))
+        ;
+    TcpConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, current_serial_, on_read_);
     acceptor_.async_accept(conn->GetSocket(), std::bind(&TcpServer::HandleAccept, this, _1, conn));
 }
 
@@ -107,11 +112,6 @@ void TcpServer::HandleAccept(const boost::system::error_code& err, TcpConnection
     }
 }
 
-void TcpServer::HandleError(const boost::system::error_code& ec, Serial serial)
-{
-    CloseSession(serial);
-    LOG(ERROR) << serial << ", " << ec.value() << ": " << ec.message();
-}
 
 void TcpServer::DropDeadConnections()
 {
@@ -120,35 +120,47 @@ void TcpServer::DropDeadConnections()
     uint64_t now = getNowTickCount();
     for (auto& item : connections_)
     {
-        auto& conn = item.second;
+        TcpConnectionPtr& conn = item.second;
+        if (conn->GetClosed())
+        {
+            dead_connections.emplace_back(item.first);
+            continue;
+        }
+
         auto elapsed = now - conn->GetLastRecvTime();
         if (elapsed >= options_.heart_beat_sec * 1000000000UL)
         {
+            conn->Close();
             dead_connections.emplace_back(item.first);
         }
         else
         {
-            auto stats = conn->GetTransferStats();
+            conn->UpdateTransferFreqency(1);
+            const TransferStats& stats = conn->GetTransferStats();
             if (stats.peak_recv_num_per_sec > options_.max_recv_num_per_sec
-             || stats.peak_recv_size_per_sec > options_.max_recv_size_per_sec)
+                || stats.peak_recv_size_per_sec > options_.max_recv_size_per_sec)
             {
+                conn->Close();
                 dead_connections.emplace_back(item.first);
             }
         }
     }
 
-    boost::system::error_code ec;
     for (auto serial : dead_connections)
     {
-        HandleError(ec, serial);
+        Close(serial);
     }
+    drop_dead_timer_->Schedule();
 }
 
-const TransferStats& TcpServer::GetConnectionStats(Serial serial) const
+const TransferStats* TcpServer::GetConnectionStats(Serial serial) const
 {
-    static const TransferStats dummy;
     auto conn = GetConnection(serial);
-    return (conn ? conn->GetTransferStats() : dummy);
+    if (conn)
+    {
+        return &conn->GetTransferStats();
+    }
+    return nullptr;
 }
 
 std::unordered_map<Serial, TransferStats>  TcpServer::GetTotalStats() const
@@ -157,7 +169,11 @@ std::unordered_map<Serial, TransferStats>  TcpServer::GetTotalStats() const
     for (auto& value : connections_)
     {
         auto& connection = value.second;
-        result[value.first] = connection->GetTransferStats();
+        auto stats_ptr = &connection->GetTransferStats();
+        if (stats_ptr)
+        {
+            result[value.first] = *stats_ptr;
+        }
     }
     return std::move(result);
 }
