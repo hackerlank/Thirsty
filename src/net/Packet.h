@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <array>
 #include <functional>
 #include <boost/system/error_code.hpp>
 #include "core/Range.h"
@@ -17,19 +16,15 @@
 
 struct Header
 {
-    uint32_t     size;              // content size
-    uint32_t     size_checksum;     // checksum value of size
-    uint32_t     content_checksum;  // checksum value of content
+    uint16_t     size;          // content size
+    uint16_t     flag;          // compression type
+    uint32_t     checksum;      // checksum value of content
 };
 
 enum
 {
-    // max content size, size of a packet is limited to 1M
-    MAX_CONTENT_LEN = (1024 * 1024) - sizeof(Header),
-
-    // small buffer pre-allocated for every connection,
-    // reduce frequency of memory allocating
-    STACK_BUF_SIZE = 64,
+    // max content size, size of a packet is limited to 64k
+    MAX_CONTENT_LEN = (64 * 1024) - sizeof(Header),
 };
 
 struct ServerOptions
@@ -76,7 +71,6 @@ struct TransferStats
 // deprecated, the UUID component is much better.
 typedef uint32_t    Serial;
 
-typedef std::array<uint8_t, STACK_BUF_SIZE> StackBuffer;
 
 // error callback
 typedef std::function<void(const boost::system::error_code)> ErrorCallback;

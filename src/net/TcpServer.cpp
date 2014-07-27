@@ -117,7 +117,7 @@ void TcpServer::DropDeadConnections()
 {
     std::vector<Serial> dead_connections;
     dead_connections.reserve(32);
-    uint64_t now = getNowTickCount();
+    time_t now = time(NULL);
     for (auto& item : connections_)
     {
         TcpConnectionPtr& conn = item.second;

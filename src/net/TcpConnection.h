@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <ctime>
 #include <memory>
-#include <array>
+#include <vector>
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
 #include "net/Packet.h"
@@ -36,10 +36,10 @@ public:
     boost::asio::ip::tcp::socket& GetSocket() { return socket_; }
 
     // serial number of this conncetion
-    Serial      GetSerial() const { return serial_; }
+    Serial  GetSerial() const { return serial_; }
 
     // last recv data timestamp
-    uint64_t    GetLastRecvTime() const { return last_recv_time_; }
+    time_t  GetLastRecvTime() const { return last_recv_time_; }
 
     // conncetion transfer statics
     const TransferStats& GetTransferStats() const { return stats_; }
@@ -50,17 +50,14 @@ private:
     // handle completion of a read operation.
     void HandleReadHead(const boost::system::error_code& err, size_t bytes);
 
-    void HandleReadContent(const boost::system::error_code& err,
-                           size_t bytes, 
-                           uint8_t* buf);
+    void HandleReadContent(const boost::system::error_code& err, size_t bytes);
 
     // handle completion of a write operation.
     void HandleWrite(const boost::system::error_code& err, 
                      size_t bytes, 
                      uint8_t* buf);
 
-    bool CheckHeader(boost::system::error_code& err, size_t bytes);
-    bool CheckContent(boost::system::error_code& err, const uint8_t* buf, size_t bytes);
+    bool CheckContent(const uint8_t* buf, size_t bytes);
 
     void UpdateTransferStats(size_t bytes_read, size_t bytes_send);    
 
@@ -75,13 +72,12 @@ private:
     Serial          serial_ = 0;
 
     // timestamp of last recv data
-    uint64_t        last_recv_time_ = 0;
+    time_t          last_recv_time_ = 0;
 
     // packet header
     Header          head_;
 
-    // cached recv buffer for packet less than 64 bytes
-    StackBuffer     stack_buf_;
+    std::vector<uint8_t> recv_buf_;
 
     // read data callback
     ReadCallback    on_read_;

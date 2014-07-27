@@ -7,19 +7,28 @@
 #include "net/TcpClient.h"
 #include "core/Conv.h"
 #include "core/Range.h"
+#include "Timer.h"
 
 using namespace std;
 
+
+void DropDeadClients(TimerPtr timer, vector<TcpClientPtr>& clients)
+{
+    for (auto& client : clients)
+    {
+        if (client && client->GetClosed())
+        {
+            client.swap(TcpClientPtr());
+        }
+    }
+    timer->Schedule();
+}
 
 TcpClientPtr CreateClient(boost::asio::io_service& io_service,
                           const std::string& host,
                           int16_t port)
 {
-    TcpClientPtr client = make_shared<TcpClient>(io_service, 
-        [](const boost::system::error_code& err)
-    {
-        printf("Error: %d, %s.\n", err.value(), err.message().c_str());
-    });
+    TcpClientPtr client = make_shared<TcpClient>(io_service);
     client->AsynConnect(host, port, [client](const string& host, int16_t port)
     {
         printf("connect to server(%s:%d) OK.\n", host.c_str(), port);
@@ -54,6 +63,15 @@ int main(int argc, char* argv[])
             auto client = CreateClient(io_service, host, port);
             clients.emplace_back(client);
         }
+
+        // create timer
+        TimerPtr timer;
+        auto callback = [&]()
+        {
+            DropDeadClients(timer, clients);
+        };
+        timer.reset(new Timer(io_service, 10000, callback));
+        timer->Schedule();
 
         io_service.run();
     }
