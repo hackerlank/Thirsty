@@ -17,7 +17,7 @@ static void TimeoutHandle(TimerPtr timer,
     size_t& count = *counter;
     if (--count > 0)
     {
-        printf("Testing timer, schedule count: %d\n", count);
+        printf("Testing timer, schedule count: %u\n", count);
         timer->Schedule();
     }
     else
