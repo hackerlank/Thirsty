@@ -822,30 +822,27 @@ inline dynamic::Type dynamic::type() const
     return type_;
 }
 
-inline const char* dynamic::typeName() const 
-{
-    return typeName(type_);
-}
-
 template<class T> struct dynamic::TypeInfo 
 {
     static char const name[];
     static Type const type;
 };
 
-#define FB_DEC_TYPE(T, str, id)                                     \
-    template<> char const dynamic::TypeInfo<T>::name[] = str;       \
-    template<> dynamic::Type const dynamic::TypeInfo<T>::type = id
+#ifndef _MSC_VER
+#define FB_DEC_TYPE(T)                                      \
+  template<> char const dynamic::TypeInfo<T>::name[];       \
+  template<> dynamic::Type const dynamic::TypeInfo<T>::type
 
-FB_DEC_TYPE(void*,              "null",     dynamic::NULLT);
-FB_DEC_TYPE(bool,               "boolean",  dynamic::BOOL);
-FB_DEC_TYPE(std::string,        "string",   dynamic::STRING);
-FB_DEC_TYPE(dynamic::Array,     "array",    dynamic::ARRAY);
-FB_DEC_TYPE(double,             "double",   dynamic::DOUBLE);
-FB_DEC_TYPE(int64_t,            "int64",    dynamic::INT64);
-FB_DEC_TYPE(dynamic::ObjectImpl,"object",   dynamic::OBJECT);
+FB_DEC_TYPE(void*);
+FB_DEC_TYPE(bool);
+FB_DEC_TYPE(std::string);
+FB_DEC_TYPE(dynamic::Array);
+FB_DEC_TYPE(double);
+FB_DEC_TYPE(int64_t);
+FB_DEC_TYPE(dynamic::ObjectImpl);
 
 #undef FB_DEC_TYPE
+#endif
 
 template<class T>
 T dynamic::asImpl() const 
