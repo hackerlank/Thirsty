@@ -84,7 +84,7 @@ struct TypeError;
 
 struct dynamic : private boost::operators<dynamic>
 {
-    enum Type 
+    enum Type
     {
         NULLT,
         ARRAY,
@@ -513,8 +513,8 @@ private:
             alignof(std::string)>::type AlignedStringStorage;
         AlignedStringStorage string;
 
-        typedef std::aligned_storage<sizeof(std::string),
-            alignof(std::string)>::type AlignedArrayStorage;
+        typedef std::aligned_storage<sizeof(Array),
+            alignof(Array)>::type AlignedArrayStorage;
         AlignedArrayStorage array;
 
         /*
