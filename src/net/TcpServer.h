@@ -4,7 +4,9 @@
 #include <string>
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
-#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/deadline_timer.hpp>
 #include "net/TcpConnection.h"
 #include "core/Range.h"
 #include "Timer.h"
@@ -69,7 +71,7 @@ private:
     ServerOptions   options_;
 
     // dead_line timer for dropping dead connections
-    TimerPtr    drop_dead_timer_;
+    boost::asio::deadline_timer    drop_dead_timer_;
 };
 
 typedef std::shared_ptr<TcpServer>    TcpServerPtr;

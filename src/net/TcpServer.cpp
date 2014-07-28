@@ -13,6 +13,7 @@ using namespace std::placeholders;
 TcpServer::TcpServer(boost::asio::io_service& io_service, const ServerOptions& options)
     : io_service_(io_service),
       acceptor_(io_service),
+      drop_dead_timer_(io_service, boost::posix_time::seconds(1)),
       options_(options)
 {
 }
@@ -38,9 +39,7 @@ void TcpServer::Start(const std::string& addr,
     StartAccept();
 
     // drop dead connections in every second
-    drop_dead_timer_ = std::make_shared<Timer>(io_service_, 1000, std::bind(
-        &TcpServer::DropDeadConnections, this));
-    drop_dead_timer_->Schedule();
+    drop_dead_timer_.async_wait(std::bind(&TcpServer::DropDeadConnections, this));
 }
 
 void TcpServer::Stop()
@@ -150,7 +149,9 @@ void TcpServer::DropDeadConnections()
     {
         Close(serial);
     }
-    drop_dead_timer_->Schedule();
+
+    drop_dead_timer_.expires_from_now(boost::posix_time::seconds(1));
+    drop_dead_timer_.async_wait(std::bind(&TcpServer::DropDeadConnections, this));
 }
 
 const TransferStats* TcpServer::GetConnectionStats(Serial serial) const
