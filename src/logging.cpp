@@ -1,5 +1,6 @@
 #include "logging.h"
 #include "Platform.h"
+#include <inttypes.h>
 #include "core/Strings.h"
 #include "StackTrace.h"
 
@@ -58,7 +59,7 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
     /* values which we print with this, but well use snprintf() */  \
     /* anyway to be extra safe. */                                  \
     char buffer[128];                                               \
-    snprintf(buffer, sizeof(buffer), FORMAT, value);               \
+    snprintf(buffer, sizeof(buffer), FORMAT, value);                \
     /* Guard against broken MSVC snprintf(). */                     \
     buffer[sizeof(buffer)-1] = '\0';                                \
     message_ += buffer;                                             \
@@ -68,8 +69,8 @@ LogMessage& LogMessage::operator<<(TYPE value) {                    \
 DECLARE_STREAM_OPERATOR(char         , "%c" )
 DECLARE_STREAM_OPERATOR(int32_t      , "%d" )
 DECLARE_STREAM_OPERATOR(uint32_t     , "%u" )
-DECLARE_STREAM_OPERATOR(int64_t      , "%lli")
-DECLARE_STREAM_OPERATOR(uint64_t     , "%llu")
+DECLARE_STREAM_OPERATOR(int64_t      , "%" PRIi64)
+DECLARE_STREAM_OPERATOR(uint64_t     , "%" PRIu64)
 DECLARE_STREAM_OPERATOR(double       , "%g" )
 #undef DECLARE_STREAM_OPERATOR
 
