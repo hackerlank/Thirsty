@@ -36,10 +36,10 @@ struct ServerOptions
     uint16_t  max_connections = 2000;
 
     // max recv packet per second for every connection
-    uint32_t  max_recv_num_per_sec = 1000;
+    uint32_t  max_recv_num_per_sec = 100;
 
     // max recv size per second for every connection
-    uint32_t  max_recv_size_per_sec = MAX_CONTENT_LEN * 60;
+    uint32_t  max_recv_size_per_sec = MAX_CONTENT_LEN * 100;
 };
 
 // transferred data stats
