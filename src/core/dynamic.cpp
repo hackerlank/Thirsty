@@ -37,19 +37,3 @@ const char* dynamic::typeName() const
 {
     return typeName(type_);
 }
-
-/*
-#define FB_DEC_TYPE(T, str, id)                                     \
-template<> char const dynamic::TypeInfo<T>::name[] = str;       \
-template<> dynamic::Type const dynamic::TypeInfo<T>::type = id
-
-FB_DEC_TYPE(void*,              "null",     dynamic::NULLT);
-FB_DEC_TYPE(bool,               "boolean",  dynamic::BOOL);
-FB_DEC_TYPE(std::string,        "string",   dynamic::STRING);
-FB_DEC_TYPE(dynamic::Array,     "array",    dynamic::ARRAY);
-FB_DEC_TYPE(double,             "double",   dynamic::DOUBLE);
-FB_DEC_TYPE(int64_t,            "int64",    dynamic::INT64);
-FB_DEC_TYPE(dynamic::ObjectImpl,"object",   dynamic::OBJECT);
-
-#undef FB_DEC_TYPE
-*/
