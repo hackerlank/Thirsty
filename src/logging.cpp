@@ -1,6 +1,6 @@
 #include "logging.h"
 #include "Platform.h"
-#include <inttypes.h>
+#include <cinttypes>
 #include "core/Strings.h"
 #include "StackTrace.h"
 
