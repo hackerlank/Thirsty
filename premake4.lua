@@ -87,6 +87,8 @@ solution 'Thirsty'
         {
             'z',
             'rt',
+            'lzma',
+            'snappy',
             'pthread',
             'boost_system',
             'boost_date_time',
@@ -203,7 +205,6 @@ solution 'UnitTest'
         links
         {
             'thirsty',
-            'lua51',
         }
         if os.get() == 'windows' then
         excludes
@@ -218,6 +219,8 @@ solution 'UnitTest'
         {
             'z',
             'rt',
+            'lzma',
+            'snappy',
             'pthread',
             'boost_system',
             'boost_date_time',
