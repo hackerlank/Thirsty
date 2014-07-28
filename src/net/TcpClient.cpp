@@ -1,4 +1,5 @@
 #include "TcpClient.h"
+#include <boost/asio.hpp>
 #include <functional>
 #include "core/Strings.h"
 #include "core/Malloc.h"

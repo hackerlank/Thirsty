@@ -5,7 +5,8 @@
 #include <memory>
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_service.hpp>
 #include "net/Packet.h"
 #include "core/Range.h"
 

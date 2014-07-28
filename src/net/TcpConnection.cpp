@@ -1,4 +1,5 @@
 #include "TcpConnection.h"
+#include <boost/asio.hpp>
 #include <functional>
 #include "core/Conv.h"
 #include "core/Malloc.h"
@@ -40,7 +41,6 @@ void TcpConnection::Close()
 
 void TcpConnection::AsynRead()
 {
-    last_recv_time_ = getNowTickCount();
     boost::asio::async_read(socket_, boost::asio::buffer(&head_, sizeof(head_)),
         std::bind(&TcpConnection::HandleReadHead, this, _1, _2));
 }
@@ -85,6 +85,7 @@ void TcpConnection::HandleReadContent(const boost::system::error_code& ec, size_
         const uint8_t* data = recv_buf_.data();
         if (CheckContent(data, bytes))
         {
+            last_recv_time_ = getNowTickCount();
             on_read_(serial_, ByteRange(data, bytes));
             AsynRead();
             UpdateTransferStats(bytes + sizeof(head_), 0);
