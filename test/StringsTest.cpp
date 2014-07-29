@@ -379,6 +379,51 @@ TEST(Strings, splitVector)
 }
 
 
+TEST(Split, stdStringFixed) 
+{
+    std::string a, b, c, d;
+
+    EXPECT_TRUE(split<false>('.', "a.b.c.d", a, b, c, d));
+    EXPECT_TRUE(split<false>('.', "a.b.c", a, b, c));
+    EXPECT_TRUE(split<false>('.', "a.b", a, b));
+    EXPECT_TRUE(split<false>('.', "a", a));
+
+    EXPECT_TRUE(split('.', "a.b.c.d", a, b, c, d));
+    EXPECT_TRUE(split('.', "a.b.c", a, b, c));
+    EXPECT_TRUE(split('.', "a.b", a, b));
+    EXPECT_TRUE(split('.', "a", a));
+
+    EXPECT_TRUE(split<false>('.', "a.b.c", a, b, c));
+    EXPECT_EQ("a", a);
+    EXPECT_EQ("b", b);
+    EXPECT_EQ("c", c);
+    EXPECT_FALSE(split<false>('.', "a.b", a, b, c));
+    EXPECT_TRUE(split<false>('.', "a.b.c", a, b));
+    EXPECT_EQ("a", a);
+    EXPECT_EQ("b.c", b);
+
+    EXPECT_TRUE(split('.', "a.b.c", a, b, c));
+    EXPECT_EQ("a", a);
+    EXPECT_EQ("b", b);
+    EXPECT_EQ("c", c);
+    EXPECT_FALSE(split('.', "a.b.c", a, b));
+    EXPECT_FALSE(split('.', "a.b", a, b, c));
+
+    EXPECT_TRUE(split<false>('.', "a.b", a, b));
+    EXPECT_EQ("a", a);
+    EXPECT_EQ("b", b);
+    EXPECT_FALSE(split<false>('.', "a", a, b));
+    EXPECT_TRUE(split<false>('.', "a.b", a));
+    EXPECT_EQ("a.b", a);
+
+    EXPECT_TRUE(split('.', "a.b", a, b));
+    EXPECT_EQ("a", a);
+    EXPECT_EQ("b", b);
+    EXPECT_FALSE(split('.', "a", a, b));
+    EXPECT_FALSE(split('.', "a.b", a));
+}
+
+
 TEST(Strings, splitFixed) 
 {
     StringPiece a, b, c, d;

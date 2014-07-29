@@ -152,7 +152,8 @@ template<bool exact,
          class Delim,
          class OutputType>
 typename std::enable_if<std::is_arithmetic<OutputType>::value
-    || std::is_same<OutputType, StringPiece>::value,
+    || std::is_same<OutputType, StringPiece>::value
+    || IsSomeString<OutputType>::value,
     bool>::type
 splitFixed(const Delim& delimiter,
            StringPiece input,
@@ -171,7 +172,8 @@ template<bool exact,
          class OutputType,
          class... OutputTypes>
 typename std::enable_if<std::is_arithmetic<OutputType>::value
-    || std::is_same<OutputType, StringPiece>::value,
+    || std::is_same<OutputType, StringPiece>::value
+    || IsSomeString<OutputType>::value,
     bool>::type
 splitFixed(const Delim& delimiter,
            StringPiece input,
@@ -229,7 +231,8 @@ template<bool exact,
          class OutputType,
          class... OutputTypes>
 typename std::enable_if<std::is_arithmetic<OutputType>::value
-    || std::is_same<OutputType, StringPiece>::value,
+    || std::is_same<OutputType, StringPiece>::value
+    || IsSomeString<OutputType>::value,
     bool>::type
 split(const Delim& delimiter,
       StringPiece input,

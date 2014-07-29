@@ -54,11 +54,11 @@ std::string& stringAppendf(std::string* output,
  *
  * Examples:
  *
- *   std::vector<folly::StringPiece> v;
- *   folly::split(":", "asd:bsd", v);
+ *   std::vector<StringPiece> v;
+ *   split(":", "asd:bsd", v);
  *
- *   std::set<folly::StringPiece> s;
- *   folly::splitTo<StringPiece>(":", "asd:bsd:asd:csd",
+ *   std::set<StringPiece> s;
+ *   splitTo<StringPiece>(":", "asd:bsd:asd:csd",
  *   std::inserter(s, s.begin()));
  *
  * Split also takes a flag (ignoreEmpty) that indicates whether adjacent
@@ -80,20 +80,20 @@ void splitTo(const Delim& delimiter,
 
 /*
  * Split a string into a fixed number of string pieces and/or numeric types
- * by delimiter. Any numeric type that folly::to<> can convert to from a
+ * by delimiter. Any numeric type that to<> can convert to from a
  * string piece is supported as a target. Returns 'true' if the fields were
  * all successfully populated.
  *
  * Examples:
  *
- *  folly::StringPiece name, key, value;
- *  if (folly::split('\t', line, name, key, value))
+ *  StringPiece name, key, value;
+ *  if (split('\t', line, name, key, value))
  *    ...
  *
- *  folly::StringPiece name;
+ *  StringPiece name;
  *  double value;
  *  int id;
- *  if (folly::split('\t', line, name, value, id))
+ *  if (split('\t', line, name, value, id))
  *    ...
  *
  * The 'exact' template parameter specifies how the function behaves when too
@@ -103,12 +103,12 @@ void splitTo(const Delim& delimiter,
  * passed. If 'exact' is overridden to 'false', all remaining fields will be
  * stored, unsplit, in the last field, as shown below:
  *
- *  folly::StringPiece x, y.
- *  if (folly::split<false>(':', "a:b:c", x, y))
+ *  StringPiece x, y.
+ *  if (split<false>(':', "a:b:c", x, y))
  *    assert(x == "a" && y == "b:c");
  *
  * Note that this will likely not work if the last field's target is of numeric
- * type, in which case folly::to<> will throw an exception.
+ * type, in which case to<> will throw an exception.
  */
 
 template<bool exact = true,
@@ -116,7 +116,8 @@ template<bool exact = true,
          class OutputType,
          class... OutputTypes>
 typename std::enable_if<std::is_arithmetic<OutputType>::value
-    || std::is_same<OutputType, StringPiece>::value, 
+    || std::is_same<OutputType, StringPiece>::value
+    || IsSomeString<OutputType>::value,
     bool>::type
 split(const Delim& delimiter,
       StringPiece input,
@@ -237,7 +238,7 @@ double prettyToDouble(StringPiece *const prettyString,
                       const PrettyType type);
 
 /*
- * Same as prettyToDouble(folly::StringPiece*, PrettyType), but
+ * Same as prettyToDouble(StringPiece*, PrettyType), but
  * expects whole string to be correctly parseable. Throws std::range_error
  * otherwise
  */
