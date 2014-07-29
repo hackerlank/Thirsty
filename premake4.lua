@@ -214,7 +214,11 @@ solution 'UnitTest'
         end
         if os.get() == 'linux' then
         buildoptions { '-std=c++11 -mcrc32 -rdynamic' }
-        defines { '__STDC_LIMIT_MACROS' }        
+        defines 
+        { 
+            '__STDC_LIMIT_MACROS',
+            '__STDC_CONSTANT_MACROS',
+        }
         links
         {
             'z',
@@ -242,6 +246,7 @@ solution 'UnitTest'
             'BOOST_ASIO_HAS_STD_ATOMIC',
             'BOOST_ASIO_HAS_STD_SHARED_PTR',
             'BOOST_ASIO_HAS_STD_CHRONO',
+            'FOLLY_HAVE_LIBLZ4',
         }        
         files
         {
