@@ -1,5 +1,8 @@
 #include "logging.h"
 #include "Platform.h"
+#include <cassert>
+#include <ctime>
+#include <cstdarg>
 #include <cinttypes>
 #include "core/Strings.h"
 #include "StackTrace.h"
@@ -15,7 +18,7 @@ void DefaultLogHandler(LogLevel level,
                        const string& message)
 {
     static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
-
+    LogFileM(level_names[level], "[%s:%d] %s\n", filename, line, message.c_str());
     // We use fprintf() instead of cerr because we want this to work at static
     // initialization time.
     fprintf(stderr, "[%s %s:%d] %s\n",
@@ -119,4 +122,34 @@ LogHandler* SetLogHandler(LogHandler* new_func)
         internal::log_handler_ = new_func;
     }
     return old;
+}
+
+
+void LogFileM(const char* module, const char* fmt, ...)
+{
+    assert(module && fmt);
+    time_t now = time(NULL);
+    tm date = *localtime(&now);
+    char filename[256];
+    int r = snprintf(filename, 256, "%s_%d-%d-%d.log", module, date.tm_year + 1900,
+        date.tm_mon, date.tm_mday);
+    if (r <= 0)
+    {
+        return;
+    }
+    char buffer[512];
+    va_list ap;
+    va_start(ap, fmt);
+    r = vsnprintf(buffer, 512, fmt, ap);
+    va_end(ap);
+    if (r <= 0)
+    {
+        return;
+    }
+    FILE* fp = fopen(filename, "a+");
+    if (fp)
+    {
+        fwrite(buffer, 1, r, fp);
+        fclose(fp);
+    }
 }

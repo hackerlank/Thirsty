@@ -1,8 +1,6 @@
 #include "Utils.h"
 #include <cassert>
 #include <cstdio>
-#include <cstdarg>
-#include <ctime>
 #include "Platform.h"
 #include "logging.h"
 
@@ -64,33 +62,4 @@ int32_t GetFileLength(const char* filename)
         return length;
     }
     return 0;
-}
-
-void LogFileM(const char* module, const char* fmt, ...)
-{
-    assert(module && fmt);
-    time_t now = time(NULL);
-    tm date = *localtime(&now);
-    char filename[256];
-    int r = snprintf(filename, 256, "%s_%d-%d-%d", module, date.tm_year + 1900,
-        date.tm_mon, date.tm_mday);
-    if (r <= 0)
-    {
-        return ;
-    }
-    char buffer[512];
-    va_list ap;
-    va_start(ap, fmt);
-    r = vsnprintf(buffer, 512, fmt, ap);
-    va_end(ap);
-    if (r <= 0)
-    {
-        return ;
-    }
-    FILE* fp = fopen(filename, "a+");
-    if (fp)
-    {
-        fwrite(buffer, 1, r, fp);
-        fclose(fp);
-    }
 }

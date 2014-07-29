@@ -197,3 +197,6 @@ typedef void LogHandler(LogLevel level,
 // below.
 LogHandler* SetLogHandler(LogHandler* new_func);
 
+
+// write log text to a modulized file
+void LogFileM(const char* module, const char* fmt, ...);

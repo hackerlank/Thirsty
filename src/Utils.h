@@ -20,5 +20,3 @@ std::string bin2hex(const void* input, size_t length);
 // given a file's name, return it's size
 int32_t GetFileLength(const char* filename);
 
-// write log to a modulized-filename
-void LogFileM(const char* module, const char* fmt, ...);
