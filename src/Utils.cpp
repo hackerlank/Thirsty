@@ -35,14 +35,13 @@ uint64_t getNowTickCount()
 
 #endif
 
-std::string bin2hex(const void* input, size_t length)
+std::string bin2hex(ByteRange data)
 {
-    assert(input);
     std::string result;
+    result.reserve(data.size() * 2);
     static const char hex[] = "0123456789abcdef";
-    for (size_t i = 0; i < length; i++)
+    for (auto ch : data)
     {
-        uint8_t ch = ((uint8_t*)(input))[i];
         result += hex[ch >> 4];
         result += hex[ch & 0x0f];
     }
