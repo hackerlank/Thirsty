@@ -1,7 +1,7 @@
 #include "TcpServer.h"
-#include <functional>
 #include <vector>
-#include <boost/date_time.hpp>
+#include <chrono>
+#include <functional>
 #include "core/Strings.h"
 #include "Utils.h"
 #include "logging.h"
@@ -13,7 +13,7 @@ using namespace std::placeholders;
 TcpServer::TcpServer(boost::asio::io_service& io_service, const ServerOptions& options)
     : io_service_(io_service),
       acceptor_(io_service),
-      drop_dead_timer_(io_service, boost::posix_time::seconds(1)),
+      drop_dead_timer_(io_service, std::chrono::seconds(1)),
       options_(options)
 {
 }
@@ -86,8 +86,10 @@ void TcpServer::StartAccept()
 {
     while (connections_.count(current_serial_++))
         ;
-    TcpConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, current_serial_, on_read_);
-    acceptor_.async_accept(conn->GetSocket(), std::bind(&TcpServer::HandleAccept, this, _1, conn));
+    TcpConnectionPtr conn = std::make_shared<TcpConnection>(io_service_, 
+        current_serial_, on_read_);
+    acceptor_.async_accept(conn->GetSocket(), std::bind(&TcpServer::HandleAccept, 
+        this, _1, conn));
 }
 
 
@@ -150,7 +152,7 @@ void TcpServer::DropDeadConnections()
         Close(serial);
     }
 
-    drop_dead_timer_.expires_from_now(boost::posix_time::seconds(1));
+    drop_dead_timer_.expires_from_now(std::chrono::seconds(1));
     drop_dead_timer_.async_wait(std::bind(&TcpServer::DropDeadConnections, this));
 }
 
