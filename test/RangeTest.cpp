@@ -762,6 +762,88 @@ TEST(StringPiece, split_step_with_process_range_delimiter)
     EXPECT_NO_THROW(p.split_step(' ', split_step_with_process_noop));
 }
 
+
+TEST(StringPiece, split_step_with_process_char_delimiter_additional_args) {
+    //              0         1         2
+    //              012345678901234567890123456
+    auto const s = "this is just  a test string";
+    auto const e = std::next(s, std::strlen(s));
+    auto const delimiter = ' ';
+    EXPECT_EQ('\0', *e);
+
+    StringPiece p(s);
+    EXPECT_EQ(s, p.begin());
+    EXPECT_EQ(e, p.end());
+    EXPECT_EQ(s, p);
+
+    auto const functor = [](
+        StringPiece s,
+        StringPiece expected
+        ) 
+    {
+        EXPECT_EQ(expected, s);
+        return expected;
+    };
+
+    auto const checker = [&](StringPiece expected) 
+    {
+        EXPECT_EQ(expected, p.split_step(delimiter, functor, expected));
+    };
+
+    checker("this");
+    checker("is");
+    checker("just");
+    checker("");
+    checker("a");
+    checker("test");
+    checker("string");
+    checker("");
+    checker("");
+
+    EXPECT_TRUE(p.empty());
+}
+
+TEST(StringPiece, split_step_with_process_range_delimiter_additional_args) {
+    //              0         1         2         3
+    //              0123456789012345678901234567890123
+    auto const s = "this  is  just    a   test  string";
+    auto const e = std::next(s, std::strlen(s));
+    auto const delimiter = "  ";
+    EXPECT_EQ('\0', *e);
+
+    StringPiece p(s);
+    EXPECT_EQ(s, p.begin());
+    EXPECT_EQ(e, p.end());
+    EXPECT_EQ(s, p);
+
+    auto const functor = [](
+        StringPiece s,
+        StringPiece expected
+        ) 
+    {
+        EXPECT_EQ(expected, s);
+        return expected;
+    };
+
+    auto const checker = [&](StringPiece expected) 
+    {
+        EXPECT_EQ(expected, p.split_step(delimiter, functor, expected));
+    };
+
+    checker("this");
+    checker("is");
+    checker("just");
+    checker("");
+    checker("a");
+    checker(" test");
+    checker("string");
+    checker("");
+    checker("");
+
+    EXPECT_TRUE(p.empty());
+}
+
+
 TEST(qfind, UInt32_Ranges)
 {
     vector<uint32_t> a({ 1, 2, 3, 260, 5 });

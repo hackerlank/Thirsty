@@ -125,6 +125,7 @@ public:
         typename std::iterator_traits<Iter>::reference > ::type
         value_type;
     typedef typename std::iterator_traits<Iter>::reference reference;
+
     typedef std::char_traits < typename std::remove_const<value_type>::type >
         traits_type;
 
@@ -626,7 +627,8 @@ public:
 
     /**
      * Convenience method that calls `split_step()` and passes the result to a
-     * functor, returning whatever the functor does.
+     * functor, returning whatever the functor does. Any additional arguments
+     * `args` passed to this function are perfectly forwarded to the functor.
      *
      * Say you have a functor with this signature:
      *
@@ -640,7 +642,7 @@ public:
      *
      * Example:
      *
-     *  void do_some_parsing(folly::StringPiece s) {
+     *  void do_some_parsing(StringPiece s) {
      *    auto version = s.split_step(' ', [&](folly::StringPiece x) {
      *      if (x.empty()) {
      *        throw std::invalid_argument("empty string");
@@ -651,20 +653,52 @@ public:
      *    // ...
      *  }
      *
+     *  struct Foo {
+     *    void parse(StringPiece s) {
+     *      s.split_step(' ', parse_field, bar, 10);
+     *      s.split_step('\t', parse_field, baz, 20);
+     *
+     *      auto const kludge = [](StringPiece x, int &out, int def) {
+     *        if (x == "null") {
+     *          out = 0;
+     *        } else {
+     *          parse_field(x, out, def);
+     *        }
+     *      };
+     *
+     *      s.split_step('\t', kludge, gaz);
+     *      s.split_step(' ', kludge, foo);
+     *    }
+     *
+     *  private:
+     *    int bar;
+     *    int baz;
+     *    int gaz;
+     *    int foo;
+     *
+     *    static parse_field(StringPiece s, int &out, int def) {
+     *      try {
+     *        out = to<int>(s);
+     *      } catch (std::exception const &) {
+     *        value = def;
+     *      }
+     *    }
+     *  };
+     *
      * @author: Marcelo Juchem <marcelo@fb.com>
      */
-    template <typename TProcess>
-    auto split_step(value_type delimiter, TProcess &&process)
-        -> decltype(process(std::declval<Range>()))
+    template <typename TProcess, typename... Args>
+    auto split_step(value_type delimiter, TProcess &&process, Args &&...args)
+        -> decltype(process(std::declval<Range>(), std::forward<Args>(args)...))
     {
-        return process(split_step(delimiter));
+        return process(split_step(delimiter), std::forward<Args>(args)...);
     }
 
-    template <typename TProcess>
-    auto split_step(Range delimiter, TProcess &&process)
-        -> decltype(process(std::declval<Range>()))
+    template <typename TProcess, typename... Args>
+    auto split_step(Range delimiter, TProcess &&process, Args &&...args)
+        -> decltype(process(std::declval<Range>(), std::forward<Args>(args)...))
     {
-        return process(split_step(delimiter));
+        return process(split_step(delimiter), std::forward<Args>(args)...);
     }
 
 private:
@@ -678,7 +712,7 @@ const typename Range<Iter>::size_type Range<Iter>::npos = std::string::npos;
 template <class T>
 void swap(Range<T>& lhs, Range<T>& rhs)
 {
-  lhs.swap(rhs);
+    lhs.swap(rhs);
 }
 
 /**
@@ -687,7 +721,7 @@ void swap(Range<T>& lhs, Range<T>& rhs)
 template <class Iter>
 Range<Iter> range(Iter first, Iter last)
 {
-  return Range<Iter>(first, last);
+    return Range<Iter>(first, last);
 }
 
 /*
@@ -699,7 +733,7 @@ template <class Collection,
               decltype(std::declval<Collection>().data())>::type>
 Range<T*> range(Collection&& v)
 {
-  return Range<T*>(v.data(), v.data() + v.size());
+    return Range<T*>(v.data(), v.data() + v.size());
 }
 
 template <class T, size_t n>
@@ -722,13 +756,13 @@ std::ostream& operator<<(std::ostream& os, const StringPiece& piece);
 template <class T>
 inline bool operator==(const Range<T>& lhs, const Range<T>& rhs)
 {
-  return lhs.size() == rhs.size() && lhs.compare(rhs) == 0;
+    return lhs.size() == rhs.size() && lhs.compare(rhs) == 0;
 }
 
 template <class T>
 inline bool operator<(const Range<T>& lhs, const Range<T>& rhs)
 {
-  return lhs.compare(rhs) < 0;
+    return lhs.compare(rhs) < 0;
 }
 
 /**
@@ -740,15 +774,15 @@ namespace detail {
 template <class A, class B>
 struct ComparableAsStringPiece
 {
-  enum
-  {
-    value =
-    (std::is_convertible<A, StringPiece>::value
-     && std::is_same<B, StringPiece>::value)
-    ||
-    (std::is_convertible<B, StringPiece>::value
-     && std::is_same<A, StringPiece>::value)
-  };
+    enum
+    {
+        value =
+        (std::is_convertible<A, StringPiece>::value
+        && std::is_same<B, StringPiece>::value)
+        ||
+        (std::is_convertible<B, StringPiece>::value
+        && std::is_same<A, StringPiece>::value)
+    };
 };
 
 } // namespace detail
@@ -761,7 +795,7 @@ typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
 operator==(const T& lhs, const U& rhs)
 {
-  return StringPiece(lhs) == StringPiece(rhs);
+    return StringPiece(lhs) == StringPiece(rhs);
 }
 
 /**
@@ -772,7 +806,7 @@ typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
 operator<(const T& lhs, const U& rhs)
 {
-  return StringPiece(lhs) < StringPiece(rhs);
+    return StringPiece(lhs) < StringPiece(rhs);
 }
 
 /**
@@ -783,7 +817,7 @@ typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
 operator>(const T& lhs, const U& rhs)
 {
-  return StringPiece(lhs) > StringPiece(rhs);
+    return StringPiece(lhs) > StringPiece(rhs);
 }
 
 /**
@@ -794,7 +828,7 @@ typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
 operator<=(const T& lhs, const U& rhs)
 {
-  return StringPiece(lhs) <= StringPiece(rhs);
+    return StringPiece(lhs) <= StringPiece(rhs);
 }
 
 /**
@@ -805,15 +839,15 @@ typename
 std::enable_if<detail::ComparableAsStringPiece<T, U>::value, bool>::type
 operator>=(const T& lhs, const U& rhs)
 {
-  return StringPiece(lhs) >= StringPiece(rhs);
+    return StringPiece(lhs) >= StringPiece(rhs);
 }
 
 struct StringPieceHash
 {
-  std::size_t operator()(const StringPiece& str) const
-  {
-    return static_cast<std::size_t>(str.hash());
-  }
+    std::size_t operator()(const StringPiece& str) const
+    {
+        return static_cast<std::size_t>(str.hash());
+    }
 };
 
 /**
@@ -824,64 +858,64 @@ size_t qfind(const Range<T>& haystack,
              const Range<T>& needle,
              Comp eq)
 {
-  // Don't use std::search, use a Boyer-Moore-like trick by comparing
-  // the last characters first
-  auto const nsize = needle.size();
-  if (haystack.size() < nsize)
-  {
-    return std::string::npos;
-  }
-  if (!nsize) return 0;
-  auto const nsize_1 = nsize - 1;
-  auto const lastNeedle = needle[nsize_1];
-
-  // Boyer-Moore skip value for the last char in the needle. Zero is
-  // not a valid value; skip will be computed the first time it's
-  // needed.
-  std::string::size_type skip = 0;
-
-  auto i = haystack.begin();
-  auto iEnd = haystack.end() - nsize_1;
-
-  while (i < iEnd)
-  {
-    // Boyer-Moore: match the last element in the needle
-    while (!eq(i[nsize_1], lastNeedle))
+    // Don't use std::search, use a Boyer-Moore-like trick by comparing
+    // the last characters first
+    auto const nsize = needle.size();
+    if (haystack.size() < nsize)
     {
-      if (++i == iEnd)
-      {
-        // not found
         return std::string::npos;
-      }
     }
-    // Here we know that the last char matches
-    // Continue in pedestrian mode
-    for (size_t j = 0; ; )
+    if (!nsize) return 0;
+    auto const nsize_1 = nsize - 1;
+    auto const lastNeedle = needle[nsize_1];
+
+    // Boyer-Moore skip value for the last char in the needle. Zero is
+    // not a valid value; skip will be computed the first time it's
+    // needed.
+    std::string::size_type skip = 0;
+
+    auto i = haystack.begin();
+    auto iEnd = haystack.end() - nsize_1;
+
+    while (i < iEnd)
     {
-      assert(j < nsize);
-      if (!eq(i[j], needle[j]))
-      {
-        // Not found, we can skip
-        // Compute the skip value lazily
-        if (skip == 0)
+        // Boyer-Moore: match the last element in the needle
+        while (!eq(i[nsize_1], lastNeedle))
         {
-          skip = 1;
-          while (skip <= nsize_1 && !eq(needle[nsize_1 - skip], lastNeedle))
-          {
-            ++skip;
-          }
+            if (++i == iEnd)
+            {
+                // not found
+                return std::string::npos;
+            }
         }
-        i += skip;
-        break;
-      }
-      // Check if done searching
-      if (++j == nsize)
-      {
-        // Yay
-        return i - haystack.begin();
-      }
+        // Here we know that the last char matches
+        // Continue in pedestrian mode
+        for (size_t j = 0;;)
+        {
+            assert(j < nsize);
+            if (!eq(i[j], needle[j]))
+            {
+                // Not found, we can skip
+                // Compute the skip value lazily
+                if (skip == 0)
+                {
+                    skip = 1;
+                    while (skip <= nsize_1 && !eq(needle[nsize_1 - skip], lastNeedle))
+                    {
+                        ++skip;
+                    }
+                }
+                i += skip;
+                break;
+            }
+            // Check if done searching
+            if (++j == nsize)
+            {
+                // Yay
+                return i - haystack.begin();
+            }
+        }
     }
-  }
   return std::string::npos;
 }
 
@@ -923,14 +957,14 @@ struct AsciiCaseSensitive
  */
 struct AsciiCaseInsensitive
 {
-  bool operator()(char lhs, char rhs) const
-  {
-    char k = lhs ^ rhs;
-    if (k == 0) return true;
-    if (k != 32) return false;
-    k = lhs | rhs;
-    return (k >= 'a' && k <= 'z');
-  }
+    bool operator()(char lhs, char rhs) const
+    {
+        char k = lhs ^ rhs;
+        if (k == 0) return true;
+        if (k != 32) return false;
+        k = lhs | rhs;
+        return (k >= 'a' && k <= 'z');
+    }
 };
 
 extern const AsciiCaseSensitive asciiCaseSensitive;
@@ -999,4 +1033,3 @@ inline size_t qfind_first_of(const Range<const unsigned char*>& haystack,
     return detail::qfind_first_byte_of(StringPiece(haystack),
         StringPiece(needles));
 }
-
