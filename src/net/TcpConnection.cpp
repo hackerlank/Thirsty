@@ -107,7 +107,7 @@ bool TcpConnection::AsynWrite(const void* data, uint32_t size)
         return false;
     }
 
-    Header head = { size, 0, 0 };
+    Header head = { (uint16_t)size };
     head.checksum = crc32c(data, size);
     size_t buf_size = size + sizeof(head);
     uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));

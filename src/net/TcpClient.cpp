@@ -57,7 +57,7 @@ bool TcpClient::AsynWrite(const void* data, uint32_t bytes)
         return false;
     }
 
-    Header head = { bytes, 0, 0 };
+    Header head = { (uint16_t)bytes };
     size_t buf_size = bytes + sizeof(head);
     head.checksum = crc32c(data, bytes);
     uint8_t* buf = (uint8_t*)checkedMalloc(goodMallocSize(buf_size));
@@ -70,7 +70,7 @@ bool TcpClient::AsynWrite(const void* data, uint32_t bytes)
 
 void TcpClient::AsynWriteHeartbeat()
 {
-    Header head = { 0, 0, 0 };
+    Header head = { };
     boost::asio::async_write(socket_, boost::asio::buffer(&head, sizeof(head)),
         std::bind(&TcpClient::HandleWrite, this, _1, _2, nullptr));
 }
