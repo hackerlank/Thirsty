@@ -9,7 +9,6 @@
 #include <boost/noncopyable.hpp>
 #include "core/Range.h"
 #include "net/Packet.h"
-#include "Timer.h"
 
 
 class TcpClient : private boost::noncopyable
