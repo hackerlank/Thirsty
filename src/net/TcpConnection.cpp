@@ -31,7 +31,7 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::Close()
 {
-    if (!closed_)
+    if (!closed_ && socket_.is_open())
     {
         socket_.shutdown(boost::asio::socket_base::shutdown_both);
         socket_.close();

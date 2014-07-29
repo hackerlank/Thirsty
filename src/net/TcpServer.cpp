@@ -44,7 +44,10 @@ void TcpServer::Start(const std::string& addr,
 
 void TcpServer::Stop()
 {
-    acceptor_.cancel();
+    if (acceptor_.is_open())
+    {
+        acceptor_.cancel();
+    }
     connections_.clear();
 }
 
