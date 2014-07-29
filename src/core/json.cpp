@@ -55,7 +55,7 @@ char32_t decodeUtf8(const unsigned char*& p,
      * 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
      */
 
-    auto skip = [&] { ++p; return char32_t('\ufffd'); };
+    auto skip = [&] { ++p; return char32_t(65533); }; // U'\ufffd'
     if (p >= e) 
     {
         if (skipOnError) return skip();
@@ -768,7 +768,7 @@ void escapeString(StringPiece input,
                 // calling utf8_decode has the side effect of
                 // checking that utf8 encodings are valid
                 char32_t v = decodeUtf8(q, e, opts.skip_invalid_utf8);
-                if (opts.skip_invalid_utf8 && v == char32_t('\ufffd')) 
+                if (opts.skip_invalid_utf8 && v == char32_t(65533)) // U'\ufffd'
                 {
                     out.append("\ufffd");
                     p = q;
