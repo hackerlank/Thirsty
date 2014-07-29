@@ -27,10 +27,13 @@ TEST(Strings, stringPrintf)
 
     EXPECT_EQ("7.7", stringPrintf("%1.1f", 7.7));
     EXPECT_EQ("7.7", stringPrintf("%1.1lf", 7.7));
-    EXPECT_EQ("7.70000000000000020",
-        stringPrintf("%.17f", 7.7));
-    EXPECT_EQ("7.70000000000000020",
-        stringPrintf("%.17lf", 7.7));
+#ifdef _MSC_VER
+    EXPECT_EQ("7.70000000000000020", stringPrintf("%.17f", 7.7));
+    EXPECT_EQ("7.70000000000000020", stringPrintf("%.17lf", 7.7));
+#else    
+    EXPECT_EQ("7.70000000000000018", stringPrintf("%.17f", 7.7));
+    EXPECT_EQ("7.70000000000000018", stringPrintf("%.17lf", 7.7));
+#endif    
 }
 
 TEST(Strings, stringAppendf)
@@ -541,14 +544,19 @@ struct PrettyTestCase
 
 
 PrettyTestCase prettyTestCases[] =
-{
-    { string("8.53e+007 s "), 85.3e6, PRETTY_TIME },
-    { string("8.53e+007 s "), 85.3e6, PRETTY_TIME },
+{   
     { string("85.3 ms"), 85.3e-3, PRETTY_TIME },
     { string("85.3 us"), 85.3e-6, PRETTY_TIME },
     { string("85.3 ns"), 85.3e-9, PRETTY_TIME },
     { string("85.3 ps"), 85.3e-12, PRETTY_TIME },
-    { string("8.53e-014 s "), 85.3e-15, PRETTY_TIME },
+#ifdef _MSC_VER
+    { string("8.53e+007 s "), 85.3e6, PRETTY_TIME },
+    { string("8.53e-014 s "), 85.3e-15, PRETTY_TIME },    
+#else    
+    { string("8.53e+07 s "), 85.3e6, PRETTY_TIME },
+    { string("8.53e-14 s "), 85.3e-15, PRETTY_TIME },
+#endif     
+
 
     { string("0 s "), 0, PRETTY_TIME },
     { string("1 s "), 1.0, PRETTY_TIME },

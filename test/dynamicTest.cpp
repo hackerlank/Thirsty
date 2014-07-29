@@ -237,7 +237,11 @@ TEST(Dynamic, FormattedIO)
     dynamic dint = 12;
     out << "0x" << std::hex << ++dint << ' ' << std::setprecision(1)
         << doubl << '\n';
+#ifdef _MSC_VER        
     EXPECT_EQ(out.str(), "0xd 1e+002\n");
+#else
+    EXPECT_EQ(out.str(), "0xd 1e+02\n");
+#endif
 
     out.str("");
     dynamic arrr = { 1, 2, 3 };
