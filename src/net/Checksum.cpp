@@ -47,11 +47,11 @@ namespace detail {
 #endif
 
 // Fast SIMD implementation of CRC-32C for x86 with SSE 4.2
-    uint32_t crc32c_hw(const void* input, size_t nbytes, uint32_t startingChecksum)
+    uint32_t crc32c_hw(const void* input, size_t nbytes, uint32_t crc)
 {
     assert(input != nullptr);
     const uint8_t* data = (const uint8_t*)input;
-    uint32_t sum = startingChecksum;
+    uint32_t sum = crc;
     size_t offset = 0;
 
     // Process bytes one at a time until we reach an 8-byte boundary and can
@@ -93,7 +93,7 @@ bool crc32c_hw_supported()
 
 #else
 
-uint32_t crc32c_hw(const uint8_t* data, size_t nbytes, uint32_t startingChecksum)
+uint32_t crc32c_hw(const void* data, size_t nbytes, uint32_t crc)
 {
     throw std::runtime_error("crc32_hw is not implemented on this platform");
 }
