@@ -91,7 +91,6 @@ solution 'Thirsty'
             'snappy',
             'pthread',
             'boost_system',
-            'boost_date_time',
             'boost_thread',
         }
         end
@@ -227,7 +226,6 @@ solution 'UnitTest'
             'snappy',
             'pthread',
             'boost_system',
-            'boost_date_time',
             'boost_thread',
         }
         end
