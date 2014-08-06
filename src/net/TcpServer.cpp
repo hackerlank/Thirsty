@@ -49,6 +49,7 @@ void TcpServer::Stop()
         acceptor_.cancel();
     }
     connections_.clear();
+    drop_dead_timer_.cancel();
 }
 
 void TcpServer::Close(Serial serial)
