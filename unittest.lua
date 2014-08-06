@@ -99,6 +99,7 @@ solution 'UnitTest'
             'zmq',
             'lzma',
             'snappy',
+            'thirsty',
             'pthread',
             'luajit-5.1',
             'boost_system',
