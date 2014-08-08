@@ -30,14 +30,9 @@ solution 'UnitTest'
         defines
         {
             'BOOST_ASIO_SEPARATE_COMPILATION',
-            'BOOST_REGEX_NO_LIB',
-            'BOOST_ASIO_HAS_MOVE',
-            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
-            'BOOST_ASIO_HAS_STD_ARRAY',
-            'BOOST_ASIO_HAS_STD_ATOMIC',
-            'BOOST_ASIO_HAS_STD_SHARED_PTR',
-            'BOOST_ASIO_HAS_STD_CHRONO',
-        }          
+            'BOOST_DATE_TIME_NO_LIB',
+            'BOOST_REGEX_NO_LIB',        
+        }
         files
         {
             'dep/gtest/src/gtest-all.cc',
@@ -72,7 +67,7 @@ solution 'UnitTest'
         libdirs
         {
             'dep/lua/lib',
-            BOOST_ROOT .. '/stage/lib-x64',
+            BOOST_ROOT .. '/stage/lib',
         }
         links
         {
@@ -120,6 +115,7 @@ solution 'UnitTest'
         defines
         {
             'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_DATE_TIME_NO_LIB',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
             'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',

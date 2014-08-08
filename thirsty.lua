@@ -30,6 +30,7 @@ solution 'Thirsty'
         defines
         {
             'BOOST_ASIO_SEPARATE_COMPILATION',
+            'BOOST_DATE_TIME_NO_LIB',
             'BOOST_REGEX_NO_LIB',
             'BOOST_ASIO_HAS_MOVE',
             'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
@@ -67,7 +68,7 @@ solution 'Thirsty'
         libdirs
         {
             'dep/lua/lib',
-            BOOST_ROOT .. '/stage/lib-x64',
+            BOOST_ROOT .. '/stage/lib',
         }
         links
         {
