@@ -1,14 +1,14 @@
 #include "Random.h"
+#include "ThreadLocalPtr.h"
 #include <cassert>
 #include <random>
-#include <boost/thread/tss.hpp>
 
 using namespace std;
 
+// using thread local storage for thread-safety
 static default_random_engine* get_tls_rng()
 {
-    // thread local storage
-    static boost::thread_specific_ptr<default_random_engine>  rng;
+    static ThreadLocalPtr<default_random_engine>  rng;
     if (rng.get() == nullptr)
     {
         rng.reset(new default_random_engine());

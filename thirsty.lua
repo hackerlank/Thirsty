@@ -99,7 +99,6 @@ solution 'Thirsty'
             'pthread',
             'luajit-5.1',
             'boost_system',
-            'boost_thread',
         }
         end
 
