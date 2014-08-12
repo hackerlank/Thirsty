@@ -98,14 +98,7 @@ solution 'UnitTest'
             'pthread',
             'luajit-5.1',
             'boost_system',
-        }
-        linkoptions
-        {
-            '-s',
-            '-rdynamic',
-            '-static-libgcc',
-            '-static-libstdc++',
-        }         
+        }      
         end
         
     project 'thirsty'
