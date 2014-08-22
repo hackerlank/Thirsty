@@ -33,6 +33,12 @@ std::ostream& operator<<(std::ostream& os, const StringPiece& piece)
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const MutableStringPiece& piece) 
+{
+    os.write(piece.start(), piece.size());
+    return os;
+}
+
 namespace detail {
 
 size_t qfind_first_byte_of_memchr(const StringPiece& haystack,
