@@ -41,7 +41,12 @@ namespace {
 typedef function<detail::TimeIterPair(unsigned int)> BenchmarkFun;
 typedef tuple<const char*, const char*, BenchmarkFun> BenchmarkItem;
 
-static vector<BenchmarkItem> benchmarks;
+// avoid static initialization order fiasco
+vector<BenchmarkItem>& getenchmarks()
+{
+    static vector<BenchmarkItem> benchmarks;
+    return benchmarks;
+}
 
 }
 
@@ -61,7 +66,7 @@ void detail::addBenchmarkImpl(const char* file,
                               BenchmarkFun fun)
 {
     auto item = make_tuple(file, name, fun);
-    benchmarks.push_back(item);
+    getenchmarks().push_back(item);
 }
 
 
@@ -131,9 +136,9 @@ static void printBenchmarkResultsAsTable(
 void runBenchmarks(const std::string& regexp, int32_t min_iters,
                    int32_t min_usec, int32_t max_secs)
 {
-    CHECK(!benchmarks.empty());
+    CHECK(!getenchmarks().empty());
     vector<tuple<const char*, const char*, double>> results;
-    results.reserve(benchmarks.size() - 1);
+    results.reserve(getenchmarks().size() - 1);
 
     unique_ptr<regex> bmRegex;
     if (!regexp.empty())
@@ -142,9 +147,9 @@ void runBenchmarks(const std::string& regexp, int32_t min_iters,
     }
 
     // PLEASE KEEP QUIET. MEASUREMENTS IN PROGRESS.
-
+    auto benchmarks = getenchmarks();
     auto const globalBaseline = runBenchmarkGetNSPerIteration(
-        get<2>(benchmarks.front()), 0, min_iters, min_usec, max_secs);
+        get<2>(getenchmarks().front()), 0, min_iters, min_usec, max_secs);
     for (auto i = 1; i < benchmarks.size(); i++)
     {
         double elapsed = 0.0;
@@ -248,6 +253,7 @@ void printBenchmarkResultsAsTable(
 
     // Compute the longest benchmark name
     size_t longestName = 0;
+    auto benchmarks = getenchmarks();
     FOR_EACH_RANGE(i, 1, benchmarks.size())
     {
         longestName = max(longestName, strlen(get<1>(benchmarks[i])));
