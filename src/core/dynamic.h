@@ -42,9 +42,6 @@
  *     ("key2", { "a", "array" })
  *     ;
  *
- * Also see folly/json.h for the serialization and deserialization
- * functions for JSON.
- *
  * Note: dynamic is not DefaultConstructible.  Rationale:
  *
  *   - The intuitive thing to initialize a defaulted dynamic to would
@@ -63,14 +60,14 @@
 #pragma once
 
 #include <cstdint>
-#include <initializer_list>
 #include <memory>
 #include <ostream>
 #include <string>
-#include <type_traits>
-#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <type_traits>
+#include <unordered_map>
+#include <initializer_list>
 #include <boost/operators.hpp>
 #include "Range.h"
 

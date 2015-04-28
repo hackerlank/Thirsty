@@ -5,7 +5,6 @@
 #pragma once
 
 #include <memory>
-#include <boost/predef/other/endian.h>
 
 // portable version check
 #ifndef __GNUC_PREREQ
@@ -135,6 +134,8 @@ typedef SSIZE_T ssize_t;
 # define __PRETTY_FUNCTION__    __FUNCSIG__
 
 #define alignof     __alignof
+
+#include <boost/detail/endian.hpp>
 
 // endian detection
 #define __ORDER_LITTLE_ENDIAN__     1234
