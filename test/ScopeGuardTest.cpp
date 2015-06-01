@@ -1,40 +1,22 @@
-/*
- * Copyright 2014 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#include "core/ScopeGuard.h"
-#include "logging.h"
+#include "ScopeGuard.h"
+#include "Logging.h"
 #include <gtest/gtest.h>
 #include <functional>
 #include <stdexcept>
 
 using std::vector;
+using folly::ScopeGuard;
+using folly::makeGuard;
 
-double returnsDouble()
-{
+double returnsDouble() {
     return 0.0;
 }
 
-class MyFunctor
-{
+class MyFunctor {
 public:
-    explicit MyFunctor(int* ptr) : ptr_(ptr)
-    {}
+    explicit MyFunctor(int* ptr) : ptr_(ptr) {}
 
-    void operator()()
-    {
+    void operator()() {
         ++*ptr_;
     }
 
@@ -42,8 +24,7 @@ private:
     int* ptr_;
 };
 
-TEST(ScopeGuard, DifferentWaysToBind)
-{
+TEST(ScopeGuard, DifferentWaysToBind) {
     {
         // There is implicit conversion from func pointer
         // double (*)() to function<void()>.
@@ -120,28 +101,22 @@ TEST(ScopeGuard, DifferentWaysToBind)
     EXPECT_EQ(11, n);
 }
 
-#ifdef __GNUC__
-TEST(ScopeGuard, GuardException)
-{
-    EXPECT_DEATH(
-    {
-        ScopeGuard g = makeGuard([&]
-        {
+TEST(ScopeGuard, GuardException) {
+    EXPECT_DEATH({
+        ScopeGuard g = makeGuard([&] {
             throw std::runtime_error("destructors should never throw!");
         });
     },
-    "destructors should never throw!"
-    );
+        "destructors should never throw!"
+        );
 }
-#endif
 
 /**
- * Add an integer to a vector iff it was inserted into the
- * db successfuly. Here is a schematic of how you would accomplish
- * this with scope guard.
- */
-void testUndoAction(bool failure)
-{
+* Add an integer to a vector iff it was inserted into the
+* db successfuly. Here is a schematic of how you would accomplish
+* this with scope guard.
+*/
+void testUndoAction(bool failure) {
     vector<int64_t> v;
     { // defines a "mini" scope
 
@@ -155,94 +130,80 @@ void testUndoAction(bool failure)
         // if it failed or succeeded.
 
         // if there was no failure, dismiss the undo guard action.
-        if (!failure)
-        {
+        if (!failure) {
             guard.dismiss();
         }
     } // all stack allocated in the mini-scope will be destroyed here.
 
-    if (failure)
-    {
+    if (failure) {
         EXPECT_EQ(0, v.size()); // the action failed => undo insertion
     }
-    else
-    {
+    else {
         EXPECT_EQ(1, v.size()); // the action succeeded => keep insertion
     }
 }
 
-TEST(ScopeGuard, UndoAction)
-{
+TEST(ScopeGuard, UndoAction) {
     testUndoAction(true);
     testUndoAction(false);
 }
 
 /**
- * Sometimes in a try catch block we want to execute a piece of code
- * regardless if an exception happened or not. For example, you want
- * to close a db connection regardless if an exception was thrown during
- * insertion. In Java and other languages there is a finally clause that
- * helps accomplish this:
- *
- *   try {
- *     dbConn.doInsert(sql);
- *   } catch (const DbException& dbe) {
- *     dbConn.recordFailure(dbe);
- *   } catch (const CriticalException& e) {
- *     throw e; // re-throw the exception
- *   } finally {
- *     dbConn.closeConnection(); // executes no matter what!
- *   }
- *
- * We can approximate this behavior in C++ with ScopeGuard.
- */
-enum class ErrorBehavior
-{
+* Sometimes in a try catch block we want to execute a piece of code
+* regardless if an exception happened or not. For example, you want
+* to close a db connection regardless if an exception was thrown during
+* insertion. In Java and other languages there is a finally clause that
+* helps accomplish this:
+*
+*   try {
+*     dbConn.doInsert(sql);
+*   } catch (const DbException& dbe) {
+*     dbConn.recordFailure(dbe);
+*   } catch (const CriticalException& e) {
+*     throw e; // re-throw the exception
+*   } finally {
+*     dbConn.closeConnection(); // executes no matter what!
+*   }
+*
+* We can approximate this behavior in C++ with ScopeGuard.
+*/
+enum class ErrorBehavior {
     SUCCESS,
     HANDLED_ERROR,
     UNHANDLED_ERROR,
 };
 
-void testFinally(ErrorBehavior error)
-{
+void testFinally(ErrorBehavior error) {
     bool cleanupOccurred = false;
 
-    try
-    {
+    try {
         ScopeGuard guard = makeGuard([&] { cleanupOccurred = true; });
 
-        try
-        {
-            if (error == ErrorBehavior::HANDLED_ERROR)
-            {
+        try {
+            if (error == ErrorBehavior::HANDLED_ERROR) {
                 throw std::runtime_error("throwing an expected error");
             }
-            else if (error == ErrorBehavior::UNHANDLED_ERROR)
-            {
+            else if (error == ErrorBehavior::UNHANDLED_ERROR) {
                 throw "never throw raw strings";
             }
         }
-        catch (const std::runtime_error&)
-        {
+        catch (const std::runtime_error&) {
         }
     }
-    catch (...)
-    {
+    catch (...) {
         // Outer catch to swallow the error for the UNHANDLED_ERROR behavior
     }
 
     EXPECT_TRUE(cleanupOccurred);
 }
 
-TEST(ScopeGuard, TryCatchFinally)
-{
+TEST(ScopeGuard, TryCatchFinally) {
     testFinally(ErrorBehavior::SUCCESS);
     testFinally(ErrorBehavior::HANDLED_ERROR);
     testFinally(ErrorBehavior::UNHANDLED_ERROR);
 }
 
-TEST(ScopeGuard, TEST_SCOPE_EXIT)
-{
+TEST(ScopeGuard, TEST_SCOPE_EXIT) {
     int x = 0;
     {
         SCOPE_EXIT{ ++x; };
@@ -251,14 +212,11 @@ TEST(ScopeGuard, TEST_SCOPE_EXIT)
     EXPECT_EQ(1, x);
 }
 
-class Foo
-{
+class Foo {
 public:
     Foo() {}
-    ~Foo()
-    {
-        try
-        {
+    ~Foo() {
+        try {
             auto e = std::current_exception();
             int test = 0;
             {
@@ -273,10 +231,8 @@ public:
     }
 };
 
-TEST(ScopeGuard, TEST_SCOPE_FAILURE2)
-{
-    try
-    {
+TEST(ScopeGuard, TEST_SCOPE_FAILURE2) {
+    try {
         Foo f;
         throw std::runtime_error("test");
     }
@@ -284,33 +240,26 @@ TEST(ScopeGuard, TEST_SCOPE_FAILURE2)
     }
 }
 
-void testScopeFailAndScopeSuccess(ErrorBehavior error, bool expectFail)
-{
+void testScopeFailAndScopeSuccess(ErrorBehavior error, bool expectFail) {
     bool scopeFailExecuted = false;
     bool scopeSuccessExecuted = false;
 
-    try
-    {
+    try {
         SCOPE_FAIL{ scopeFailExecuted = true; };
         SCOPE_SUCCESS{ scopeSuccessExecuted = true; };
 
-        try
-        {
-            if (error == ErrorBehavior::HANDLED_ERROR)
-            {
+        try {
+            if (error == ErrorBehavior::HANDLED_ERROR) {
                 throw std::runtime_error("throwing an expected error");
             }
-            else if (error == ErrorBehavior::UNHANDLED_ERROR)
-            {
+            else if (error == ErrorBehavior::UNHANDLED_ERROR) {
                 throw "never throw raw strings";
             }
         }
-        catch (const std::runtime_error&)
-        {
+        catch (const std::runtime_error&) {
         }
     }
-    catch (...)
-    {
+    catch (...) {
         // Outer catch to swallow the error for the UNHANDLED_ERROR behavior
     }
 
@@ -318,17 +267,14 @@ void testScopeFailAndScopeSuccess(ErrorBehavior error, bool expectFail)
     EXPECT_EQ(!expectFail, scopeSuccessExecuted);
 }
 
-TEST(ScopeGuard, TEST_SCOPE_FAIL_AND_SCOPE_SUCCESS)
-{
+TEST(ScopeGuard, TEST_SCOPE_FAIL_AND_SCOPE_SUCCESS) {
     testScopeFailAndScopeSuccess(ErrorBehavior::SUCCESS, false);
     testScopeFailAndScopeSuccess(ErrorBehavior::HANDLED_ERROR, false);
     testScopeFailAndScopeSuccess(ErrorBehavior::UNHANDLED_ERROR, true);
 }
 
-TEST(ScopeGuard, TEST_SCOPE_SUCCESS_THROW)
-{
-    auto lambda = []()
-    {
+TEST(ScopeGuard, TEST_SCOPE_SUCCESS_THROW) {
+    auto lambda = []() {
         SCOPE_SUCCESS{ throw std::runtime_error("ehm"); };
     };
     EXPECT_THROW(lambda(), std::runtime_error);
