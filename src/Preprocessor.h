@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Facebook, Inc.
+ * Copyright 2015 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 // @author: Andrei Alexandrescu
 
-#pragma once
+#ifndef FOLLY_PREPROCESSOR_
+#define FOLLY_PREPROCESSOR_
 
 /**
  * Necessarily evil preprocessor-related amenities.
@@ -27,10 +28,24 @@
  * FB_ONE_OR_NONE(hello) expands to nothing. This macro is used to
  * insert or eliminate text based on the presence of another argument.
  */
-#ifdef __GNUC__
+#ifdef _MSC_VER
 
+#define VA_NARGS_IMPL(_1, _2, _3, _4, _5, N, ...) N
+#define VA_NARGS(...) VA_NARGS_IMPL(X,##__VA_ARGS__, 4, 3, 2, 1, 0)
+#define VARARG_IMPL2(base, count, ...) base##count(__VA_ARGS__)
+#define VARARG_IMPL(base, count, ...) VARARG_IMPL2(base, count, __VA_ARGS__)
+#define VARARG(base, ...) VARARG_IMPL(base, VA_NARGS(__VA_ARGS__), __VA_ARGS__)
+
+#define FB_ONE_OR_NONE0() /* */
+#define FB_ONE_OR_NONE1(x) /* */
+#define FB_ONE_OR_NONE2(x, y) x
+#define FB_ONE_OR_NONE3(x, y, z) x
+#define FB_ONE_OR_NONE(...) VARARG(FB_ONE_OR_NONE, __VA_ARGS__)
+
+#else
 #define FB_ONE_OR_NONE(a, ...) FB_THIRD(a, ## __VA_ARGS__, a)
 #define FB_THIRD(a, b, ...) __VA_ARGS__
+#endif
 
 /**
  * Helper macro that extracts the first argument out of a list of any
@@ -46,8 +61,6 @@
 #define FB_ARG_2_OR_1(...) FB_ARG_2_OR_1_IMPL(__VA_ARGS__, __VA_ARGS__)
 // Support macro for the above
 #define FB_ARG_2_OR_1_IMPL(a, b, ...) b
-
-#endif
 
 /**
  * Helper macro that provides a way to pass argument with commas in it to
@@ -78,4 +91,7 @@
  * Use FB_STRINGIZE(x) when you'd want to do what #x does inside
  * another macro expansion.
  */
-#define FB_STRINGIZE(x) #x
+#define FB_STRINGIZE_NX(x)  #x
+#define FB_STRINGIZE(x)     FB_STRINGIZE_NX(x)
+
+#endif // FOLLY_PREPROCESSOR_
