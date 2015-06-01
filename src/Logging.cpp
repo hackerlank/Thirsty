@@ -1,155 +1,94 @@
-#include "logging.h"
-#include "Platform.h"
-#include <cassert>
-#include <ctime>
-#include <cstdarg>
-#include <cinttypes>
-#include "core/Strings.h"
-#include "StackTrace.h"
+// Protocol Buffers - Google's data interchange format
+// Copyright 2008 Google Inc.  All rights reserved.
+// https://developers.google.com/protocol-buffers/
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using std::string;
+#include "Logging.h"
+#include <stdio.h>
+#include <mutex>
+
+using std::mutex;
+using std::lock_guard;
 
 
 namespace internal {
 
-void DefaultLogHandler(LogLevel level,
-                       const char* filename,
-                       int line,
-                       const string& message)
+void DefaultLogHandler(LogLevel level, const char* filename, int line,
+                       const std::string& message) 
 {
     static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
-    LogFileM(level_names[level], "[%s:%d] %s\n", filename, line, message.c_str());
-    // We use fprintf() instead of cerr because we want this to work at static
-    // initialization time.
-    fprintf(stderr, "[%s %s:%d] %s\n",
-        level_names[level], filename, line, message.c_str());
-    fflush(stderr);  // Needed on MSVC.
+    fprintf(stderr, "%s\n", message.c_str());
 }
 
-void NullLogHandler(LogLevel level,
-                    const char* filename,
-                    int line,
-                    const string& message)
+void NullLogHandler(LogLevel /* level */, const char* /* filename */,
+                    int /* line */, const std::string& /* message */) 
 {
-  // Nothing.
+    // Nothing.
 }
 
 static LogHandler* log_handler_ = &DefaultLogHandler;
+static int log_silencer_count_ = 0;
+static mutex log_silencer_count_mutex_;
 
+void LogMessage::Finish() {
+    bool suppress = false;
 
+    if (level_ != LOGLEVEL_FATAL) {
+        lock_guard<mutex> lock(log_silencer_count_mutex_);
+        suppress = log_silencer_count_ > 0;
+    }
 
-LogMessage& LogMessage::operator<<(const string& value)
-{
-    message_ += value;
-    return *this;
-}
+    if (!suppress) {
+        log_handler_(level_, filename_, line_, message_);
+    }
 
-LogMessage& LogMessage::operator<<(const char* value)
-{
-    message_ += value;
-    return *this;
-}
-
-
-
-// Since this is just for logging, we don't care if the current locale changes
-// the results -- in fact, we probably prefer that.  So we use snprintf()
-// instead of Simple*toa().
-#undef DECLARE_STREAM_OPERATOR
-#define DECLARE_STREAM_OPERATOR(TYPE, FORMAT)                       \
-LogMessage& LogMessage::operator<<(TYPE value) {                    \
-    /* 128 bytes should be big enough for any of the primitive */   \
-    /* values which we print with this, but well use snprintf() */  \
-    /* anyway to be extra safe. */                                  \
-    char buffer[128];                                               \
-    snprintf(buffer, sizeof(buffer), FORMAT, value);                \
-    /* Guard against broken MSVC snprintf(). */                     \
-    buffer[sizeof(buffer)-1] = '\0';                                \
-    message_ += buffer;                                             \
-    return *this;                                                   \
-}
-
-DECLARE_STREAM_OPERATOR(char         , "%c" )
-DECLARE_STREAM_OPERATOR(int32_t      , "%d" )
-DECLARE_STREAM_OPERATOR(uint32_t     , "%u" )
-DECLARE_STREAM_OPERATOR(int64_t      , "%" PRIi64)
-DECLARE_STREAM_OPERATOR(uint64_t     , "%" PRIu64)
-DECLARE_STREAM_OPERATOR(double       , "%g" )
-#undef DECLARE_STREAM_OPERATOR
-
-LogMessage::LogMessage(LogLevel level, const char* filename, int line)
-  : level_(level), filename_(filename), line_(line)
-{
-}
-
-LogMessage::~LogMessage()
-{
-}
-
-void LogMessage::Finish()
-{
-    log_handler_(level_, filename_, line_, message_);
-    if (level_ == LOGLEVEL_FATAL)
-    {
-        string stack = getStackTrace();
-        string msg = stringPrintf("%s[%d]: %s\nstack traceback:\n%s\n",
-            filename_, line_, message_.c_str(), stack.c_str());
-        throw std::runtime_error(msg);
+    if (level_ == LOGLEVEL_FATAL) {
+        abort();
     }
 }
 
-void LogFinisher::operator=(LogMessage& other)
-{
-    other << "\n";
+void LogFinisher::operator=(LogMessage& other) {
     other.Finish();
 }
 
 } // namespace internal
 
-LogHandler* SetLogHandler(LogHandler* new_func)
-{
+
+LogHandler* SetLogHandler(LogHandler* new_func) {
     LogHandler* old = internal::log_handler_;
-    if (old == &internal::NullLogHandler)
-    {
+    if (old == &internal::NullLogHandler) {
         old = NULL;
     }
-    if (new_func == NULL)
-    {
+    if (new_func == NULL) {
         internal::log_handler_ = &internal::NullLogHandler;
     }
-    else
-    {
+    else {
         internal::log_handler_ = new_func;
     }
     return old;
-}
-
-
-void LogFileM(const char* module, const char* fmt, ...)
-{
-    assert(module && fmt);
-    time_t now = time(NULL);
-    tm date = *localtime(&now);
-    char filename[256];
-    int r = snprintf(filename, 256, "%s_%d-%d-%d.log", module, date.tm_year + 1900,
-        date.tm_mon, date.tm_mday);
-    if (r <= 0)
-    {
-        return;
-    }
-    char buffer[512];
-    va_list ap;
-    va_start(ap, fmt);
-    r = vsnprintf(buffer, 512, fmt, ap);
-    va_end(ap);
-    if (r <= 0)
-    {
-        return;
-    }
-    FILE* fp = fopen(filename, "a+");
-    if (fp)
-    {
-        fwrite(buffer, 1, r, fp);
-        fclose(fp);
-    }
 }

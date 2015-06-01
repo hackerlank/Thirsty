@@ -79,12 +79,8 @@ class LogFinisher;
 class LogMessage 
 {
 public:
-    typedef LogMessage& (*Manipulator)(LogMessage&);
-
     LogMessage(LogLevel level, const char* filename, int line);
     ~LogMessage();
-
-    LogMessage& operator<<(Manipulator pfn) {return pfn(*this);}
 
     LogMessage& operator<<(const std::string& value);
     LogMessage& operator<<(const char* value);
