@@ -17,9 +17,11 @@ solution 'Thirsty'
 
     filter 'configurations:Release'
         defines     { 'NDEBUG' }
-        flags       { 'Symbols', 'Optimize' }
+        flags       { 'Symbols' }
+        optimize    'On'
 
     filter 'action:vs*'
+        architecture 'x64'
         defines
         {
             'WIN32',
@@ -41,22 +43,12 @@ solution 'Thirsty'
     filter 'system:linux'
         buildoptions    { '-std=c++11 -mcrc32 -rdynamic' }
         defines         '__STDC_LIMIT_MACROS'
-        includedirs     '/usr/local/include/luajit-2.0'
 
     project 'Thirsty'
         location    'build'
-        kind        'ConsoleApp'
+        kind        'StaticLib'
         defines
         {
-            'BOOST_ASIO_SEPARATE_COMPILATION',
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',
-            'BOOST_ASIO_HAS_MOVE',
-            'BOOST_ASIO_HAS_VARIADIC_TEMPLATES',
-            'BOOST_ASIO_HAS_STD_ARRAY',
-            'BOOST_ASIO_HAS_STD_ATOMIC',
-            'BOOST_ASIO_HAS_STD_SHARED_PTR',
-            'BOOST_ASIO_HAS_STD_CHRONO',
             'FOLLY_HAVE_LIBLZ4',
         }
         files
@@ -70,8 +62,6 @@ solution 'Thirsty'
         includedirs
         {
             'src',
-            'dep/lua/include',
-            'dep/zmq/include',
             BOOST_ROOT,
         }
 
@@ -94,33 +84,11 @@ solution 'Thirsty'
                 'boost_system',
             }
 
-    project 'zmq'
+    project 'UnitTest'
         location    'build'
-        kind        'StaticLib'
-
-        defines     'ZMQ_STATIC'
-        includedirs 'dep/zmq/include'
-        files
-        {
-            'dep/zmq/include/*.h',
-            'dep/zmq/src/*.hpp',
-            'dep/zmq/src/*.cpp',
-        }
-
-        filter 'system:windows'
-            includedirs 'dep/zmq/msvc'
-
-        filter 'system:linux'
-            includedirs 'dep/zmq/gcc'
-
-    project 'unit-test'
-        location    'build/test'
         kind        'ConsoleApp'
         defines
-        {
-            'BOOST_ASIO_SEPARATE_COMPILATION',
-            'BOOST_DATE_TIME_NO_LIB',
-            'BOOST_REGEX_NO_LIB',        
+        {      
         }
         files
         {
