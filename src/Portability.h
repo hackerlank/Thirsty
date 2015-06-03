@@ -154,6 +154,26 @@ struct MaxAlign { char c; } __attribute__((__aligned__));
 # error cannot define platform specific thread local storage
 #endif
 
+/* Define attribute wrapper for function attribute used to disable
+ * address sanitizer instrumentation. Unfortunately, this attribute
+ * has issues when inlining is used, so disable that as well. */
+#ifdef FOLLY_SANITIZE_ADDRESS
+# if defined(__clang__)
+#  if __has_attribute(__no_address_safety_analysis__)
+#   define FOLLY_DISABLE_ADDRESS_SANITIZER \
+      __attribute__((__no_address_safety_analysis__, __noinline__))
+#  elif __has_attribute(__no_sanitize_address__)
+#   define FOLLY_DISABLE_ADDRESS_SANITIZER \
+      __attribute__((__no_sanitize_address__, __noinline__))
+#  endif
+# elif defined(__GNUC__)
+#  define FOLLY_DISABLE_ADDRESS_SANITIZER \
+     __attribute__((__no_address_safety_analysis__, __noinline__))
+# endif
+#endif
+#ifndef FOLLY_DISABLE_ADDRESS_SANITIZER
+# define FOLLY_DISABLE_ADDRESS_SANITIZER
+#endif
 
 #if !defined(__clang__) && !defined(_MSC_VER)
 #define FOLLY_CONSTEXPR constexpr
@@ -165,6 +185,8 @@ struct MaxAlign { char c; } __attribute__((__aligned__));
 // MSVC specific defines
 // mainly for posix compat
 #ifdef _MSC_VER
+
+#include <intrin.h>
 
 // this definition is in a really silly place with a silly name
 // and ifdefing it every time we want it is painful
@@ -190,3 +212,7 @@ typedef SSIZE_T ssize_t;
 #define constexpr   
 
 #endif // _MSC_VER
+
+#if defined(__linux__)
+#define FOLLY_HAVE_MEMRCHR
+#endif
