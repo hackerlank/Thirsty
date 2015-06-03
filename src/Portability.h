@@ -193,6 +193,11 @@ struct MaxAlign { char c; } __attribute__((__aligned__));
 #include <basetsd.h>
 typedef SSIZE_T ssize_t;
 
+// Windows use LLP64
+#ifndef __SIZEOF_LONG__
+#define __SIZEOF_LONG__     4
+#endif
+
 // sprintf semantics are not exactly identical
 // but current usage is not a problem
 # define snprintf   sprintf_s
