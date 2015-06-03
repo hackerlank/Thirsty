@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Facebook, Inc.
+ * Copyright 2015 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,32 @@
 // @author Kristina Holst (kholst@fb.com)
 // @author Andrei Alexandrescu (andrei.alexandrescu@fb.com)
 
-#include "core/Range.h"
-#include "Benchmark.h"
-#include "core/Foreach.h"
-#include <gtest/gtest.h>
+#include "Range.h"
 #include <array>
 #include <cstdlib>
 #include <iterator>
 #include <limits>
-#include <string>
-#include <vector>
 #include <random>
-#include <boost/range/concepts.hpp>
+#include <string>
+#include <type_traits>
+#include <vector>
+#include <gtest/gtest.h>
 
 
 using namespace std;
 
 namespace detail {
 
-// declaration of functions in Range.cpp
-size_t qfind_first_byte_of_memchr(const StringPiece& haystack,
-                                  const StringPiece& needles);
+size_t qfind_first_byte_of_nosse(const StringPiece haystack,
+    const StringPiece needles);
 
-size_t qfind_first_byte_of_byteset(const StringPiece& haystack,
-                                   const StringPiece& needles);
+size_t qfind_first_byte_of_sse42(const StringPiece haystack,
+    const StringPiece needles);
 
-}  // namespaces
+size_t qfind_first_byte_of_byteset(const StringPiece haystack,
+    const StringPiece needles);
 
-
-using namespace std;
-
-BOOST_CONCEPT_ASSERT((boost::RandomAccessRangeConcept<StringPiece>));
+} // namespace detail
 
 TEST(StringPiece, All)
 {
@@ -56,6 +51,9 @@ TEST(StringPiece, All)
     string fooStr(foo);
     string foo2Str(foo2);
 
+    // we expect the compiler to optimize things so that there's only one copy
+    // of the string literal "foo", even though we've got it in multiple places
+    EXPECT_EQ(foo, foo2);  // remember, this uses ==, not strcmp, so it's a ptr
     // comparison rather than lexical
 
     // the string object creates copies though, so the c_str of these should be
@@ -227,7 +225,7 @@ TEST(StringPiece, All)
 }
 
 template <class T>
-void expectLT(const T& a, const T& b)
+void expectLT(const T& a, const T& b) 
 {
     EXPECT_TRUE(a < b);
     EXPECT_TRUE(a <= b);
@@ -242,7 +240,7 @@ void expectLT(const T& a, const T& b)
 }
 
 template <class T>
-void expectEQ(const T& a, const T& b)
+void expectEQ(const T& a, const T& b) 
 {
     EXPECT_FALSE(a < b);
     EXPECT_TRUE(a <= b);
@@ -251,10 +249,10 @@ void expectEQ(const T& a, const T& b)
     EXPECT_FALSE(a > b);
 }
 
-TEST(StringPiece, EightBitComparisons)
+TEST(StringPiece, EightBitComparisons) 
 {
     char values[] = { '\x00', '\x20', '\x40', '\x7f', '\x80', '\xc0', '\xff' };
-    const size_t count = sizeof(values) / sizeof(values[0]);
+    constexpr size_t count = sizeof(values) / sizeof(values[0]);
     for (size_t i = 0; i < count; ++i) {
         std::string a(1, values[i]);
         // Defeat copy-on-write
@@ -270,7 +268,7 @@ TEST(StringPiece, EightBitComparisons)
     }
 }
 
-TEST(StringPiece, ToByteRange)
+TEST(StringPiece, ToByteRange) 
 {
     StringPiece a("hello");
     ByteRange b(a);
@@ -285,26 +283,26 @@ TEST(StringPiece, ToByteRange)
     EXPECT_EQ(a.end(), c.end());
 }
 
-TEST(StringPiece, InvalidRange)
+TEST(StringPiece, InvalidRange) 
 {
     StringPiece a("hello");
     EXPECT_EQ(a, a.subpiece(0, 10));
     EXPECT_EQ(StringPiece("ello"), a.subpiece(1));
     EXPECT_EQ(StringPiece("ello"), a.subpiece(1, std::string::npos));
     EXPECT_EQ(StringPiece("ell"), a.subpiece(1, 3));
-    EXPECT_ANY_THROW(a.subpiece(6, 7));
-    EXPECT_ANY_THROW(a.subpiece(6));
+    EXPECT_THROW(a.subpiece(6, 7), std::out_of_range);
+    EXPECT_THROW(a.subpiece(6), std::out_of_range);
 
     std::string b("hello");
     EXPECT_EQ(a, StringPiece(b, 0, 10));
     EXPECT_EQ("ello", a.subpiece(1));
     EXPECT_EQ("ello", a.subpiece(1, std::string::npos));
     EXPECT_EQ("ell", a.subpiece(1, 3));
-    EXPECT_ANY_THROW(a.subpiece(6, 7));
-    EXPECT_ANY_THROW(a.subpiece(6));
+    EXPECT_THROW(a.subpiece(6, 7), std::out_of_range);
+    EXPECT_THROW(a.subpiece(6), std::out_of_range);
 }
 
-TEST(StringPiece, Prefix)
+TEST(StringPiece, Prefix) 
 {
     StringPiece a("hello");
     EXPECT_TRUE(a.startsWith(""));
@@ -352,7 +350,7 @@ TEST(StringPiece, Prefix)
   }
 }
 
-TEST(StringPiece, Suffix)
+TEST(StringPiece, Suffix) 
 {
     StringPiece a("hello");
     EXPECT_TRUE(a.endsWith(""));
@@ -400,7 +398,7 @@ TEST(StringPiece, Suffix)
   }
 }
 
-TEST(StringPiece, PrefixEmpty)
+TEST(StringPiece, PrefixEmpty) 
 {
     StringPiece a;
     EXPECT_TRUE(a.startsWith(""));
@@ -414,7 +412,7 @@ TEST(StringPiece, PrefixEmpty)
     EXPECT_EQ("", a);
 }
 
-TEST(StringPiece, SuffixEmpty)
+TEST(StringPiece, SuffixEmpty) 
 {
     StringPiece a;
     EXPECT_TRUE(a.endsWith(""));
@@ -428,485 +426,66 @@ TEST(StringPiece, SuffixEmpty)
     EXPECT_EQ("", a);
 }
 
-TEST(StringPiece, split_step_char_delimiter)
+TEST(StringPiece, NoInvalidImplicitConversions) 
 {
-    //              0         1         2
-    //              012345678901234567890123456
-    auto const s = "this is just  a test string";
-    auto const e = std::next(s, std::strlen(s));
-    EXPECT_EQ('\0', *e);
+    struct IsString {
+        bool operator()(Range<int*>) { return false; }
+        bool operator()(StringPiece) { return true; }
+    };
 
-    StringPiece p(s);
-    EXPECT_EQ(s, p.begin());
-    EXPECT_EQ(e, p.end());
-
-    auto x = p.split_step(' ');
-    EXPECT_EQ(std::next(s, 5), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("this", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(std::next(s, 8), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("is", x);
-
-    x = p.split_step('u');
-    EXPECT_EQ(std::next(s, 10), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("j", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(std::next(s, 13), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("st", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(std::next(s, 14), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(std::next(s, 16), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("a", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(std::next(s, 21), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("test", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(e, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("string", x);
-
-    x = p.split_step(' ');
-    EXPECT_EQ(e, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("", x);
+    std::string s = "hello";
+    EXPECT_TRUE(IsString()(s));
 }
 
-TEST(StringPiece, split_step_range_delimiter)
+
+TEST(qfind, UInt32_Ranges) 
 {
-    //              0         1         2         3
-    //              0123456789012345678901234567890123
-    auto const s = "this  is  just    a   test  string";
-    auto const e = std::next(s, std::strlen(s));
-    EXPECT_EQ('\0', *e);
+  vector<uint32_t> a({1, 2, 3, 260, 5});
+  vector<uint32_t> b({2, 3, 4});
 
-    StringPiece p(s);
-    EXPECT_EQ(s, p.begin());
-    EXPECT_EQ(e, p.end());
+  auto a_range = Range<const uint32_t*>(&a[0], a.size());
+  auto b_range = Range<const uint32_t*>(&b[0], b.size());
 
-    auto x = p.split_step("  ");
-    EXPECT_EQ(std::next(s, 6), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("this", x);
+  EXPECT_EQ(qfind(a_range, b_range), string::npos);
 
-    x = p.split_step("  ");
-    EXPECT_EQ(std::next(s, 10), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("is", x);
-
-    x = p.split_step("u");
-    EXPECT_EQ(std::next(s, 12), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("j", x);
-
-    x = p.split_step("  ");
-    EXPECT_EQ(std::next(s, 16), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("st", x);
-
-    x = p.split_step("  ");
-    EXPECT_EQ(std::next(s, 18), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("", x);
-
-    x = p.split_step("  ");
-    EXPECT_EQ(std::next(s, 21), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("a", x);
-
-    x = p.split_step("  ");
-    EXPECT_EQ(std::next(s, 28), p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ(" test", x);
-
-    x = p.split_step("  ");
-    EXPECT_EQ(e, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("string", x);
-
-    x = p.split_step("  ");
-    EXPECT_EQ(e, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("", x);
-
-    x = p.split_step(" ");
-    EXPECT_EQ(e, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ("", x);
-}
-
-void split_step_with_process_noop(StringPiece) {}
-
-TEST(StringPiece, split_step_with_process_char_delimiter)
-{
-    //              0         1         2
-    //              012345678901234567890123456
-    auto const s = "this is just  a test string";
-    auto const e = std::next(s, std::strlen(s));
-    EXPECT_EQ('\0', *e);
-
-    StringPiece p(s);
-    EXPECT_EQ(s, p.begin());
-    EXPECT_EQ(e, p.end());
-
-    auto fn = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 5), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("this", x);
-        return 1;
-    };
-    EXPECT_EQ(1, (p.split_step(' ', fn)));
-
-    auto fn2 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 8), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("is", x);
-        return 2;
-    };
-    EXPECT_EQ(2, (p.split_step(' ', fn2)));
-
-    auto fn3 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 10), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("j", x);
-        return 3;
-    };
-    EXPECT_EQ(3, (p.split_step('u', fn3)));
-
-    auto fn4 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 13), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("st", x);
-        return 4;
-    };
-    EXPECT_EQ(4, (p.split_step(' ', fn4)));
-
-    auto fn5 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 14), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("", x);
-        return 5;
-    };
-    EXPECT_EQ(5, (p.split_step(' ', fn5)));
-
-    auto fn6 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 16), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("a", x);
-        return 6;
-    };
-    EXPECT_EQ(6, (p.split_step(' ', fn6)));
-
-    auto fn7 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 21), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("test", x);
-        return 7;
-    };
-    EXPECT_EQ(7, (p.split_step(' ', fn7)));
-
-    auto fn8 = [&](StringPiece x)
-    {
-        EXPECT_EQ(e, p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("string", x);
-        return 8;
-    };
-    EXPECT_EQ(8, (p.split_step(' ', fn8)));
-
-    auto fn9 = [&](StringPiece x)
-    {
-        EXPECT_EQ(e, p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("", x);
-        return 9;
-    };
-    EXPECT_EQ(9, (p.split_step(' ', fn9)));
-
-    EXPECT_TRUE((std::is_same <
-        void,
-        decltype(p.split_step(' ', split_step_with_process_noop))
-    > ::value));
-
-    EXPECT_NO_THROW(p.split_step(' ', split_step_with_process_noop));
-}
-
-TEST(StringPiece, split_step_with_process_range_delimiter)
-{
-    //              0         1         2         3
-    //              0123456789012345678901234567890123
-    auto const s = "this  is  just    a   test  string";
-    auto const e = std::next(s, std::strlen(s));
-    EXPECT_EQ('\0', *e);
-
-    StringPiece p(s);
-    EXPECT_EQ(s, p.begin());
-    EXPECT_EQ(e, p.end());
-
-    auto fn1 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 6), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("this", x);
-        return 1;
-    };
-    EXPECT_EQ(1, (p.split_step("  ", fn1)));
-
-    auto fn2 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 10), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("is", x);
-        return 2;
-    };
-    EXPECT_EQ(2, (p.split_step("  ", fn2)));
-
-    auto fn3 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 12), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("j", x);
-        return 3;
-    };
-    EXPECT_EQ(3, (p.split_step("u", fn3)));
-
-    auto fn4 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 16), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("st", x);
-        return 4;
-    };
-    EXPECT_EQ(4, (p.split_step("  ", fn4)));
-
-    auto fn5 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 18), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("", x);
-        return 5;
-    };
-    EXPECT_EQ(5, (p.split_step("  ", fn5)));
-
-    auto fn6 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 21), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("a", x);
-        return 6;
-    };
-    EXPECT_EQ(6, (p.split_step("  ", fn6)));
-
-    auto fn7 = [&](StringPiece x)
-    {
-        EXPECT_EQ(std::next(s, 28), p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ(" test", x);
-        return 7;
-    };
-    EXPECT_EQ(7, (p.split_step("  ", fn7)));
-
-    auto fn8 = [&](StringPiece x)
-    {
-        EXPECT_EQ(e, p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("string", x);
-        return 8;
-    };
-    EXPECT_EQ(8, (p.split_step("  ", fn8)));
-
-    auto fn9 = [&](StringPiece x)
-    {
-        EXPECT_EQ(e, p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("", x);
-        return 9;
-    };
-    EXPECT_EQ(9, (p.split_step("  ", fn9)));
-
-    auto fn10 = [&](StringPiece x)
-    {
-        EXPECT_EQ(e, p.begin());
-        EXPECT_EQ(e, p.end());
-        EXPECT_EQ("", x);
-        return 10;
-    };
-    EXPECT_EQ(10, (p.split_step("  ", fn10)));
-
-    EXPECT_TRUE((std::is_same <
-        void,
-        decltype(p.split_step(' ', split_step_with_process_noop))
-    > ::value));
-
-    EXPECT_NO_THROW(p.split_step(' ', split_step_with_process_noop));
-}
-
-
-TEST(StringPiece, split_step_with_process_char_delimiter_additional_args) {
-    //              0         1         2
-    //              012345678901234567890123456
-    auto const s = "this is just  a test string";
-    auto const e = std::next(s, std::strlen(s));
-    auto const delimiter = ' ';
-    EXPECT_EQ('\0', *e);
-
-    StringPiece p(s);
-    EXPECT_EQ(s, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ(s, p);
-
-    auto const functor = [](
-        StringPiece s,
-        StringPiece expected
-        ) 
-    {
-        EXPECT_EQ(expected, s);
-        return expected;
-    };
-
-    auto const checker = [&](StringPiece expected) 
-    {
-        EXPECT_EQ(expected, p.split_step(delimiter, functor, expected));
-    };
-
-    checker("this");
-    checker("is");
-    checker("just");
-    checker("");
-    checker("a");
-    checker("test");
-    checker("string");
-    checker("");
-    checker("");
-
-    EXPECT_TRUE(p.empty());
-}
-
-TEST(StringPiece, split_step_with_process_range_delimiter_additional_args) {
-    //              0         1         2         3
-    //              0123456789012345678901234567890123
-    auto const s = "this  is  just    a   test  string";
-    auto const e = std::next(s, std::strlen(s));
-    auto const delimiter = "  ";
-    EXPECT_EQ('\0', *e);
-
-    StringPiece p(s);
-    EXPECT_EQ(s, p.begin());
-    EXPECT_EQ(e, p.end());
-    EXPECT_EQ(s, p);
-
-    auto const functor = [](
-        StringPiece s,
-        StringPiece expected
-        ) 
-    {
-        EXPECT_EQ(expected, s);
-        return expected;
-    };
-
-    auto const checker = [&](StringPiece expected) 
-    {
-        EXPECT_EQ(expected, p.split_step(delimiter, functor, expected));
-    };
-
-    checker("this");
-    checker("is");
-    checker("just");
-    checker("");
-    checker("a");
-    checker(" test");
-    checker("string");
-    checker("");
-    checker("");
-
-    EXPECT_TRUE(p.empty());
-}
-
-
-TEST(qfind, UInt32_Ranges)
-{
-    vector<uint32_t> a({ 1, 2, 3, 260, 5 });
-    vector<uint32_t> b({ 2, 3, 4 });
-
-    auto a_range = Range<const uint32_t*>(&a[0], a.size());
-    auto b_range = Range<const uint32_t*>(&b[0], b.size());
-
-    EXPECT_EQ(qfind(a_range, b_range), string::npos);
-
-    a[3] = 4;
-    EXPECT_EQ(qfind(a_range, b_range), 1);
+  a[3] = 4;
+  EXPECT_EQ(qfind(a_range, b_range), 1);
 }
 
 template <typename NeedleFinder>
-class NeedleFinderTest : public ::testing::Test
-{
-public:
-    static size_t find_first_byte_of(StringPiece haystack, StringPiece needles)
-    {
-        return NeedleFinder::find_first_byte_of(haystack, needles);
-    }
+class NeedleFinderTest : public ::testing::Test {
+ public:
+  static size_t find_first_byte_of(StringPiece haystack, StringPiece needles) {
+    return NeedleFinder::find_first_byte_of(haystack, needles);
+  }
 };
 
-struct SseNeedleFinder
-{
-    static size_t find_first_byte_of(StringPiece haystack, StringPiece needles)
-    {
-        // This will only use the SSE version if it is supported on this CPU
-        // (selected using ifunc).
-        return detail::qfind_first_byte_of(haystack, needles);
-    }
+struct SseNeedleFinder {
+  static size_t find_first_byte_of(StringPiece haystack, StringPiece needles) {
+    // This will only use the SSE version if it is supported on this CPU
+    // (selected using ifunc).
+    return detail::qfind_first_byte_of(haystack, needles);
+  }
 };
 
-struct NoSseNeedleFinder
-{
-    static size_t find_first_byte_of(StringPiece haystack, StringPiece needles)
-    {
-        return detail::qfind_first_byte_of_nosse(haystack, needles);
-    }
+struct NoSseNeedleFinder {
+  static size_t find_first_byte_of(StringPiece haystack, StringPiece needles) {
+    return detail::qfind_first_byte_of_nosse(haystack, needles);
+  }
 };
 
-struct MemchrNeedleFinder
-{
-    static size_t find_first_byte_of(StringPiece haystack, StringPiece needles)
-    {
-        return detail::qfind_first_byte_of_memchr(haystack, needles);
-    }
+struct ByteSetNeedleFinder {
+  static size_t find_first_byte_of(StringPiece haystack, StringPiece needles) {
+    return detail::qfind_first_byte_of_byteset(haystack, needles);
+  }
 };
 
-struct ByteSetNeedleFinder
-{
-    static size_t find_first_byte_of(StringPiece haystack, StringPiece needles)
-    {
-        return detail::qfind_first_byte_of_byteset(haystack, needles);
-    }
-};
-
-typedef ::testing::Types < SseNeedleFinder, NoSseNeedleFinder, MemchrNeedleFinder,
-    ByteSetNeedleFinder > NeedleFinders;
+typedef ::testing::Types<SseNeedleFinder,
+                         NoSseNeedleFinder,
+                         ByteSetNeedleFinder> NeedleFinders;
 TYPED_TEST_CASE(NeedleFinderTest, NeedleFinders);
 
-TYPED_TEST(NeedleFinderTest, Null)
+TYPED_TEST(NeedleFinderTest, Null) 
 {
     { // null characters in the string
         string s(10, char(0));
@@ -945,15 +524,13 @@ TYPED_TEST(NeedleFinderTest, Empty)
     EXPECT_EQ(string::npos, this->find_first_byte_of(b, b));
 }
 
-TYPED_TEST(NeedleFinderTest, Unaligned)
+TYPED_TEST(NeedleFinderTest, Unaligned) 
 {
     // works correctly even if input buffers are not 16-byte aligned
     string s = "0123456789ABCDEFGH";
-    for (int i = 0; i < s.size(); ++i)
-    {
+    for (size_t i = 0; i < s.size(); ++i) {
         StringPiece a(s.c_str() + i);
-        for (int j = 0; j < s.size(); ++j)
-        {
+        for (size_t j = 0; j < s.size(); ++j) {
             StringPiece b(s.c_str() + j);
             EXPECT_EQ((i > j) ? 0 : j - i, this->find_first_byte_of(a, b));
         }
@@ -962,37 +539,32 @@ TYPED_TEST(NeedleFinderTest, Unaligned)
 
 // for some algorithms (specifically those that create a set of needles),
 // we check for the edge-case of _all_ possible needles being sought.
-TYPED_TEST(NeedleFinderTest, Needles256)
+TYPED_TEST(NeedleFinderTest, Needles256) 
 {
     string needles;
     const auto minValue = std::numeric_limits<StringPiece::value_type>::min();
     const auto maxValue = std::numeric_limits<StringPiece::value_type>::max();
     // make the size ~big to avoid any edge-case branches for tiny haystacks
     const int haystackSize = 50;
-    for (int i = minValue; i <= maxValue; i++)   // <=
-    {
-        needles.push_back(i);
+    for (size_t i = minValue; i <= maxValue; i++) {  // <=
+        needles.push_back(static_cast<char>(i));
     }
     EXPECT_EQ(StringPiece::npos, this->find_first_byte_of("", needles));
-    for (int i = minValue; i <= maxValue; i++)
-    {
-        EXPECT_EQ(0, this->find_first_byte_of(string(haystackSize, i), needles));
+    for (size_t i = minValue; i <= maxValue; i++) {
+        EXPECT_EQ(0, this->find_first_byte_of(string(haystackSize, static_cast<char>(i)), needles));
     }
 
     needles.append("these are redundant characters");
     EXPECT_EQ(StringPiece::npos, this->find_first_byte_of("", needles));
-    for (int i = minValue; i <= maxValue; i++)
-    {
-        EXPECT_EQ(0, this->find_first_byte_of(string(haystackSize, i), needles));
+    for (size_t i = minValue; i <= maxValue; i++) {
+        EXPECT_EQ(0, this->find_first_byte_of(string(haystackSize, static_cast<char>(i)), needles));
     }
 }
 
 TYPED_TEST(NeedleFinderTest, Base)
 {
-    for (int i = 0; i < 32; ++i)
-    {
-        for (int j = 0; j < 32; ++j)
-        {
+    for (size_t i = 0; i < 32; ++i) {
+        for (int j = 0; j < 32; ++j) {
             string s = string(i, 'X') + "abca" + string(i, 'X');
             string delims = string(j, 'Y') + "a" + string(j, 'Y');
             EXPECT_EQ(i, this->find_first_byte_of(s, delims));
@@ -1000,7 +572,73 @@ TYPED_TEST(NeedleFinderTest, Base)
     }
 }
 
-TEST(NonConstTest, StringPiece)
+#if !defined(_MSC_VER)
+const size_t kPageSize = 4096;
+// Updates contents so that any read accesses past the last byte will
+// cause a SIGSEGV.  It accomplishes this by changing access to the page that
+// begins immediately after the end of the contents (as allocators and mmap()
+// all operate on page boundaries, this is a reasonable assumption).
+// This function will also initialize buf, which caller must free().
+static void createProtectedBuf(StringPiece& contents, char** buf) 
+{
+    ASSERT_LE(contents.size(), kPageSize);
+    const size_t kSuccess = 0;
+    if (kSuccess != posix_memalign((void**)buf, kPageSize, 4 * kPageSize)) {
+        ASSERT_FALSE(true);
+    }
+    mprotect(*buf + kPageSize, kPageSize, PROT_NONE);
+    size_t newBegin = kPageSize - contents.size();
+    memcpy(*buf + newBegin, contents.data(), contents.size());
+    contents.reset(*buf + newBegin, contents.size());
+}
+
+static void freeProtectedBuf(char* buf) 
+{
+    mprotect(buf + kPageSize, kPageSize, PROT_READ | PROT_WRITE);
+    free(buf);
+}
+
+TYPED_TEST(NeedleFinderTest, NoSegFault) 
+{
+    const string base = string(32, 'a') + string("b");
+    const string delims = string(32, 'c') + string("b");
+    for (int i = 0; i <= 32; i++) {
+        for (int j = 0; j <= 33; j++) {
+            for (int shouldFind = 0; shouldFind <= 1; ++shouldFind) {
+                StringPiece s1(base);
+                s1.advance(i);
+                ASSERT_TRUE(!s1.empty());
+                if (!shouldFind) {
+                    s1.pop_back();
+                }
+                StringPiece s2(delims);
+                s2.advance(j);
+                char* buf1;
+                char* buf2;
+                createProtectedBuf(s1, &buf1);
+                createProtectedBuf(s2, &buf2);
+                // printf("s1: '%s' (%ld) \ts2: '%s' (%ld)\n",
+                //        string(s1.data(), s1.size()).c_str(), s1.size(),
+                //        string(s2.data(), s2.size()).c_str(), s2.size());
+                auto r1 = this->find_first_byte_of(s1, s2);
+                auto f1 = std::find_first_of(s1.begin(), s1.end(),
+                    s2.begin(), s2.end());
+                auto e1 = (f1 == s1.end()) ? StringPiece::npos : f1 - s1.begin();
+                EXPECT_EQ(r1, e1);
+                auto r2 = this->find_first_byte_of(s2, s1);
+                auto f2 = std::find_first_of(s2.begin(), s2.end(),
+                    s1.begin(), s1.end());
+                auto e2 = (f2 == s2.end()) ? StringPiece::npos : f2 - s2.begin();
+                EXPECT_EQ(r2, e2);
+                freeProtectedBuf(buf1);
+                freeProtectedBuf(buf2);
+            }
+        }
+    }
+}
+#endif
+
+TEST(NonConstTest, StringPiece) 
 {
     std::string hello("hello");
     MutableStringPiece sp(&hello.front(), hello.size());
@@ -1010,14 +648,15 @@ TEST(NonConstTest, StringPiece)
         StringPiece s(sp);
         EXPECT_EQ("xello", s);
     }
-  {
-      ByteRange r1(sp);
-      MutableByteRange r2(sp);
-  }
+    {
+        ByteRange r1(sp);
+        MutableByteRange r2(sp);
+    }
 }
 
+
 template<class C>
-void testRangeFunc(C&& x, size_t n)
+void testRangeFunc(C&& x, size_t n) 
 {
     const auto& cx = x;
     // type, conversion checks
@@ -1025,10 +664,8 @@ void testRangeFunc(C&& x, size_t n)
     Range<const int*> r2 = range(std::forward<C>(x));
     Range<const int*> r3 = range(cx);
     Range<const int*> r5 = range(std::move(cx));
-#ifdef __GNUC__
     EXPECT_EQ(r1.begin(), &x[0]);
-    EXPECT_EQ(r1.end(), &x[n]);
-#endif
+    //EXPECT_EQ(r1.end(), &x[n]);
     EXPECT_EQ(n, r1.size());
     EXPECT_EQ(n, r2.size());
     EXPECT_EQ(n, r3.size());
@@ -1037,41 +674,45 @@ void testRangeFunc(C&& x, size_t n)
 
 TEST(RangeFunc, Vector)
 {
-    std::vector<int> x;
-    testRangeFunc(x, 0);
-    x.push_back(2);
+    std::vector<int> x = { 10 };
     testRangeFunc(x, 1);
+    x.push_back(20);
+    testRangeFunc(x, 2);
     testRangeFunc(std::vector < int > {1, 2}, 2);
 }
 
-TEST(RangeFunc, Array)
+TEST(RangeFunc, Array) 
 {
     std::array<int, 3> x;
     testRangeFunc(x, 3);
 }
 
+//TEST(RangeFunc, CArray) 
+//{
+//    int x[] = {1, 2, 3, 4};
+//    testRangeFunc(x, 4);
+//}
 
-std::string get_rand_str(
-    int size, std::uniform_int_distribution<>& dist, std::mt19937& gen) 
+std::string get_rand_str(size_t size,
+                         std::uniform_int_distribution<>& dist,
+                         std::mt19937& gen) 
 {
     std::string ret(size, '\0');
-    for (int i = 0; i < size; ++i) 
-    {
+    for (size_t i = 0; i < size; ++i) {
         ret[i] = static_cast<char>(dist(gen));
     }
 
     return ret;
 }
 
-bool operator==(MutableStringPiece mp, StringPiece sp)
-{
-    return mp.compare(sp) == 0;
+bool operator==(MutableStringPiece mp, StringPiece sp) {
+  return mp.compare(sp) == 0;
 }
 
-bool operator==(StringPiece sp, MutableStringPiece mp)
-{
-    return mp.compare(sp) == 0;
+bool operator==(StringPiece sp, MutableStringPiece mp) {
+  return mp.compare(sp) == 0;
 }
+
 
 TEST(ReplaceAt, exhaustiveTest) 
 {
@@ -1082,13 +723,10 @@ TEST(ReplaceAt, exhaustiveTest)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist('a', 'z');
 
-    for (int i = 0; i < 100; ++i) 
-    {
-        for (int j = 1; j <= msp.size(); ++j) 
-        {
+    for (int i = 0; i < 100; ++i) {
+        for (size_t j = 1; j <= msp.size(); ++j) {
             auto replacement = get_rand_str(j, dist, gen);
-            for (int pos = 0; pos < msp.size() - j; ++pos) 
-            {
+            for (size_t pos = 0; pos < msp.size() - j; ++pos) {
                 msp.replaceAt(pos, replacement);
                 str.replace(pos, replacement.size(), replacement);
                 EXPECT_EQ(msp.compare(str), 0);
@@ -1096,8 +734,8 @@ TEST(ReplaceAt, exhaustiveTest)
         }
     }
 
-    // too far
-    EXPECT_EQ(msp.replaceAt(msp.size() - 2, StringPiece("meh")), false);
+  // too far
+  EXPECT_EQ(msp.replaceAt(msp.size() - 2, StringPiece("meh")), false);
 }
 
 TEST(ReplaceAll, basicTest) 
@@ -1133,6 +771,7 @@ TEST(ReplaceAll, basicTest)
     EXPECT_EQ(msp, orig);
 }
 
+
 TEST(ReplaceAll, randomTest) 
 {
     char input[] = "abcdefghijklmnoprstuwqz"; // no pattern repeata inside
@@ -1143,13 +782,10 @@ TEST(ReplaceAll, randomTest)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist('A', 'Z');
 
-    for (int i = 0; i < 100; ++i) 
-    {
-        for (int j = 1; j <= orig.size(); ++j) 
-        {
+    for (int i = 0; i < 100; ++i) {
+        for (size_t j = 1; j <= orig.size(); ++j) {
             auto replacement = get_rand_str(j, dist, gen);
-            for (int pos = 0; pos < msp.size() - j; ++pos) 
-            {
+            for (size_t pos = 0; pos < msp.size() - j; ++pos) {
                 auto piece = orig.substr(pos, j);
                 EXPECT_EQ(msp.replaceAll(piece, replacement), 1);
                 EXPECT_EQ(msp.find(replacement), pos);
@@ -1168,24 +804,32 @@ TEST(ReplaceAll, BadArg)
     char input[] = "meh meh meh";
     auto all = MutableStringPiece(input);
 
-    try 
-    {
+    try {
         all.replaceAll(fst, snd);
     }
-    catch (std::invalid_argument&) 
-    {
+    catch (std::invalid_argument&) {
         ++count;
     }
 
-    try 
-    {
+    try {
         all.replaceAll(snd, fst);
     }
-    catch (std::invalid_argument&) 
-    {
+    catch (std::invalid_argument&) {
         ++count;
     }
 
     EXPECT_EQ(count, 2);
 }
 
+TEST(Range, Constructors) 
+{
+    vector<int> c = { 1, 2, 3 };
+    typedef Range<vector<int>::iterator> RangeType;
+    typedef Range<vector<int>::const_iterator> ConstRangeType;
+    RangeType cr(c.begin(), c.end());
+    auto subpiece1 = ConstRangeType(cr, 1, 5);
+    auto subpiece2 = ConstRangeType(cr, 1);
+    EXPECT_EQ(subpiece1.size(), 2);
+    EXPECT_EQ(subpiece1.begin(), subpiece2.begin());
+    EXPECT_EQ(subpiece1.end(), subpiece2.end());
+}
