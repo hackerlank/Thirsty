@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Facebook, Inc.
+ * Copyright 2015 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
-#include "core/CpuId.h"
-#include <gtest/gtest.h>
+#include "CpuId.h"
 #include <iostream>
+#include <gtest/gtest.h>
 
-using namespace std;
 
-TEST(CpuId, Simple)
+TEST(CpuId, Simple) 
 {
     // All CPUs should support MMX
     CpuId id;
     EXPECT_TRUE(id.mmx());
 }
 
-
-static void OutputCpuid(CpuId cpuid)
+TEST(CpuId, Output)
 {
-    cout << "Cpuid: " << endl;
+    CpuId id;
+    std::cout << "CpuId flags: " << std::endl;
 #define FN(a, x)    a.x()
-#define OUTPUT(x)   cout << "\t" << #x << ": " << FN(cpuid, x) << endl
+#define OUTPUT(x)   std::cout << "\t" << #x << ":  " << FN(id, x) << std::endl
     OUTPUT(sse3);
     OUTPUT(pclmuldq);
     OUTPUT(dtes64);
@@ -92,12 +91,33 @@ static void OutputCpuid(CpuId cpuid)
     OUTPUT(htt);
     OUTPUT(tm);
     OUTPUT(pbe);
-#undef OUTPUT
-#undef FN    
-}
+    OUTPUT(bmi1);
 
-TEST(CpuId, Output)
-{
-    CpuId cpuid;
-    OutputCpuid(cpuid);
+    OUTPUT(hle);
+    OUTPUT(avx2);
+    OUTPUT(smep);
+    OUTPUT(bmi2);
+    OUTPUT(erms);
+    OUTPUT(invpcid);
+    OUTPUT(rtm);
+    OUTPUT(mpx);
+    OUTPUT(avx512f);
+    OUTPUT(avx512dq);
+    OUTPUT(rdseed);
+    OUTPUT(adx);
+    OUTPUT(smap);
+    OUTPUT(avx512ifma);
+    OUTPUT(pcommit);
+    OUTPUT(clflushopt);
+    OUTPUT(clwb);
+    OUTPUT(avx512pf);
+    OUTPUT(avx512er);
+    OUTPUT(avx512cd);
+    OUTPUT(sha);
+    OUTPUT(avx512bw);
+    OUTPUT(avx512vl);
+    OUTPUT(prefetchwt1);
+    OUTPUT(avx512vbmi);
+#undef OUTPUT
+#undef FN 
 }
