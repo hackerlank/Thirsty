@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Facebook, Inc.
+ * Copyright 2015 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@
 //   April 10 2012: buffer overflow on platforms without unaligned reads
 //   July 12 2012: was passing out variables in final to in/out in short
 //   July 30 2012: I reintroduced the buffer overflow
-//   August 5 2012: SpookyV2: d = should be d += in short hash, and remove extra mix from long hash
+//   August 5 2012: SpookyV2: d = should be d += in short hash, and remove
+//                  extra mix from long hash
 
 #include "SpookyHashV2.h"
 #include <cstring>
@@ -31,15 +32,13 @@
 #define ALLOW_UNALIGNED_READS 1
 
 
+namespace hash {
+
 //
 // short hash ... it could be used on any message,
 // but it's used by Spooky just for short messages.
 //
-void SpookyHashV2::Short(
-                        const void *message,
-                        size_t length,
-                        uint64_t *hash1,
-                        uint64_t *hash2)
+void SpookyHashV2::Short(const void* message, size_t length, uint64_t* hash1, uint64_t* hash2)
 {
     uint64_t buf[2*sc_numVars];
     union
@@ -137,13 +136,8 @@ void SpookyHashV2::Short(
     *hash2 = b;
 }
 
-
 // do the whole hash in one call
-void SpookyHashV2::Hash128(
-                        const void *message,
-                        size_t length,
-                        uint64_t *hash1,
-                        uint64_t *hash2)
+void SpookyHashV2::Hash128(const void* message, size_t length, uint64_t* hash1, uint64_t* hash2)
 {
     if (length < sc_bufSize)
     {
@@ -363,3 +357,6 @@ void SpookyHashV2::Final(uint64_t *hash1, uint64_t *hash2)
     *hash1 = h0;
     *hash2 = h1;
 }
+
+}  // namespace hash
+

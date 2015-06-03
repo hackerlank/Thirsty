@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Facebook, Inc.
+ * Copyright 2015 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,13 @@
 // slower than MD5.
 //
 
-#pragma once
+#ifndef FOLLY_SPOOKYHASHV2_H_
+#define FOLLY_SPOOKYHASHV2_H_
 
 #include <cstddef>
 #include <cstdint>
 
+namespace hash {
 
 class SpookyHashV2
 {
@@ -58,8 +60,8 @@ public:
     static void Hash128(
         const void *message,  // message to hash
         size_t length,        // length of message in bytes
-        uint64_t *hash1,        // in/out: in seed 1, out hash value 1
-        uint64_t *hash2);       // in/out: in seed 2, out hash value 2
+        uint64_t *hash1,      // in/out: in seed 1, out hash value 1
+        uint64_t *hash2);     // in/out: in seed 2, out hash value 2
 
     //
     // Hash64: hash a single message in one call, return 64-bit output
@@ -67,7 +69,7 @@ public:
     static uint64_t Hash64(
         const void *message,  // message to hash
         size_t length,        // length of message in bytes
-        uint64_t seed)          // seed
+        uint64_t seed)        // seed
     {
         uint64_t hash1 = seed;
         Hash128(message, length, &hash1, &seed);
@@ -80,7 +82,7 @@ public:
     static uint32_t Hash32(
         const void *message,  // message to hash
         size_t length,        // length of message in bytes
-        uint32_t seed)          // seed
+        uint32_t seed)        // seed
     {
         uint64_t hash1 = seed, hash2 = seed;
         Hash128(message, length, &hash1, &hash2);
@@ -141,18 +143,18 @@ public:
         uint64_t &s4, uint64_t &s5, uint64_t &s6, uint64_t &s7,
         uint64_t &s8, uint64_t &s9, uint64_t &s10,uint64_t &s11)
     {
-      s0 += data[0];    s2 ^= s10;    s11 ^= s0;    s0 = Rot64(s0,11);    s11 += s1;
-      s1 += data[1];    s3 ^= s11;    s0 ^= s1;    s1 = Rot64(s1,32);    s0 += s2;
-      s2 += data[2];    s4 ^= s0;    s1 ^= s2;    s2 = Rot64(s2,43);    s1 += s3;
-      s3 += data[3];    s5 ^= s1;    s2 ^= s3;    s3 = Rot64(s3,31);    s2 += s4;
-      s4 += data[4];    s6 ^= s2;    s3 ^= s4;    s4 = Rot64(s4,17);    s3 += s5;
-      s5 += data[5];    s7 ^= s3;    s4 ^= s5;    s5 = Rot64(s5,28);    s4 += s6;
-      s6 += data[6];    s8 ^= s4;    s5 ^= s6;    s6 = Rot64(s6,39);    s5 += s7;
-      s7 += data[7];    s9 ^= s5;    s6 ^= s7;    s7 = Rot64(s7,57);    s6 += s8;
-      s8 += data[8];    s10 ^= s6;    s7 ^= s8;    s8 = Rot64(s8,55);    s7 += s9;
-      s9 += data[9];    s11 ^= s7;    s8 ^= s9;    s9 = Rot64(s9,54);    s8 += s10;
-      s10 += data[10];    s0 ^= s8;    s9 ^= s10;    s10 = Rot64(s10,22);    s9 += s11;
-      s11 += data[11];    s1 ^= s9;    s10 ^= s11;    s11 = Rot64(s11,46);    s10 += s0;
+      s0 += data[0];   s2 ^= s10; s11 ^= s0;  s0 = Rot64(s0,11);   s11 += s1;
+      s1 += data[1];   s3 ^= s11; s0 ^= s1;   s1 = Rot64(s1,32);   s0 += s2;
+      s2 += data[2];   s4 ^= s0;  s1 ^= s2;   s2 = Rot64(s2,43);   s1 += s3;
+      s3 += data[3];   s5 ^= s1;  s2 ^= s3;   s3 = Rot64(s3,31);   s2 += s4;
+      s4 += data[4];   s6 ^= s2;  s3 ^= s4;   s4 = Rot64(s4,17);   s3 += s5;
+      s5 += data[5];   s7 ^= s3;  s4 ^= s5;   s5 = Rot64(s5,28);   s4 += s6;
+      s6 += data[6];   s8 ^= s4;  s5 ^= s6;   s6 = Rot64(s6,39);   s5 += s7;
+      s7 += data[7];   s9 ^= s5;  s6 ^= s7;   s7 = Rot64(s7,57);   s6 += s8;
+      s8 += data[8];   s10 ^= s6; s7 ^= s8;   s8 = Rot64(s8,55);   s7 += s9;
+      s9 += data[9];   s11 ^= s7; s8 ^= s9;   s9 = Rot64(s9,54);   s8 += s10;
+      s10 += data[10]; s0 ^= s8;  s9 ^= s10;  s10 = Rot64(s10,22); s9 += s11;
+      s11 += data[11]; s1 ^= s9;  s10 ^= s11; s11 = Rot64(s11,46); s10 += s0;
     }
 
     //
@@ -219,7 +221,8 @@ public:
     // with diffs defined by either xor or subtraction
     // with a base of all zeros plus a counter, or plus another bit, or random
     //
-    static inline void ShortMix(uint64_t &h0, uint64_t &h1, uint64_t &h2, uint64_t &h3)
+    static inline void ShortMix(uint64_t &h0, uint64_t &h1,
+                                uint64_t &h2, uint64_t &h3)
     {
         h2 = Rot64(h2,50);  h2 += h3;  h0 ^= h2;
         h3 = Rot64(h3,52);  h3 += h0;  h1 ^= h3;
@@ -247,7 +250,8 @@ public:
     // For every pair of input bits,
     // with probability 50 +- .75% (the worst case is approximately that)
     //
-    static inline void ShortEnd(uint64_t &h0, uint64_t &h1, uint64_t &h2, uint64_t &h3)
+    static inline void ShortEnd(uint64_t &h0, uint64_t &h1,
+                                uint64_t &h2, uint64_t &h3)
     {
         h3 ^= h2;  h2 = Rot64(h2,15);  h3 += h2;
         h0 ^= h3;  h3 = Rot64(h3,52);  h0 += h3;
@@ -271,7 +275,7 @@ private:
     // held to the same quality bar.
     //
     static void Short(
-        const void *message,  // message (array of bytes, not necessarily aligned)
+        const void *message,  // message (byte array, not necessarily aligned)
         size_t length,        // length of message (in bytes)
         uint64_t *hash1,        // in/out: in the seed, out the hash value
         uint64_t *hash2);       // in/out: in the seed, out the hash value
@@ -294,8 +298,12 @@ private:
     //
     static const uint64_t sc_const = 0xdeadbeefdeadbeefLL;
 
-    uint64_t    m_data[2*sc_numVars]; // unhashed data, for partial messages
-    uint64_t    m_state[sc_numVars];  // internal state of the hash
-    size_t      m_length;             // total length of the input so far
-    uint8_t     m_remainder;          // length of unhashed data stashed in m_data
+    uint64_t m_data[2*sc_numVars];   // unhashed data, for partial messages
+    uint64_t m_state[sc_numVars];  // internal state of the hash
+    size_t m_length;             // total length of the input so far
+    uint8_t  m_remainder;          // length of unhashed data stashed in m_data
 };
+
+}  // namespace hash
+
+#endif
