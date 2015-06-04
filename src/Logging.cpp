@@ -50,7 +50,7 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
 #if defined(__ANDROID__)
     __android_log_print(ANDROID_LOG_WARN, "core", "[%s %s:%d] %s\n", 
 #else
-    fprintf(stderr, "%s\n",
+    fprintf(stderr, "[%s %s:%d] %s\n",
 #endif
         level_names[level], filename, line, message.c_str());
 }
