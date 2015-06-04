@@ -1,6 +1,6 @@
 #include <iostream>
 #include <gtest/gtest.h>
-//#include "Benchmark.h"
+#include "Benchmark.h"
 
 
 using namespace std;
@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     // run benchmarks
 #ifdef NDEBUG
     cout << "\nPATIENCE, BENCHMARKS IN PROGRESS." << endl;
-    //runBenchmarks();
+    runBenchmarks();
     cout << "MEASUREMENTS DONE." << endl;
 #endif
     return r;
