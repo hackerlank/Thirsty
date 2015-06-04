@@ -26,10 +26,9 @@
 #include <regex>
 #include <algorithm>
 #include <iostream>
-#include "core/Foreach.h"
-#include "core/Conv.h"
-#include "core/Strings.h"
-#include "logging.h"
+#include "Conv.h"
+#include "Strings.h"
+#include "Logging.h"
 
 
 using namespace std;
@@ -49,6 +48,36 @@ vector<BenchmarkItem>& getenchmarks()
 }
 
 }
+
+#if defined(_MSC_VER)
+#include <windows.h>
+inline uint64_t getPerformanceFreqency()
+{
+    static LARGE_INTEGER freq;
+    if (freq.QuadPart == 0)
+    {
+        CHECK(QueryPerformanceFrequency(&freq));
+    }
+    return freq.QuadPart;
+}
+
+uint64_t getNowTickCount()
+{
+    LARGE_INTEGER now;
+    CHECK(QueryPerformanceCounter(&now));
+    return (now.QuadPart * 1000000000UL) / getPerformanceFreqency();
+}
+
+#elif 
+
+uint64_t getNowTickCount()
+{
+    timespec ts;
+    CHECK(clock_gettime(CLOCK_REALTIME, &ts) == 0);
+    return (ts.tv_sec * 1000000000UL) + ts.tv_nsec;
+}
+
+#endif
 
 
 // Add the global baseline

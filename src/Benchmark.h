@@ -20,8 +20,8 @@
 #include <string>
 #include <utility>
 #include <functional>
-#include "core/Preprocessor.h"
-#include "Utils.h"
+#include "Preprocessor.h"
+
 
 /**
  * Runs all benchmarks defined. Usually put in main().
@@ -50,6 +50,7 @@ void addBenchmarkImpl(const char* file,
 
 } // namespace detail
 
+uint64_t getNowTickCount();
 
 /**
  * Supporting type for BENCHMARK_SUSPEND defined below.
