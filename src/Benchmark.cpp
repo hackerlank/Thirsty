@@ -33,6 +33,21 @@
 
 using namespace std;
 
+
+DEFINE_bool(benchmark, false, "Run benchmarks.");
+
+DEFINE_string(bm_regex, "",
+    "Only benchmarks whose names match this regex will be run.");
+
+DEFINE_int64(bm_min_usec, 100,
+    "Minimum # of microseconds we'll accept for each benchmark.");
+
+DEFINE_int64(bm_min_iters, 1,
+    "Minimum # of iterations we'll try for each benchmark.");
+
+DEFINE_int32(bm_max_secs, 1,
+    "Maximum # of seconds we'll spend on each benchmark.");
+
 BenchmarkSuspender::NanosecondsSpent BenchmarkSuspender::nsSpent;
 
 namespace {
@@ -113,11 +128,9 @@ static double estimateTime(double * begin, double * end)
 }
 
 
-static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
-    const double globalBaseline, int32_t min_iters, int32_t min_usec,
-    int32_t max_secs)
+static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun, const double globalBaseline)
 {
-    static const auto minNanoseconds = min_usec * 1000UL;
+    static const auto minNanoseconds = FLAGS_bm_min_usec * 1000UL;
 
     // We do measurements in several epochs and take the minimum, to
     // account for jitter.
@@ -125,7 +138,7 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
 
     // We establish a total time budget as we don't want a measurement
     // to take too long. This will curtail the number of actual epochs.
-    const uint64_t timeBudgetInNs = max_secs * 1000000000;
+    const uint64_t timeBudgetInNs = FLAGS_bm_max_secs * 1000000000;
     uint64_t global = getNowTickCount();
 
     double epochResults[epochs] = { 0 };
@@ -133,7 +146,7 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
 
     for (; actualEpochs < epochs; ++actualEpochs)
     {
-        for (unsigned int n = min_iters; n < (1UL << 30); n *= 2)
+        for (auto n = FLAGS_bm_min_iters; n < (1UL << 30); n *= 2)
         {
             auto const nsecsAndIter = fun(n); // run `n` times of benchmark case
             if (nsecsAndIter.first < minNanoseconds)
@@ -162,23 +175,22 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun,
 static void printBenchmarkResultsAsTable(
     const vector<tuple<const char*, const char*, double> >& data);
 
-void runBenchmarks(const std::string& regexp, int32_t min_iters,
-                   int32_t min_usec, int32_t max_secs)
+void runBenchmarks()
 {
     CHECK(!getenchmarks().empty());
     vector<tuple<const char*, const char*, double>> results;
     results.reserve(getenchmarks().size() - 1);
 
     unique_ptr<regex> bmRegex;
-    if (!regexp.empty())
+    if (!FLAGS_bm_regex.empty())
     {
-        bmRegex.reset(new regex(regexp));
+        bmRegex.reset(new regex(FLAGS_bm_regex));
     }
 
     // PLEASE KEEP QUIET. MEASUREMENTS IN PROGRESS.
     auto benchmarks = getenchmarks();
     auto const globalBaseline = runBenchmarkGetNSPerIteration(
-        get<2>(getenchmarks().front()), 0, min_iters, min_usec, max_secs);
+        get<2>(getenchmarks().front()), 0);
     for (auto i = 1; i < benchmarks.size(); i++)
     {
         double elapsed = 0.0;
@@ -188,8 +200,7 @@ void runBenchmarks(const std::string& regexp, int32_t min_iters,
             {
                 continue;
             }
-            elapsed = runBenchmarkGetNSPerIteration(get<2>(benchmarks[i]),
-                globalBaseline, min_iters, min_usec, max_secs);
+            elapsed = runBenchmarkGetNSPerIteration(get<2>(benchmarks[i]), globalBaseline);
         }
         results.emplace_back(get<0>(benchmarks[i]),
             get<1>(benchmarks[i]), elapsed);
@@ -283,7 +294,7 @@ void printBenchmarkResultsAsTable(
     // Compute the longest benchmark name
     size_t longestName = 0;
     auto benchmarks = getenchmarks();
-    FOR_EACH_RANGE(i, 1, benchmarks.size())
+    for (auto i = 1U; i < benchmarks.size(); i++)
     {
         longestName = max(longestName, strlen(get<1>(benchmarks[i])));
     }

@@ -21,19 +21,13 @@
 #include <utility>
 #include <functional>
 #include "Preprocessor.h"
+#include "CmdLineFlags.h"
 
 
-/**
- * Runs all benchmarks defined. Usually put in main().
- * `regexp`     Only benchmarks whose names match this regex will be run
- * `min_iters`  Minimum # of iterations we'll try for each benchmark
- * `min_usec`   Minimum # of microseconds we'll accept for each benchmark
- * `max_secs`   Maximum # of seconds we'll spend on each benchmark
- */
-void runBenchmarks(const std::string& regexp = "",
-                   int32_t min_iters = 1,
-                   int32_t min_usec = 100,
-                   int32_t max_secs = 1);
+DECLARE_bool(benchmark);
+
+
+void runBenchmarks();
 
 
 namespace detail {
@@ -48,16 +42,17 @@ void addBenchmarkImpl(const char* file,
                       const char* name,
                       std::function<TimeIterPair(unsigned int)>);
 
+uint64_t getNowTickCount();
+
 } // namespace detail
 
-uint64_t getNowTickCount();
 
 /**
  * Supporting type for BENCHMARK_SUSPEND defined below.
  */
 struct BenchmarkSuspender
 {
-    BenchmarkSuspender() : start_(getNowTickCount())
+    BenchmarkSuspender() : start_(detail::getNowTickCount())
     {
     }
 
@@ -65,14 +60,14 @@ struct BenchmarkSuspender
     BenchmarkSuspender(BenchmarkSuspender&& rhs)
         : start_(rhs.start_)
     {
-        rhs.start_ = getNowTickCount();
+        rhs.start_ = detail::getNowTickCount();
     }
 
     BenchmarkSuspender& operator=(const BenchmarkSuspender &) = delete;
     BenchmarkSuspender& operator=(BenchmarkSuspender && rhs)
     {
         start_ = rhs.start_;
-        rhs.start_ = getNowTickCount();
+        rhs.start_ = detail::getNowTickCount();
         return *this;
     }
 
@@ -84,12 +79,12 @@ struct BenchmarkSuspender
     void dismiss()
     {
         tally();
-        start_ = getNowTickCount();
+        start_ = detail::getNowTickCount();
     }
 
     void rehire()
     {
-        start_ = getNowTickCount();
+        start_ = detail::getNowTickCount();
     }
 
     /**
@@ -111,7 +106,7 @@ struct BenchmarkSuspender
 private:
     void tally()
     {
-        auto end = getNowTickCount();
+        auto end = detail::getNowTickCount();
         nsSpent += (end - start_);
         start_ = end;
     }
@@ -222,7 +217,7 @@ void doNotOptimizeAway(T&& datum)
  *
  * BENCHMARK(insertVectorBegin, n) {
  *   vector<int> v;
- *   FOR_EACH_RANGE (i, 0, n) {
+ *   for (auto i = 0; i < n; i++) {
  *     v.insert(v.begin(), 42);
  *   }
  * }
@@ -252,7 +247,7 @@ void doNotOptimizeAway(T&& datum)
  *   BENCHMARK_SUSPEND {
  *     v.reserve(n);
  *   }
- *   FOR_EACH_RANGE (i, 0, n) {
+ *   for (auto i = 0; i < n; i++) {
  *     v.insert(v.begin(), 42);
  *   }
  * }
