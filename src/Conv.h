@@ -591,7 +591,7 @@ Tgt digits_to(const char * b, const char * e)
         const int32_t r3 = shift1[static_cast<size_t>(b[3])];
         const auto sum = r0 + r1 + r2 + r3;
         assert(sum < OOR && "Assumption: string only has digits");
-        result += sum;
+        result += static_cast<Tgt>(sum);
     }
 
     switch (e - b)
@@ -603,7 +603,7 @@ Tgt digits_to(const char * b, const char * e)
         const int32_t r2 = shift1[static_cast<size_t>(b[2])];
         const auto sum = r0 + r1 + r2;
         assert(sum < OOR && "Assumption: string only has digits");
-        return result * 1000 + sum;
+        return static_cast<Tgt>(result * 1000 + sum);
     }
     case 2:
     {
@@ -611,13 +611,13 @@ Tgt digits_to(const char * b, const char * e)
         const int32_t r1 = shift1[static_cast<size_t>(b[1])];
         const auto sum = r0 + r1;
         assert(sum < OOR && "Assumption: string only has digits");
-        return result * 100 + sum;
+        return static_cast<Tgt>(result * 100 + sum);
     }
     case 1:
         {
             const int32_t sum = shift1[static_cast<size_t>(b[0])];
             assert(sum < OOR && "Assumption: string only has digits");
-            return result * 10 + sum;
+            return static_cast<Tgt>(result * 10 + sum);
         }
     }
 
@@ -644,9 +644,9 @@ inline void enforceWhitespace(const char* b, const char* e) {
 } // namespace detail
 
 /**
-* String represented as a pair of pointers to char to unsigned
-* integrals. Assumes NO whitespace before or after.
-*/
+ * String represented as a pair of pointers to char to unsigned
+ * integrals. Assumes NO whitespace before or after.
+ */
 template <class Tgt>
 typename std::enable_if<
     std::is_integral<Tgt>::value
@@ -697,9 +697,9 @@ to(const char* b, const char* e)
  */
 
 /**
-* StringPiece to integrals, with progress information. Alters the
-* StringPiece parameter to munch the already-parsed characters.
-*/
+ * StringPiece to integrals, with progress information. Alters the
+ * StringPiece parameter to munch the already-parsed characters.
+ */
 template <class Tgt>
 typename std::enable_if<
     std::is_integral<Tgt>::value
