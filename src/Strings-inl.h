@@ -138,7 +138,10 @@ struct convertTo {
 template<bool exact,
          class Delim,
          class OutputType>
-typename std::enable_if<IsSplitTargetType<OutputType>::value, bool>::type
+typename std::enable_if<
+    std::is_arithmetic<OutputType>::value ||
+    detail::IsSizableString<OutputType>::value,
+    bool>::type
 splitFixed(const Delim& delimiter,
            StringPiece input,
            OutputType& out) {
@@ -153,7 +156,10 @@ template<bool exact,
          class Delim,
          class OutputType,
          class... OutputTypes>
-typename std::enable_if<IsSplitTargetType<OutputType>::value, bool>::type
+typename std::enable_if<
+    std::is_arithmetic<OutputType>::value ||
+    detail::IsSizableString<OutputType>::value,
+    bool>::type
 splitFixed(const Delim& delimiter,
            StringPiece input,
            OutputType& outHead,
@@ -208,7 +214,10 @@ template<bool exact,
          class Delim,
          class OutputType,
          class... OutputTypes>
-typename std::enable_if<IsSplitTargetType<OutputType>::value, bool>::type
+typename std::enable_if<
+    std::is_arithmetic<OutputType>::value ||
+    detail::IsSizableString<OutputType>::value,
+    bool>::type
 split(const Delim& delimiter,
       StringPiece input,
       OutputType& outHead,
@@ -228,10 +237,6 @@ namespace detail {
  * struct need not conform to the std::string api completely (ex. does not need
  * to implement append()).
  */
-template <class T> struct IsSizableString {
-  enum { value = std::is_same<T, std::string>::value
-         || std::is_same<T, StringPiece>::value };
-};
 
 template <class Iterator>
 struct IsSizableStringContainerIterator :

@@ -128,17 +128,25 @@ class OutputIterator>
  * Note that this will likely not work if the last field's target is of numeric
  * type, in which case to<> will throw an exception.
  */
-template <class T>
-using IsSplitTargetType = std::integral_constant<bool,
-  std::is_arithmetic<T>::value ||
-  std::is_same<T, StringPiece>::value ||
-  std::is_same<T, std::string>::value>;
+
+
+namespace detail {
+
+template <class T> struct IsSizableString {
+  enum { value = std::is_same<T, std::string>::value
+         || std::is_same<T, StringPiece>::value };
+};
+
+} // namespace detail
 
 template<bool exact = true,
          class Delim,
          class OutputType,
          class... OutputTypes>
-typename std::enable_if<IsSplitTargetType<OutputType>::value, bool>::type
+typename std::enable_if<
+  std::is_arithmetic<OutputType>::value ||
+  detail::IsSizableString<OutputType>::value,
+bool>::type
 split(const Delim& delimiter,
       StringPiece input,
       OutputType& outHead,
