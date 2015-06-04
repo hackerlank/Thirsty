@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <cstdarg>
 #include <random>
+#include <memory>
 #include <gtest/gtest.h>
 #include "ScopeGuard.h"
 

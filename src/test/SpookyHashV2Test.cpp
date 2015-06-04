@@ -35,7 +35,9 @@ using namespace hash;
 
 static bool failed = false;
 
-#if !defined(_WIN32)
+#if defined(_WIN32)
+#include <Windows.h>
+#else
 static uint64_t GetTickCount() {
   return detail::getNowTickCount() / 1000; // milliseconds
 }

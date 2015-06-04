@@ -18,6 +18,7 @@
 #include <cstdarg>
 #include <cctype>
 #include <array>
+#include <memory>
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
