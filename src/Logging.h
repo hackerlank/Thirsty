@@ -61,7 +61,6 @@ template <typename T>
 inline std::string to_string(const T& value)
 {
 #if defined(__ANDROID__)
-    template <typename T>
     std::ostringstream strm;
     strm << value;
     return strm.str();
