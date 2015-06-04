@@ -54,8 +54,8 @@ solution 'Thirsty'
         files
         {
             'dep/gtest/src/gtest-all.cc',
-            'test/*.h',
-            'test/*.cpp',
+            'src/test/*.h',
+            'src/test/*.cpp',
         }
         includedirs
         {
@@ -63,10 +63,6 @@ solution 'Thirsty'
             'dep/gtest',
             'dep/gtest/include',
             BOOST_ROOT,
-        }
-        removefiles 
-        {
-            'test/CompressionTest.cpp'
         }
         links 'libthirsty'
         libdirs 'bin'
