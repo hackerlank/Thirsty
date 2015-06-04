@@ -31,6 +31,7 @@ solution 'Thirsty'
             '_SCL_SECURE_NO_WARNINGS',
             'NOMINMAX',
         }
+        buildoptions '/GF'
         includedirs {USR_DIR .. '/include'}
         libdirs
         {
@@ -44,7 +45,7 @@ solution 'Thirsty'
         buildoptions    { '-std=c++11 -mcrc32 -rdynamic' }
         defines         '__STDC_LIMIT_MACROS'
 
-    project 'Thirsty'
+    project 'libthirsty'
         location    'build'
         kind        'StaticLib'
         defines
@@ -107,4 +108,5 @@ solution 'Thirsty'
         {
             'test/CompressionTest.cpp'
         }
+        links 'libthirsty'
         libdirs 'bin'
