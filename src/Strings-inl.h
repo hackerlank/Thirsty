@@ -16,6 +16,8 @@
  
 #pragma once
 
+#include <stdlib.h>
+#include <string.h>
 #include <stdexcept>
 #include <iterator>
 #include <type_traits>
@@ -32,14 +34,14 @@ inline bool atDelim(const char* s, char c) {
  return *s == c;
 }
 inline bool atDelim(const char* s, StringPiece sp) {
-  return !std::memcmp(s, sp.start(), sp.size());
+  return !memcmp(s, sp.start(), sp.size());
 }
 
 // These are used to short-circuit internalSplit() in the case of
 // 1-character strings.
 inline char delimFront(char c) {
   // This one exists only for compile-time; it should never be called.
-  std::abort();
+  abort();
   return c;
 }
 inline char delimFront(StringPiece s) {

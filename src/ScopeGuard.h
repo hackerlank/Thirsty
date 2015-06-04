@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <cstddef>
+#include <stddef.h>
 #include <functional>
 #include <new>
 #include "Portability.h"

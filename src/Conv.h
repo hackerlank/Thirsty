@@ -23,8 +23,10 @@
 
 #pragma once
 
-#include <cstdint>
-#include <cassert>
+#include <stdint.h>
+#include <assert.h>
+#include <float.h>
+#include <stdlib.h>
 #include <string>
 #include <typeinfo>
 #include <stdexcept>

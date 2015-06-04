@@ -46,8 +46,8 @@
 #ifndef FOLLY_SPOOKYHASHV2_H_
 #define FOLLY_SPOOKYHASHV2_H_
 
-#include <cstddef>
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
 
 namespace hash {
 

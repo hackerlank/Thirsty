@@ -15,8 +15,8 @@
  */
 
 #include "Strings.h"
-#include <cstdarg>
-#include <cctype>
+#include <stdarg.h>
+#include <ctype.h>
 #include <array>
 #include <memory>
 #include <stdexcept>
@@ -670,7 +670,7 @@ std::string prettyPrint(double val, PrettyType type, bool addSpace)
 double prettyToDouble(StringPiece *const prettyString, const PrettyType type)
 {
     double value = to<double>(prettyString);
-    while (prettyString->size() > 0 && std::isspace(prettyString->front())) {
+    while (prettyString->size() > 0 && isspace(prettyString->front())) {
         prettyString->advance(1); //Skipping spaces between number and suffix
     }
     const PrettySuffix* suffixes = kPrettySuffixes[type];

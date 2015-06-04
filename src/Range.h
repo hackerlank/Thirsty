@@ -23,12 +23,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
-#include <float.h>
 #include <iosfwd>
-#include <stdexcept>
 #include <string>
-#include <type_traits>
+#include <stdexcept>
 #include <algorithm>
+#include <type_traits>
 #include "Portability.h"
 #include "Preprocessor.h"
 #include "Logging.h"

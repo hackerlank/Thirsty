@@ -16,8 +16,7 @@
 
 // @author: Andrei Alexandrescu
 
-#ifndef FOLLY_PREPROCESSOR_
-#define FOLLY_PREPROCESSOR_
+#pragma once
 
 /**
  * Necessarily evil preprocessor-related amenities.
@@ -93,5 +92,3 @@
  */
 #define FB_STRINGIZE_NX(x)  #x
 #define FB_STRINGIZE(x)     FB_STRINGIZE_NX(x)
-
-#endif // FOLLY_PREPROCESSOR_

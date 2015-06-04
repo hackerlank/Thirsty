@@ -46,8 +46,8 @@
 
  #pragma once
 
-#include <cstdint>
-#include <cstdlib>
+#include <stdint.h>
+#include <stdlib.h>
 #include <type_traits>
 #include "Portability.h"
 
