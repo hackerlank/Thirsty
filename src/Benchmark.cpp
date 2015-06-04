@@ -42,7 +42,7 @@ DEFINE_string(bm_regex, "",
 DEFINE_int64(bm_min_usec, 100,
     "Minimum # of microseconds we'll accept for each benchmark.");
 
-DEFINE_int64(bm_min_iters, 1,
+DEFINE_int32(bm_min_iters, 1,
     "Minimum # of iterations we'll try for each benchmark.");
 
 DEFINE_int32(bm_max_secs, 1,
@@ -63,6 +63,8 @@ vector<BenchmarkItem>& getenchmarks()
 }
 
 }
+
+namespace detail {
 
 #if defined(_MSC_VER)
 #include <windows.h>
@@ -93,7 +95,7 @@ uint64_t getNowTickCount()
 }
 
 #endif
-
+} // namespace detail
 
 // Add the global baseline
 BENCHMARK(globalBenchmarkBaseline, n)
@@ -130,7 +132,7 @@ static double estimateTime(double * begin, double * end)
 
 static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun, const double globalBaseline)
 {
-    static const auto minNanoseconds = FLAGS_bm_min_usec * 1000UL;
+    static const uint64_t minNanoseconds = FLAGS_bm_min_usec * 1000UL;
 
     // We do measurements in several epochs and take the minimum, to
     // account for jitter.
@@ -139,7 +141,7 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun, const doubl
     // We establish a total time budget as we don't want a measurement
     // to take too long. This will curtail the number of actual epochs.
     const uint64_t timeBudgetInNs = FLAGS_bm_max_secs * 1000000000;
-    uint64_t global = getNowTickCount();
+    uint64_t global = detail::getNowTickCount();
 
     double epochResults[epochs] = { 0 };
     size_t actualEpochs = 0;
@@ -160,7 +162,7 @@ static double runBenchmarkGetNSPerIteration(const BenchmarkFun& fun, const doubl
             // Done with the current epoch, we got a meaningful timing.
             break;
         }
-        if (getNowTickCount() - global >= timeBudgetInNs)
+        if (detail::getNowTickCount() - global >= timeBudgetInNs)
         {
             // No more time budget available.
             ++actualEpochs;

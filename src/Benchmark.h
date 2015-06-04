@@ -130,9 +130,9 @@ void addBenchmarkWithTimes(const char* file, const char* name, Lambda&& lambda)
         unsigned int niter;
 
         // CORE MEASUREMENT STARTS
-        auto const start = getNowTickCount();
+        auto const start = detail::getNowTickCount();
         niter = lambda(times);
-        auto const end = getNowTickCount();
+        auto const end = detail::getNowTickCount();
         // CORE MEASUREMENT ENDS
 
         return detail::TimeIterPair(end - start - BenchmarkSuspender::nsSpent, niter);
