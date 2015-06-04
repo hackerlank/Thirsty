@@ -102,6 +102,7 @@ void testIntegral2String() {
 template <class String, class Int, class... Ints>
 void testIntegral2String() 
 {
+
     typedef typename make_unsigned<Int>::type Uint;
     typedef typename make_signed<Int>::type Sint;
 
@@ -121,15 +122,14 @@ void testIntegral2String()
     EXPECT_EQ(to<Sint>(to<String>(svalue)), svalue);
     value = numeric_limits<Sint>::max();
     EXPECT_EQ(to<Sint>(to<String>(svalue)), svalue);
-
     testIntegral2String<String, Ints...>();
 }
 
+
 TEST(Conv, Integral2String) 
 {
-    testIntegral2String<std::string, char, short, int, long>();
+    testIntegral2String<std::string, int8_t, int16_t, int32_t, int64_t>();
 }
-
 
 template <class String>
 void testString2Integral() {
@@ -321,10 +321,11 @@ void testString2Integral()
     testString2Integral<String, Ints...>();
 }
 
+
 TEST(Conv, String2Integral) 
 {
-    testString2Integral<const char*, signed char, short, int, long, long long>();
-    testString2Integral<std::string, signed char, short, int, long, long long>();
+    testString2Integral<const char*, uint8_t, int16_t, int32_t, int64_t>();
+    testString2Integral<std::string, uint8_t, int16_t, int32_t, int64_t>();
 
     // Testing the behavior of the StringPiece* API
     // StringPiece* normally parses as much valid data as it can,
@@ -341,6 +342,7 @@ TEST(Conv, String2Integral)
     EXPECT_THROW(to<uint8_t>(&sp2), std::range_error);
     EXPECT_EQ(buf2, sp2.begin());
 }
+
 
 TEST(Conv, StringPiece2Integral) 
 {

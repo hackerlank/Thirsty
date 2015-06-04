@@ -33,12 +33,6 @@ template <> const char *const MaxString<uint16_t>::value = "65535";
 template <> const char *const MaxString<uint32_t>::value = "4294967295";
 template <> const char *const MaxString<uint64_t>::value = "18446744073709551615";
 
-#if defined(_MSC_VER)
-template <> const char *const MaxString<unsigned long>::value = "4294967295";
-#else
-template <> const char *const MaxString<unsigned long long>::value = "18446744073709551615";
-#endif
-
 static_assert(sizeof(unsigned long) >= 4,
     "Wrong value for MaxString<unsigned long>::value,"
     " please update.");
