@@ -22,11 +22,11 @@
 
 #include "SpookyHashV2.h"
 #include "Benchmark.h"
-#include <cinttypes>
-#include <cstdio>
-#include <cstddef>
-#include <cstring>
-#include <cstdlib>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 #include <ctime>
 #include <gtest/gtest.h>
 #include "Logging.h"
