@@ -25,8 +25,8 @@
 
 inline int32_t GenRandomSeed()
 {
-    auto device = std::random_device();
-    return device();
+    std::random_device d;
+    return d();
 }
 
 DEFINE_int32(random_seed, GenRandomSeed(), "random seed");

@@ -85,7 +85,7 @@ uint64_t getNowTickCount()
     return (now.QuadPart * 1000000000UL) / getPerformanceFreqency();
 }
 
-#elif 
+#else
 
 uint64_t getNowTickCount()
 {

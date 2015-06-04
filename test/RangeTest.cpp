@@ -28,6 +28,9 @@
 #include <vector>
 #include <gtest/gtest.h>
 
+#if defined(__linux__)
+#include <sys/mman.h>
+#endif
 
 using namespace std;
 
@@ -572,7 +575,7 @@ TYPED_TEST(NeedleFinderTest, Base)
     }
 }
 
-#if !defined(_MSC_VER)
+#if defined(__linux__)
 const size_t kPageSize = 4096;
 // Updates contents so that any read accesses past the last byte will
 // cause a SIGSEGV.  It accomplishes this by changing access to the page that

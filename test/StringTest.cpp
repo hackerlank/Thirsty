@@ -37,12 +37,12 @@ TEST(StringPrintf, BasicTest)
 TEST(StringPrintf, NumericFormats) 
 {
     EXPECT_EQ("12", stringPrintf("%d", 12));
-    EXPECT_EQ("5000000000", stringPrintf("%"PRIu64, 5000000000ULL));
-    EXPECT_EQ("5000000000", stringPrintf("%"PRId64, 5000000000LL));
-    EXPECT_EQ("-5000000000", stringPrintf("%"PRId64, -5000000000LL));
+    EXPECT_EQ("5000000000", stringPrintf("%" PRIu64, 5000000000UL));
+    EXPECT_EQ("5000000000", stringPrintf("%" PRId64, 5000000000LL));
+    EXPECT_EQ("-5000000000", stringPrintf("%" PRId64, -5000000000L));
     EXPECT_EQ("-1", stringPrintf("%d", 0xffffffff));
-    EXPECT_EQ("-1", stringPrintf("%"PRId64, 0xffffffffffffffff));
-    EXPECT_EQ("-1", stringPrintf("%"PRId64, 0xffffffffffffffffUL));
+    EXPECT_EQ("-1", stringPrintf("%" PRId64, 0xffffffffffffffff));
+    EXPECT_EQ("-1", stringPrintf("%" PRId64, 0xffffffffffffffffUL));
 
     EXPECT_EQ("7.7", stringPrintf("%1.1f", 7.7));
     EXPECT_EQ("7.7", stringPrintf("%1.1lf", 7.7));

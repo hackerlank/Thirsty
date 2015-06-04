@@ -19,9 +19,11 @@
 
 #pragma once
 
-#include <cassert>
-#include <cstring>
-#include <cstdint>
+#include <assert.h>
+#include <string.h>
+#include <stdint.h>
+#include <limits.h>
+#include <float.h>
 #include <iosfwd>
 #include <stdexcept>
 #include <string>
@@ -30,6 +32,7 @@
 #include "Portability.h"
 #include "Preprocessor.h"
 #include "Logging.h"
+#include "SpookyHashV2.h"
 
 
 template <class T> class Range;

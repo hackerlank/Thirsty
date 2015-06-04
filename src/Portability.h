@@ -45,7 +45,7 @@ struct MaxAlign { char c; } __attribute__((__aligned__));
 
 #if defined(_MSC_VER)
 # define FOLLY_ALIGN(x) __declspec(align(x))
-#elif
+#else
 # define FOLLY_ALIGN(x) __attribute__((aligned(x)))
 #endif
 
@@ -219,5 +219,5 @@ typedef SSIZE_T ssize_t;
 #endif // _MSC_VER
 
 #if defined(__linux__)
-#define FOLLY_HAVE_MEMRCHR
+#define FOLLY_HAVE_MEMRCHR  1
 #endif
