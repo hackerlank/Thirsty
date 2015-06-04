@@ -5,8 +5,7 @@
 #include <stdexcept>
 
 using std::vector;
-using folly::ScopeGuard;
-using folly::makeGuard;
+
 
 double returnsDouble() {
     return 0.0;
@@ -24,7 +23,8 @@ private:
     int* ptr_;
 };
 
-TEST(ScopeGuard, DifferentWaysToBind) {
+TEST(ScopeGuard, DifferentWaysToBind) 
+{
     {
         // There is implicit conversion from func pointer
         // double (*)() to function<void()>.
@@ -101,7 +101,9 @@ TEST(ScopeGuard, DifferentWaysToBind) {
     EXPECT_EQ(11, n);
 }
 
-TEST(ScopeGuard, GuardException) {
+#if !defined(_MSC_VER)
+TEST(ScopeGuard, GuardException) 
+{
     EXPECT_DEATH({
         ScopeGuard g = makeGuard([&] {
             throw std::runtime_error("destructors should never throw!");
@@ -110,6 +112,7 @@ TEST(ScopeGuard, GuardException) {
         "destructors should never throw!"
         );
 }
+#endif
 
 /**
 * Add an integer to a vector iff it was inserted into the
