@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef FOLLY_SCOPEGUARD_H_
-#define FOLLY_SCOPEGUARD_H_
+#pragma once
 
 #include <cstddef>
 #include <functional>
@@ -23,8 +22,6 @@
 #include "Portability.h"
 #include "Preprocessor.h"
 #include "detail/UncaughtExceptionCounter.h"
-
-namespace folly {
 
 /**
  * ScopeGuard is a general implementation of the "Initialization is
@@ -217,21 +214,18 @@ operator+(detail::ScopeGuardOnExit, FunctionType&& fn) {
 }
 } // namespace detail
 
-} // folly
 
 #define SCOPE_EXIT \
   auto FB_ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) \
-  = ::folly::detail::ScopeGuardOnExit() + [&]() noexcept
+  = detail::ScopeGuardOnExit() + [&]() noexcept
 
 #if defined(FOLLY_EXCEPTION_COUNT_USE_CXA_GET_GLOBALS) || \
     defined(FOLLY_EXCEPTION_COUNT_USE_GETPTD)
 #define SCOPE_FAIL \
   auto FB_ANONYMOUS_VARIABLE(SCOPE_FAIL_STATE) \
-  = ::folly::detail::ScopeGuardOnFail() + [&]() noexcept
+  = detail::ScopeGuardOnFail() + [&]() noexcept
 
 #define SCOPE_SUCCESS \
   auto FB_ANONYMOUS_VARIABLE(SCOPE_SUCCESS_STATE) \
-  = ::folly::detail::ScopeGuardOnSuccess() + [&]()
+  = detail::ScopeGuardOnSuccess() + [&]()
 #endif // native uncaught_exception() supported
-
-#endif // FOLLY_SCOPEGUARD_H_

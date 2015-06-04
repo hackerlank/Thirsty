@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef FOLLY_DETAIL_UNCAUGHTEXCEPTIONCOUNTER_H_
-#define FOLLY_DETAIL_UNCAUGHTEXCEPTIONCOUNTER_H_
+#pragma once
 
 #include <exception>
 
@@ -38,7 +37,7 @@ extern "C" _tiddata* _getptd(); // declared in mtdll.h from MSVCRT
 #endif
 
 
-namespace folly { namespace detail {
+namespace detail {
 
 /**
  * Used to check if a new uncaught exception was thrown by monitoring the
@@ -87,6 +86,4 @@ inline int UncaughtExceptionCounter::getUncaughtExceptionCount() noexcept {
 #endif
 }
 
-}} // namespaces
-
-#endif /* FOLLY_DETAIL_UNCAUGHTEXCEPTIONCOUNTER_H_ */
+}
