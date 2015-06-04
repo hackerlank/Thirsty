@@ -42,10 +42,13 @@ solution 'Thirsty'
             'src/**.h',
             'src/**.cpp',
         }
+        removefiles
+        {
+            'src/test/**.*',
+        }
         includedirs
         {
             'src',
-            BOOST_ROOT,
         }
 
     project 'UnitTest'
@@ -62,7 +65,6 @@ solution 'Thirsty'
             'src',
             'dep/gtest',
             'dep/gtest/include',
-            BOOST_ROOT,
         }
         links 'libthirsty'
         libdirs 'bin'
