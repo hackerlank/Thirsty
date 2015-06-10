@@ -31,7 +31,7 @@
 #include "Portability.h"
 #include "Preprocessor.h"
 #include "Logging.h"
-#include "SpookyHashV2.h"
+
 
 
 template <class T> class Range;
@@ -1079,14 +1079,3 @@ inline size_t qfind_first_of(const Range<const unsigned char*>& haystack,
   return detail::qfind_first_byte_of(StringPiece(haystack),
                                      StringPiece(needles));
 }
-
-template<class Key>
-struct hasher;
-
-template <class T> struct hasher < Range<T*> > 
-{
-    size_t operator()(Range<T*> r) const 
-    {
-        return hash::SpookyHashV2::Hash64(r.begin(), r.size() * sizeof(T), 0);
-    }
-};
