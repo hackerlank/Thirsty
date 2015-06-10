@@ -217,7 +217,3 @@ typedef SSIZE_T ssize_t;
 #define constexpr   
 
 #endif // _MSC_VER
-
-#if defined(__linux__)
-#define FOLLY_HAVE_MEMRCHR  1
-#endif
