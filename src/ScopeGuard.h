@@ -21,7 +21,7 @@
 #include <new>
 #include "Portability.h"
 #include "Preprocessor.h"
-#include "detail/UncaughtExceptionCounter.h"
+#include "UncaughtExceptionCounter.h"
 
 /**
  * ScopeGuard is a general implementation of the "Initialization is
