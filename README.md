@@ -7,7 +7,7 @@
 
 这是一个从Facebook的[folly](https://github.com/facebook/folly)里提取的几个基础C++组件。
 
-我更改了代码使其能在Visual C++ 2013下编译，在核心API不变的情况下跑过所有的单元测试case。
+我更改了代码使其能在Visual C++ 2013下编译，在核心API不变的情况下跑过所有的单元测试。
 
 
 包含：
@@ -21,5 +21,5 @@
 
 下载构建工具[premake5](http://premake.github.io/download.html).
 
-* Windows 7 x64，双击`build-msvc2013.bat`生成sln
+* Windows 7 x64，双击`msvc2013.bat`生成Visual C++工程文件
 * Ubuntu 14.04 x64，在Terminal里执行`premake5 gmake && make config=release`
