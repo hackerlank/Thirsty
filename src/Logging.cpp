@@ -32,12 +32,6 @@
 #include <stdio.h>
 #include <mutex>
 
-#if defined(_WIN32)
-#include <Windows.h>
-#elif defined(__ANDROID__)
-#include <android/log.h>
-#endif
-
 using std::mutex;
 using std::lock_guard;
 
@@ -47,12 +41,7 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
                        const std::string& message) 
 {
     static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
-#if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_WARN, "core", "[%s %s:%d] %s\n", 
-#else
-    fprintf(stderr, "[%s %s:%d] %s\n",
-#endif
-        level_names[level], filename, line, message.c_str());
+    fprintf(stderr, "[%s %s:%d] %s\n", level_names[level], filename, line, message.c_str());
 }
 
 void NullLogHandler(LogLevel /* level */, const char* /* filename */,

@@ -57,18 +57,6 @@ enum LogLevel
 
 namespace detail {
 
-template <typename T>
-inline std::string to_string(const T& value)
-{
-#if defined(__ANDROID__)
-    std::ostringstream strm;
-    strm << value;
-    return strm.str();
-#else
-    return std::to_string(value);
-#endif
-}
-
 class LogFinisher;
 
 class LogMessage {
