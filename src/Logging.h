@@ -88,7 +88,7 @@ public:
         || std::is_enum<T>::value, LogMessage&>::type
         operator<<(T value)
     {
-        message_ += detail::to_string(value);
+        message_ += std::to_string(value);
         return *this;
     }
 
