@@ -2,6 +2,9 @@
 -- Premake script (http://premake.github.io)
 --
 
+// https://github.com/ichenq/usr
+local USR_ROOT = os.getenv('USR_ROOT') or 'E:/Library/usr'
+
 solution 'Thirsty'
     configurations  {'Debug', 'Release'}
     language        'C++'
@@ -28,23 +31,22 @@ solution 'Thirsty'
             'NOMINMAX',
         }
         buildoptions '/GF'
+        includedirs { USR_ROOT .. '/include' }
+        libdirs { USR_ROOT .. '/lib/x64' }
 
 
     filter 'action:gmake'
+        USR_ROOT = 'usr/local/'
         buildoptions    { '-std=c++11 -rdynamic' }
         defines         '__STDC_LIMIT_MACROS'
 
-    project 'libthirsty'
+    project 'thirsty'
         location    'build'
         kind        'StaticLib'
         files
         {
             'src/**.h',
             'src/**.cpp',
-        }
-        removefiles
-        {
-            'src/test/**.*',
         }
         includedirs
         {
@@ -56,17 +58,15 @@ solution 'Thirsty'
         kind        'ConsoleApp'
         files
         {
-            'dep/gtest/src/gtest-all.cc',
-            'src/test/*.h',
-            'src/test/*.cpp',
+            'test/*.h',
+            'test/*.cpp',
         }
-        includedirs
+        includedirs 'src'
+        links 
         {
-            'src',
-            'dep/gtest',
-            'dep/gtest/include',
+            'thirsty', 
+            'gtest',
         }
-        links 'libthirsty'
         libdirs 'bin'
         
         filter 'action:gmake'
