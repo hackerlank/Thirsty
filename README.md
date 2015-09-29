@@ -5,16 +5,10 @@
 
 ## Feature
 
-这是一个从Facebook的[folly](https://github.com/facebook/folly)里提取的几个基础C++组件。
-
-我更改了代码使其能在Visual C++ 2013下编译，在核心API不变的情况下跑过所有的单元测试。
-
-
-包含：
 * [Scoped Guard](http://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Scope_Guard)
 * [Benchmark](https://github.com/facebook/folly/blob/master/folly/docs/Benchmark.md)
 * [Conv](https://github.com/facebook/folly/blob/master/folly/docs/Conv.md)
-* [Format](https://github.com/facebook/folly/blob/master/folly/docs/Format.md)
+
 
 
 ## Installation
