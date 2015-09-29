@@ -107,14 +107,14 @@ to(const Src & value)
     {
         FOLLY_RANGE_CHECK(
             value <= std::numeric_limits<Tgt>::max(),
-            "Overflow", detail::to_string(value));
+            "Overflow", std::to_string(value));
     }
     /* static */ if (std::is_signed<Src>::value &&
         (!std::is_signed<Tgt>::value || sizeof(Src) > sizeof(Tgt))) 
     {
         FOLLY_RANGE_CHECK(
             value >= std::numeric_limits<Tgt>::min(),
-            "Negative overflow", detail::to_string(value));
+            "Negative overflow", std::to_string(value));
     }
     return static_cast<Tgt>(value);
 }
