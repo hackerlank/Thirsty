@@ -2,7 +2,7 @@
 -- Premake script (http://premake.github.io)
 --
 
-// https://github.com/ichenq/usr
+-- https://github.com/ichenq/usr
 local USR_ROOT = os.getenv('USR_ROOT') or 'E:/Library/usr'
 
 solution 'Thirsty'
